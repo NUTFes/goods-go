@@ -18,22 +18,22 @@ run = """
 [tasks.03-lint]
 alias = "lint"
 description = "Lintチェック"
-run = "pnpm exec biome lint"
+run = "pnpm exec biome lint ./src"
 
 [tasks."04-lint:fix"]
 alias = "lint:fix"
 description = "Lint修正"
-run = "pnpm exec biome lint --fix"
+run = "pnpm exec biome lint --fix ./src"
 
 [tasks."05-format:check"]
 alias = "format:check"
 description = "フォーマット確認"
-run = "pnpm exec biome format"
+run = "pnpm exec biome format ./src"
 
 [tasks."06-format"]
 alias = "format"
 description = "フォーマット適用"
-run = "pnpm exec biome format --write"
+run = "pnpm exec biome format --write ./src"
 
 [tasks."07-docker:build"]
 alias = "docker:build"
