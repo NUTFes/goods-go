@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "tamasfe.even-better-toml",
+    "esbenp.prettier-vscode"
+  ]
+}

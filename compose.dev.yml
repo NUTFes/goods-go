@@ -1,0 +1,21 @@
+include:
+  - path: supabase/docker-compose.yml
+
+services:
+  app:
+    container_name: goods-go-dev
+    image: goods-go-dev
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_SUPABASE_URL: http://supabase-kong:8000
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

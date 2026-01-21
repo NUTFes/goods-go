@@ -1,0 +1,77 @@
+[tools]
+node = "24.13.0"
+pnpm = "10.28.1"
+
+[tasks.01-up]
+alias = "up"
+description = "開発環境起動 (Supabase + Next.js)"
+run = "docker compose --env-file supabase/.env -f compose.dev.yml up -d"
+
+[tasks.02-down]
+alias = "down"
+description = "全環境停止 (Dev/Prod/Supabase)"
+run = """
+  docker compose --env-file supabase/.env -f compose.prod.yml down
+  docker compose --env-file supabase/.env -f compose.dev.yml down
+"""
+
+[tasks.03-lint]
+alias = "lint"
+description = "Lintチェック"
+run = "pnpm exec biome lint"
+
+[tasks."04-lint:fix"]
+alias = "lint:fix"
+description = "Lint修正"
+run = "pnpm exec biome lint --fix"
+
+[tasks."05-format:check"]
+alias = "format:check"
+description = "フォーマット確認"
+run = "pnpm exec biome format"
+
+[tasks."06-format"]
+alias = "format"
+description = "フォーマット適用"
+run = "pnpm exec biome format --write"
+
+[tasks."07-docker:build"]
+alias = "docker:build"
+description = "開発環境をビルドして起動"
+run = "docker compose --env-file supabase/.env -f compose.dev.yml up --build -d"
+
+[tasks."08-prod:up"]
+alias = "prod:up"
+description = "本番環境を起動"
+run = "docker compose --env-file supabase/.env -f compose.prod.yml up -d"
+
+[tasks."09-prod:build"]
+alias = "prod:build"
+description = "本番環境をビルドして起動"
+run = "docker compose --env-file supabase/.env -f compose.prod.yml up --build -d"
+
+[tasks."10-prod:down"]
+alias = "prod:down"
+description = "本番環境を停止 (Supabase含む)"
+run = """
+  docker compose --env-file supabase/.env -f compose.prod.yml down
+  docker compose --env-file supabase/.env -f supabase/docker-compose.yml down
+"""
+
+[tasks."11-supabase:reset"]
+alias = "supabase:reset"
+description = "Supabase DBリセット"
+run = "cd supabase && ./reset.sh"
+
+[tasks."12-clean"]
+alias = "clean"
+description = "ビルド成果物を削除"
+run = "rm -rf .next node_modules"
+
+[tasks."13-clean:docker"]
+alias = "clean:docker"
+description = "Dockerリソースを削除"
+run = """
+  docker compose --env-file supabase/.env -f compose.dev.yml down -v --rmi local
+  docker compose --env-file supabase/.env -f supabase/docker-compose.yml down -v --rmi local
+"""
