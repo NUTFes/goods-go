@@ -10,8 +10,8 @@
     "lint:fix": "biome check ./src --write",
     "format": "biome format ./src",
     "format:fix": "biome format ./src --write",
-    "prettier": "prettier . '!./src' '!./supabase' '!./.next' '!./.pnpm-store' --check --plugin=prettier-plugin-sh",
-    "prettier:fix": "prettier . '!./src' '!./supabase' '!./.next' '!./.pnpm-store' --write --plugin=prettier-plugin-sh"
+    "prettier": "prettier . '!./src' '!./.next' '!./.pnpm-store' --check --plugin=prettier-plugin-sh",
+    "prettier:fix": "prettier . '!./src' '!./.next' '!./.pnpm-store' --write --plugin=prettier-plugin-sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
