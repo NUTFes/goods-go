@@ -1,11 +1,11 @@
 # goods-go
 
-Next.js + self-hosted Supabase の開発環境
+Next.js + Supabase の開発環境
 
 ## 技術スタック
 
 - Next.js 16 (App Router)
-- Supabase (self-hosted)
+- Supabase
 - Docker Compose
 - mise (タスクランナー/バージョン管理)
 - pnpm
@@ -40,9 +40,7 @@ pnpm install
 
 ### 2. 環境変数の設定
 
-Supabaseの環境変数ファイル (`supabase/.env`) が必要です。
-
-[NUTFes/settings](https://github.com/NUTFes/settings/tree/main/goods-go/supabase) から取得してください。
+[NUTFes/settings](https://github.com/NUTFes/settings/tree/main/goods-go/) から取得してください。
 
 ### 3. 開発環境の起動
 
@@ -50,7 +48,7 @@ Supabaseの環境変数ファイル (`supabase/.env`) が必要です。
 mise run up
 ```
 
-このコマンドでSupabaseとNext.jsの開発環境がDockerで起動します。
+このコマンドでNext.jsの開発環境がDockerで起動します。
 <http://localhost:3000> でアプリケーションにアクセスできます。
 
 開発環境では `src/` と `public/` がボリュームマウントされているため、
@@ -79,32 +77,4 @@ mise run 07-docker:build
 
 `mise tasks` で一覧を確認できます。`mise run`で選択したタスクを実行できます。
 
-| タスク              | エイリアス       | 説明                              |
-| ------------------- | ---------------- | --------------------------------- |
-| `01-up`             | `up`             | 開発環境起動 (Supabase + Next.js) |
-| `02-down`           | `down`           | 全環境停止 (Dev/Prod/Supabase)    |
-| `03-lint`           | `lint`           | Lintチェック                      |
-| `04-lint:fix`       | `lint:fix`       | Lint修正                          |
-| `05-format:check`   | `format:check`   | フォーマット確認                  |
-| `06-format`         | `format`         | フォーマット適用                  |
-| `07-docker:build`   | `docker:build`   | 開発環境をビルドして起動          |
-| `08-prod:up`        | `prod:up`        | 本番環境を起動                    |
-| `09-prod:build`     | `prod:build`     | 本番環境をビルドして起動          |
-| `10-prod:down`      | `prod:down`      | 本番環境を停止 (Supabase含む)     |
-| `11-supabase:reset` | `supabase:reset` | Supabase DBリセット               |
-| `12-clean`          | `clean`          | ビルド成果物を削除                |
-| `13-clean:docker`   | `clean:docker`   | Dockerリソースを削除              |
-
-## ディレクトリ構成
-
-```bash
-.
-├── src/             # アプリケーションソースコード
-├── public/          # 静的ファイル
-├── supabase/        # Supabase self-hosted 設定
-├── compose.dev.yml  # 開発用 Docker Compose
-├── compose.prod.yml # 本番用 Docker Compose
-├── dev.Dockerfile   # 開発用 Dockerfile
-├── prod.Dockerfile  # 本番用 Dockerfile
-└── .mise.toml       # mise 設定 (タスク/ツールバージョン)
 ```
