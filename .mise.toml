@@ -75,3 +75,32 @@ run = """
   docker compose --env-file supabase/.env -f compose.dev.yml down -v --rmi local
   docker compose --env-file supabase/.env -f supabase/docker-compose.yml down -v --rmi local
 """
+
+[tasks."14-supabase:db:reset"]
+alias = "supabase:db:reset"
+description = "Supabase DBをリセットして migrations + seed.sql を適用"
+run = """
+set -euo pipefail
+
+CID="$(docker ps -q -f name=^/supabase-db$ || true)"
+if [ -z "$CID" ]; then
+  echo "supabase-db が起動していません。先に Supabase を起動してください"
+  exit 1
+fi
+
+NET="$(docker inspect supabase-db | python3 -c 'import json,sys; o=json.load(sys.stdin)[0][\"NetworkSettings\"][\"Networks\"]; print(next(iter(o.keys())))')"
+
+docker run --rm -i \\
+  --network "$NET" \\
+  --env-file supabase/.env \\
+  -v "$PWD":/work \\
+  -w /work \\
+  node:24-bullseye \\
+  bash -lc '
+    set -euo pipefail
+    export PGSSLMODE=disable
+    [ -f supabase/config.toml ] || npx -y supabase@latest init
+    yes | npx -y supabase@latest db reset --debug \\
+      --db-url "postgresql://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/${POSTGRES_DB}?sslmode=disable"
+  '
+"""
