@@ -1,5 +1,9 @@
 -- 20260215000100_schema.sql
 -- テーブル/インデックス/modified更新トリガ（RLSやRBACはまだ入れない）
+-- 追加:
+--   - users.email: 有効レコードのみユニーク（deleted is null）
+--   - items.name : 有効レコードのみユニーク（deleted is null）
+--   - locations.name: 同一親（同一階層）でのみユニーク（deleted is null）
 
 create extension if not exists pgcrypto;
 
@@ -24,13 +28,33 @@ $$;
 create table if not exists public.users (
   user_id   uuid         primary key references auth.users(id) on delete cascade,
   name      varchar(60)  not null default '',
-  email     varchar(254) not null default '',
-  role      smallint     not null default 2, -- 0=Admin, 1=Leader, 2=User
+  email     varchar(254) not null,               -- ★ default '' は付けない
+  role      smallint     not null default 2,     -- 0=Admin, 1=Leader, 2=User
   deleted   timestamptz,
   created   timestamptz  not null default now(),
   modified  timestamptz,
   constraint chk_users_role check (role in (0, 1, 2))
 );
+
+-- （推奨）emailが空白だけを禁止
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'chk_users_email_not_blank'
+      and conrelid = 'public.users'::regclass
+  ) then
+    alter table public.users
+      add constraint chk_users_email_not_blank
+      check (btrim(email) <> '');
+  end if;
+end $$;
+
+-- ★ 有効レコードだけ email をユニーク（大小文字無視 + 前後空白無視）
+create unique index if not exists uq_users_email_active
+  on public.users (lower(btrim(email)))
+  where deleted is null;
 
 drop trigger if exists trg_users_set_modified on public.users;
 create trigger trg_users_set_modified
@@ -49,6 +73,26 @@ create table if not exists public.items (
   modified  timestamptz,
   constraint uq_items_item_id unique (item_id)
 );
+
+-- （推奨）物品名が空白だけを禁止
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'chk_items_name_not_blank'
+      and conrelid = 'public.items'::regclass
+  ) then
+    alter table public.items
+      add constraint chk_items_name_not_blank
+      check (btrim(name) <> '');
+  end if;
+end $$;
+
+-- ★ 有効レコードだけ 物品名 をユニーク（大小文字無視 + 前後空白無視）
+create unique index if not exists uq_items_name_active
+  on public.items (lower(btrim(name)))
+  where deleted is null;
 
 drop trigger if exists trg_items_set_modified on public.items;
 create trigger trg_items_set_modified
@@ -73,6 +117,34 @@ create table if not exists public.locations (
     on update cascade
     on delete set null
 );
+
+-- （推奨）場所名が空白だけを禁止
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'chk_locations_name_not_blank'
+      and conrelid = 'public.locations'::regclass
+  ) then
+    alter table public.locations
+      add constraint chk_locations_name_not_blank
+      check (btrim(name) <> '');
+  end if;
+end $$;
+
+-- ★ 同一階層（同じ親）配下では name を重複禁止（有効レコードのみ）
+--   ※ NULLはユニーク判定が特殊なので「親あり」と「root」を分ける
+create unique index if not exists uq_locations_sibling_name_active
+  on public.locations (parent_location_id, lower(btrim(name)))
+  where deleted is null
+    and parent_location_id is not null;
+
+-- ★ root階層（parent_location_id is null）同士でも name を重複禁止（有効レコードのみ）
+create unique index if not exists uq_locations_root_name_active
+  on public.locations (lower(btrim(name)))
+  where deleted is null
+    and parent_location_id is null;
 
 drop trigger if exists trg_locations_set_modified on public.locations;
 create trigger trg_locations_set_modified
