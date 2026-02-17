@@ -16,6 +16,11 @@ begin
     return new;
   end if;
 
+  -- JWT文脈が無い管理系処理（postgres/service_role等）は許可
+  if auth.uid() is null then
+    return new;
+  end if;
+
   -- 自分以外の更新は禁止
   if old.user_id <> auth.uid() then
     raise exception 'permission denied: cannot update other users';
