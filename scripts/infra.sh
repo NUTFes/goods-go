@@ -10,7 +10,7 @@ STACK_COMPOSE_FILE="${STACK_DIR}/docker-compose.yml"
 STACK_COMPOSE_PROJECT="goods-go-supabase-prod"
 
 usage() {
-  cat <<'EOF'
+  cat << 'EOF'
 usage:
   bash scripts/infra.sh dev up|down|logs [service...]
   bash scripts/infra.sh prod deploy|up|down|logs|status [service...]
@@ -21,7 +21,7 @@ EOF
 ensure_commands() {
   local command_name
   for command_name in "$@"; do
-    if ! command -v "${command_name}" >/dev/null 2>&1; then
+    if ! command -v "${command_name}" > /dev/null 2>&1; then
       echo "[infra] missing required command: ${command_name}" >&2
       exit 1
     fi
@@ -180,14 +180,14 @@ resolve_supabase_db_url() {
 is_stack_service_running() {
   local service_name="$1"
   local container_id
-  container_id="$(stack_compose ps -q "${service_name}" 2>/dev/null | head -n 1)"
+  container_id="$(stack_compose ps -q "${service_name}" 2> /dev/null | head -n 1)"
 
   if [[ -z "${container_id}" ]]; then
     return 1
   fi
 
   local container_status
-  container_status="$(docker inspect -f '{{.State.Status}}' "${container_id}" 2>/dev/null || true)"
+  container_status="$(docker inspect -f '{{.State.Status}}' "${container_id}" 2> /dev/null || true)"
   [[ "${container_status}" == "running" ]]
 }
 
@@ -199,21 +199,21 @@ wait_for_stack_service_ready() {
 
   while true; do
     local container_id
-    container_id="$(stack_compose ps -q "${service_name}" 2>/dev/null | head -n 1)"
+    container_id="$(stack_compose ps -q "${service_name}" 2> /dev/null | head -n 1)"
 
     if [[ -n "${container_id}" ]]; then
       local container_status
       local health_status
 
-      container_status="$(docker inspect -f '{{.State.Status}}' "${container_id}" 2>/dev/null || true)"
-      health_status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${container_id}" 2>/dev/null || true)"
+      container_status="$(docker inspect -f '{{.State.Status}}' "${container_id}" 2> /dev/null || true)"
+      health_status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${container_id}" 2> /dev/null || true)"
 
       if [[ "${container_status}" == "running" && ("${health_status}" == "healthy" || "${health_status}" == "none") ]]; then
         return
       fi
     fi
 
-    if (( $(date +%s) - start_time >= timeout_seconds )); then
+    if (($(date +%s) - start_time >= timeout_seconds)); then
       echo "[infra] timeout waiting for ${service_name} to become ready" >&2
       exit 1
     fi
@@ -248,7 +248,7 @@ prod_compose() {
   next_public_publishable_key="$(resolve_stack_publishable_key)"
 
   NEXT_PUBLIC_SUPABASE_URL="${next_public_url}" \
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="${next_public_publishable_key}" \
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="${next_public_publishable_key}" \
     docker compose "${compose_args[@]}" "$@"
 }
 
@@ -275,7 +275,7 @@ dev_down() {
 
 dev_logs() {
   ensure_commands docker
-  if (( $# == 0 )); then
+  if (($# == 0)); then
     dev_compose logs -f --tail 200
     return
   fi
@@ -295,7 +295,7 @@ supabase_down() {
 
 supabase_logs() {
   ensure_commands docker
-  if (( $# == 0 )); then
+  if (($# == 0)); then
     stack_compose logs -f --tail 200
     return
   fi
@@ -394,7 +394,7 @@ supabase_update_stack() {
   mkdir -p "${temp_dir}"
 
   echo "[infra] fetching latest self-host-stack from official supabase repository..."
-  
+
   # Perform sparse checkout
   git clone --filter=blob:none --no-checkout https://github.com/supabase/supabase "${temp_dir}"
   (
@@ -405,16 +405,16 @@ supabase_update_stack() {
 
   echo "[infra] syncing files to ${STACK_DIR}..."
   mkdir -p "${STACK_DIR}"
-  
+
   # Copy all files including dotfiles (.env.example etc.)
   cp -rf "${temp_dir}/docker/." "${STACK_DIR}/"
-  
+
   # Ensure .env exists for stack_compose commands
   if [[ ! -f "${STACK_DIR}/.env" ]]; then
     echo "[infra] creating .env from .env.example..."
     cp "${STACK_DIR}/.env.example" "${STACK_DIR}/.env"
   fi
-  
+
   # Clean up
   rm -rf "${temp_dir}"
 
@@ -437,7 +437,7 @@ prod_down() {
 
 prod_logs() {
   ensure_commands docker
-  if (( $# == 0 )); then
+  if (($# == 0)); then
     prod_compose logs -f --tail 200
     return
   fi
@@ -466,7 +466,7 @@ prod_deploy() {
   echo "[infra] deploy completed"
 }
 
-if (( $# < 2 )); then
+if (($# < 2)); then
   usage
   exit 1
 fi
@@ -481,7 +481,10 @@ case "${scope}" in
       up) dev_up ;;
       down) dev_down ;;
       logs) dev_logs "$@" ;;
-      *) usage; exit 1 ;;
+      *)
+        usage
+        exit 1
+        ;;
     esac
     ;;
   prod)
@@ -491,7 +494,10 @@ case "${scope}" in
       down) prod_down ;;
       logs) prod_logs "$@" ;;
       status) prod_status ;;
-      *) usage; exit 1 ;;
+      *)
+        usage
+        exit 1
+        ;;
     esac
     ;;
   supabase)
@@ -505,7 +511,10 @@ case "${scope}" in
       migrate) supabase_migrate ;;
       reset) supabase_reset ;;
       update-stack) supabase_update_stack ;;
-      *) usage; exit 1 ;;
+      *)
+        usage
+        exit 1
+        ;;
     esac
     ;;
   *)
