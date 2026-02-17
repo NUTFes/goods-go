@@ -47,7 +47,7 @@ returns smallint
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 set row_security = off
 as $$
   select u.role
@@ -62,7 +62,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 set row_security = off
 as $$
   select coalesce(public.user_role() = 0, false)
@@ -73,7 +73,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 set row_security = off
 as $$
   select coalesce(public.user_role() = 1, false)
