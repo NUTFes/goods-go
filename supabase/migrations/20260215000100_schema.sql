@@ -28,7 +28,7 @@ $$;
 -- users: ユーザー（auth.users と連携）
 -- =========================================
 create table if not exists public.users (
-  user_id       uuid primary key,                         -- auth.users.id と一致
+  user_id       uuid primary key references auth.users(id) on delete cascade, -- auth.users.id と一致
   name          varchar(60)  not null default '（未設定）',  -- 表示名（最大60）
   email         varchar(254),                              -- メール（NULL可 / 空文字は禁止）
   role          smallint     not null default 2,           -- 0=Admin,1=Leader,2=User
