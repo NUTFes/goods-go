@@ -97,3 +97,39 @@ drop trigger if exists trg_tasks_enforce_update_permissions on public.tasks;
 create trigger trg_tasks_enforce_update_permissions
 before update on public.tasks
 for each row execute function public.enforce_tasks_update_permissions();
+
+-- =========================================
+-- tasks: ステータス変更を task_activities に記録
+-- =========================================
+create or replace function public.log_task_status_change()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.current_status is distinct from old.current_status then
+    insert into public.task_activities (
+      task_id,
+      changed_by_user_id,
+      action,
+      payload
+    )
+    values (
+      new.task_id,
+      auth.uid(),
+      'status_change',
+      jsonb_build_object(
+        'from_status', old.current_status,
+        'to_status', new.current_status
+      )
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_tasks_log_status_change on public.tasks;
+
+create trigger trg_tasks_log_status_change
+after update of current_status on public.tasks
+for each row execute function public.log_task_status_change();
