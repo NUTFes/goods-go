@@ -14,7 +14,8 @@
       "!dist",
       "!build",
       "!src/components/ui",
-      "!src/hooks/use-mobile.ts"
+      "!src/hooks/use-mobile.ts",
+      "!src/types/schema.gen.ts"
     ]
   },
   "formatter": {

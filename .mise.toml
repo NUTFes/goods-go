@@ -2,69 +2,167 @@
 node = "24.13.0"
 pnpm = "10.28.1"
 
-[tasks.01-up]
+# --- App Development (Local) ---
+
+[tasks."10:up"]
 alias = "up"
-description = "開発環境起動 (Next.js)"
-run = "docker compose -f compose.dev.yml up -d"
+description = "開発環境起動 (Next.js + Supabase local)"
+run = "bash scripts/infra.sh dev up"
 
-[tasks.02-down]
+[tasks."11:down"]
 alias = "down"
-description = "全環境停止 (Dev/Prod)"
-run = """
-  docker compose -f compose.prod.yml down
-  docker compose -f compose.dev.yml down
-"""
+description = "開発環境停止 (Next.js + Supabase local)"
+run = "bash scripts/infra.sh dev down"
 
-[tasks.03-lint]
+[tasks."12:logs"]
+alias = "logs"
+description = "開発環境ログ表示"
+run = "bash scripts/infra.sh dev logs"
+
+[tasks."13:build"]
+alias = "build"
+description = "開発環境をビルドして起動"
+run = "docker compose -f compose.dev.yml up --build -d"
+
+# --- Code Quality ---
+
+[tasks."20:lint"]
 alias = "lint"
 description = "Lintチェック"
 run = "pnpm exec biome lint ./src"
 
-[tasks."04-lint:fix"]
+[tasks."21:lint:fix"]
 alias = "lint:fix"
 description = "Lint修正"
 run = "pnpm exec biome lint --fix ./src"
 
-[tasks."05-format:check"]
+[tasks."22:format:check"]
 alias = "format:check"
 description = "フォーマット確認"
 run = "pnpm exec biome format ./src"
 
-[tasks."06-format"]
+[tasks."23:format"]
 alias = "format"
 description = "フォーマット適用"
 run = "pnpm exec biome format --write ./src"
 
-[tasks."07-docker:build"]
-alias = "docker:build"
-description = "開発環境をビルドして起動"
-run = "docker compose -f compose.dev.yml up --build -d"
-
-[tasks."08-prod:up"]
-alias = "prod:up"
-description = "本番環境を起動"
-run = "docker compose -f compose.prod.yml up -d"
-
-[tasks."09-prod:build"]
-alias = "prod:build"
-description = "本番環境をビルドして起動"
-run = "docker compose -f compose.prod.yml up --build -d"
-
-[tasks."10-prod:down"]
-alias = "prod:down"
-description = "本番環境を停止"
-run = """
-  docker compose -f compose.prod.yml down
-"""
-
-[tasks."11-clean"]
+[tasks."24:clean"]
 alias = "clean"
 description = "ビルド成果物を削除"
 run = "rm -rf .next node_modules"
 
-[tasks."12-clean:docker"]
+[tasks."25:clean:docker"]
 alias = "clean:docker"
 description = "Dockerリソースを削除"
-run = """
-  docker compose -f compose.dev.yml down -v --rmi local
-"""
+run = "docker compose -f compose.dev.yml down -v --rmi local"
+
+# --- Supabase Development (Local) ---
+
+[tasks."30:supabase:start"]
+alias = "supabase:start"
+description = "Supabaseローカル環境を起動"
+run = "pnpm exec supabase start"
+
+[tasks."31:supabase:stop"]
+alias = "supabase:stop"
+description = "Supabaseローカル環境を停止"
+run = "pnpm exec supabase stop"
+
+[tasks."32:supabase:status"]
+alias = "supabase:status"
+description = "Supabaseローカル接続情報を確認"
+run = "pnpm exec supabase status"
+
+[tasks."33:supabase:reset"]
+alias = "supabase:reset"
+description = "ローカルへ Migration + Seed を再適用"
+run = "pnpm exec supabase db reset --local"
+
+[tasks."34:supabase:lint"]
+alias = "supabase:lint"
+description = "ローカルDBのスキーマLint"
+run = "pnpm exec supabase db lint --local --fail-on error"
+
+[tasks."35:supabase:typegen"]
+alias = "supabase:typegen"
+description = "ローカルDBから型を生成"
+run = "mkdir -p src/types && pnpm exec supabase gen types typescript --local > src/types/schema.gen.ts"
+
+[tasks."36:supabase:migration:new"]
+alias = "supabase:migration:new"
+description = "新規 migration ファイルを作成"
+run = "pnpm exec supabase migration new"
+
+# --- Supabase Production ---
+
+[tasks."40:prod:supabase:up"]
+alias = "prod:supabase:up"
+description = "self-hosted Supabase stack を起動"
+run = "bash scripts/infra.sh supabase up"
+
+[tasks."41:prod:supabase:down"]
+alias = "prod:supabase:down"
+description = "self-hosted Supabase stack を停止"
+run = "bash scripts/infra.sh supabase down"
+
+[tasks."42:prod:supabase:logs"]
+alias = "prod:supabase:logs"
+description = "self-hosted Supabase stack のログを表示"
+run = "bash scripts/infra.sh supabase logs"
+
+[tasks."43:prod:supabase:status"]
+alias = "prod:supabase:status"
+description = "self-hosted Supabase stack の状態を確認"
+run = "bash scripts/infra.sh supabase status"
+
+[tasks."44:prod:supabase:plan"]
+alias = "prod:supabase:plan"
+description = "self-hosted DBへの migration 差分を dry-run で確認"
+run = "bash scripts/infra.sh supabase plan"
+
+[tasks."45:prod:supabase:lint"]
+alias = "prod:supabase:lint"
+description = "self-hosted DBのスキーマLint"
+run = "bash scripts/infra.sh supabase lint"
+
+[tasks."46:prod:supabase:migrate"]
+alias = "prod:supabase:migrate"
+description = "migration を self-hosted DB に適用"
+run = "bash scripts/infra.sh supabase migrate"
+
+[tasks."47:prod:supabase:reset"]
+alias = "prod:supabase:reset"
+description = "self-hosted Supabase stack をフルリセット"
+run = "bash scripts/infra.sh supabase reset"
+
+[tasks."48:prod:supabase:update-stack"]
+alias = "supabase:update-stack"
+description = "公式から self-hosted Supabase stack を最新化"
+run = "bash scripts/infra.sh supabase update-stack"
+
+# --- App Production ---
+
+[tasks."50:prod:up"]
+alias = "prod:up"
+description = "本番アプリ環境を起動"
+run = "bash scripts/infra.sh prod up"
+
+[tasks."51:prod:down"]
+alias = "prod:down"
+description = "本番アプリ環境を停止"
+run = "bash scripts/infra.sh prod down"
+
+[tasks."52:prod:logs"]
+alias = "prod:logs"
+description = "本番アプリ環境ログを表示"
+run = "bash scripts/infra.sh prod logs"
+
+[tasks."53:prod:deploy"]
+alias = "prod:deploy"
+description = "DB反映込みで本番環境を一括デプロイ"
+run = "bash scripts/infra.sh prod deploy"
+
+[tasks."54:prod:status"]
+alias = "prod:status"
+description = "本番アプリ環境の状態を確認"
+run = "bash scripts/infra.sh prod status"
