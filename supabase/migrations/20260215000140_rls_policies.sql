@@ -26,9 +26,15 @@ drop policy if exists users_select_own_or_admin              on public.users;
 drop policy if exists users_update_own_or_admin              on public.users;
 
 drop policy if exists items_select_active_or_admin           on public.items;
+drop policy if exists items_insert_admin_only                on public.items;
+drop policy if exists items_update_admin_only                on public.items;
+drop policy if exists items_delete_admin_only                on public.items;
 drop policy if exists items_write_admin_only                 on public.items;
 
 drop policy if exists locations_select_active_or_admin       on public.locations;
+drop policy if exists locations_insert_admin_only            on public.locations;
+drop policy if exists locations_update_admin_only            on public.locations;
+drop policy if exists locations_delete_admin_only            on public.locations;
 drop policy if exists locations_write_admin_only             on public.locations;
 
 drop policy if exists tasks_select_active_or_admin           on public.tasks;
@@ -72,14 +78,30 @@ using (
   (select public.is_admin()) or deleted is null
 );
 
-create policy items_write_admin_only
+create policy items_insert_admin_only
 on public.items
-for all
+for insert
+to authenticated
+with check (
+  (select public.is_admin())
+);
+
+create policy items_update_admin_only
+on public.items
+for update
 to authenticated
 using (
   (select public.is_admin())
 )
 with check (
+  (select public.is_admin())
+);
+
+create policy items_delete_admin_only
+on public.items
+for delete
+to authenticated
+using (
   (select public.is_admin())
 );
 
@@ -94,14 +116,30 @@ using (
   (select public.is_admin()) or deleted is null
 );
 
-create policy locations_write_admin_only
+create policy locations_insert_admin_only
 on public.locations
-for all
+for insert
+to authenticated
+with check (
+  (select public.is_admin())
+);
+
+create policy locations_update_admin_only
+on public.locations
+for update
 to authenticated
 using (
   (select public.is_admin())
 )
 with check (
+  (select public.is_admin())
+);
+
+create policy locations_delete_admin_only
+on public.locations
+for delete
+to authenticated
+using (
   (select public.is_admin())
 );
 
