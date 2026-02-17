@@ -10,6 +10,7 @@
 create or replace function public.enforce_users_update_permissions()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   if public.is_admin() then
@@ -49,6 +50,7 @@ for each row execute function public.enforce_users_update_permissions();
 create or replace function public.enforce_tasks_update_permissions()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 declare
   r smallint;
@@ -100,6 +102,7 @@ for each row execute function public.enforce_tasks_update_permissions();
 create or replace function public.log_task_status_change()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   if new.current_status is distinct from old.current_status then

@@ -15,6 +15,7 @@ create extension if not exists pgcrypto;
 create or replace function public.set_modified()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   if (tg_op = 'UPDATE') then
