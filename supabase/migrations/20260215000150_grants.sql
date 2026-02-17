@@ -22,5 +22,7 @@ grant select, insert on table public.task_activities to authenticated;
 -- シーケンス（identityがある場合）
 grant usage, select on all sequences in schema public to authenticated;
 
--- 関数
-grant execute on all functions in schema public to authenticated;
+-- 関数（RLS判定に必要なものだけ）
+grant execute on function public.user_role() to authenticated;
+grant execute on function public.is_admin() to authenticated;
+grant execute on function public.is_leader() to authenticated;
