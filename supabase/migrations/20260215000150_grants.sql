@@ -13,8 +13,8 @@ grant usage on schema public to authenticated;
 -- テーブル権限（RLSが最終防衛線）
 grant select, update on table public.users to authenticated;
 
-grant select on table public.items to authenticated;
-grant select on table public.locations to authenticated;
+grant select, insert, update, delete on table public.items to authenticated;
+grant select, insert, update, delete on table public.locations to authenticated;
 
 grant select, insert, update, delete on table public.tasks to authenticated;
 grant select, insert on table public.task_activities to authenticated;
