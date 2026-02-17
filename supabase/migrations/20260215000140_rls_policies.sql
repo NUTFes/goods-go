@@ -13,6 +13,12 @@ alter table public.locations       enable row level security;
 alter table public.tasks           enable row level security;
 alter table public.task_activities enable row level security;
 
+alter table public.users           force row level security;
+alter table public.items           force row level security;
+alter table public.locations       force row level security;
+alter table public.tasks           force row level security;
+alter table public.task_activities force row level security;
+
 -- =========================================
 -- Drop existing policies (idempotent)
 -- =========================================
