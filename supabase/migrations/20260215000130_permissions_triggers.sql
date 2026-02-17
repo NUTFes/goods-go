@@ -21,22 +21,11 @@ begin
     raise exception 'permission denied: cannot update other users';
   end if;
 
-  -- role / email / deleted は変更不可
-  if new.role is distinct from old.role then
-    raise exception 'permission denied: cannot change role';
-  end if;
-
-  if new.email is distinct from old.email then
-    raise exception 'permission denied: cannot change email';
-  end if;
-
-  if new.deleted is distinct from old.deleted then
-    raise exception 'permission denied: cannot change deleted flag';
-  end if;
-
-  -- name 以外を変更していないかチェック
-  if (new.name) is distinct from (old.name) then
-    return new;
+  -- 非Adminは name 以外の変更不可
+  if (new.user_id, new.email, new.role, new.deleted, new.created, new.modified)
+     is distinct from
+     (old.user_id, old.email, old.role, old.deleted, old.created, old.modified) then
+    raise exception 'permission denied: only name can be changed';
   end if;
 
   return new;
