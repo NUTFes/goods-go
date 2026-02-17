@@ -47,7 +47,7 @@ on public.users
 for select
 to authenticated
 using (
-  public.is_admin() or user_id = auth.uid()
+  (select public.is_admin()) or user_id = (select auth.uid())
 );
 
 create policy users_update_own_or_admin
@@ -55,10 +55,10 @@ on public.users
 for update
 to authenticated
 using (
-  public.is_admin() or user_id = auth.uid()
+  (select public.is_admin()) or user_id = (select auth.uid())
 )
 with check (
-  public.is_admin() or user_id = auth.uid()
+  (select public.is_admin()) or user_id = (select auth.uid())
 );
 
 -- =========================================
@@ -69,7 +69,7 @@ on public.items
 for select
 to authenticated
 using (
-  public.is_admin() or deleted is null
+  (select public.is_admin()) or deleted is null
 );
 
 create policy items_write_admin_only
@@ -77,10 +77,10 @@ on public.items
 for all
 to authenticated
 using (
-  public.is_admin()
+  (select public.is_admin())
 )
 with check (
-  public.is_admin()
+  (select public.is_admin())
 );
 
 -- =========================================
@@ -91,7 +91,7 @@ on public.locations
 for select
 to authenticated
 using (
-  public.is_admin() or deleted is null
+  (select public.is_admin()) or deleted is null
 );
 
 create policy locations_write_admin_only
@@ -99,10 +99,10 @@ on public.locations
 for all
 to authenticated
 using (
-  public.is_admin()
+  (select public.is_admin())
 )
 with check (
-  public.is_admin()
+  (select public.is_admin())
 );
 
 -- =========================================
@@ -113,7 +113,7 @@ on public.tasks
 for select
 to authenticated
 using (
-  public.is_admin() or deleted is null
+  (select public.is_admin()) or deleted is null
 );
 
 create policy tasks_insert_admin_only
@@ -121,7 +121,7 @@ on public.tasks
 for insert
 to authenticated
 with check (
-  public.is_admin()
+  (select public.is_admin())
 );
 
 create policy tasks_update_admin_or_leader
@@ -129,12 +129,12 @@ on public.tasks
 for update
 to authenticated
 using (
-  public.is_admin()
-  or (public.is_leader() and deleted is null)
+  (select public.is_admin())
+  or ((select public.is_leader()) and deleted is null)
 )
 with check (
-  public.is_admin()
-  or (public.is_leader() and deleted is null)
+  (select public.is_admin())
+  or ((select public.is_leader()) and deleted is null)
 );
 
 create policy tasks_delete_admin_only
@@ -142,7 +142,7 @@ on public.tasks
 for delete
 to authenticated
 using (
-  public.is_admin()
+  (select public.is_admin())
 );
 
 -- =========================================
@@ -153,7 +153,7 @@ on public.task_activities
 for select
 to authenticated
 using (
-  public.is_admin()
+  (select public.is_admin())
   or exists (
     select 1
     from public.tasks t
@@ -168,8 +168,8 @@ for insert
 to authenticated
 with check (
   (
-    public.is_admin()
-    or (public.is_leader() and changed_by_user_id = auth.uid())
+    (select public.is_admin())
+    or ((select public.is_leader()) and changed_by_user_id = (select auth.uid()))
   )
   and exists (
     select 1
