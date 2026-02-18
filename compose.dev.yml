@@ -10,7 +10,7 @@ services:
       dockerfile: dev.Dockerfile
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_SUPABASE_URL: http://supabase-kong:8000
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:${KONG_HTTP_PORT}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
     volumes:
