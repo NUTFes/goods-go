@@ -39,25 +39,25 @@ values ('verify-loc-to')
 on conflict do nothing;
 
 insert into public.tasks(
-  date_type,
-  task_date,
-  schedule_type,
+  event_day_type,
   item_id,
   quantity,
   from_location_id,
   to_location_id,
+  scheduled_start_time,
+  scheduled_end_time,
   created_user_id,
   leader_user_id,
   current_status
 )
 select
-  0,
-  current_date,
-  0,
+  1,
   (select item_id from public.items where name = 'verify-item-a' and deleted is null limit 1),
   1,
   (select location_id from public.locations where name = 'verify-loc-from' and deleted is null limit 1),
   (select location_id from public.locations where name = 'verify-loc-to' and deleted is null limit 1),
+  '09:00'::time,
+  '10:00'::time,
   '00000000-0000-0000-0000-0000000000a0',
   '00000000-0000-0000-0000-0000000000b0',
   0
@@ -196,25 +196,25 @@ select set_config(
 
 -- expect: permission denied by RLS/policy
 insert into public.tasks(
-  date_type,
-  task_date,
-  schedule_type,
+  event_day_type,
   item_id,
   quantity,
   from_location_id,
   to_location_id,
+  scheduled_start_time,
+  scheduled_end_time,
   created_user_id,
   leader_user_id,
   current_status
 )
 select
-  0,
-  current_date,
-  0,
+  1,
   (select item_id from public.items where name = 'verify-item-a' and deleted is null limit 1),
   1,
   (select location_id from public.locations where name = 'verify-loc-from' and deleted is null limit 1),
   (select location_id from public.locations where name = 'verify-loc-to' and deleted is null limit 1),
+  '09:00'::time,
+  '10:00'::time,
   '00000000-0000-0000-0000-0000000000b0',
   '00000000-0000-0000-0000-0000000000b0',
   0;
@@ -253,6 +253,75 @@ set current_status = case when current_status = 0 then 1 else 0 end,
     note = 'leader-note-should-fail'
 where created_user_id = '00000000-0000-0000-0000-0000000000a0'
   and leader_user_id = '00000000-0000-0000-0000-0000000000b0';
+rollback;
+
+-- 2-5) DB制約（同一場所禁止 / 時刻前後）
+begin;
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-0000000000a0","role":"authenticated"}',
+  true
+);
+
+-- expect: ERROR (from/to same)
+insert into public.tasks(
+  event_day_type,
+  item_id,
+  quantity,
+  from_location_id,
+  to_location_id,
+  scheduled_start_time,
+  scheduled_end_time,
+  created_user_id,
+  leader_user_id,
+  current_status
+)
+select
+  0,
+  (select item_id from public.items where name = 'verify-item-a' and deleted is null limit 1),
+  1,
+  (select location_id from public.locations where name = 'verify-loc-from' and deleted is null limit 1),
+  (select location_id from public.locations where name = 'verify-loc-from' and deleted is null limit 1),
+  '11:00'::time,
+  '12:00'::time,
+  '00000000-0000-0000-0000-0000000000a0',
+  '00000000-0000-0000-0000-0000000000b0',
+  0;
+rollback;
+
+begin;
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-0000000000a0","role":"authenticated"}',
+  true
+);
+
+-- expect: ERROR (end <= start)
+insert into public.tasks(
+  event_day_type,
+  item_id,
+  quantity,
+  from_location_id,
+  to_location_id,
+  scheduled_start_time,
+  scheduled_end_time,
+  created_user_id,
+  leader_user_id,
+  current_status
+)
+select
+  0,
+  (select item_id from public.items where name = 'verify-item-a' and deleted is null limit 1),
+  1,
+  (select location_id from public.locations where name = 'verify-loc-from' and deleted is null limit 1),
+  (select location_id from public.locations where name = 'verify-loc-to' and deleted is null limit 1),
+  '12:00'::time,
+  '12:00'::time,
+  '00000000-0000-0000-0000-0000000000a0',
+  '00000000-0000-0000-0000-0000000000b0',
+  0;
 rollback;
 
 -- ============================================================

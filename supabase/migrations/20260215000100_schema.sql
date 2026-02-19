@@ -109,13 +109,8 @@ create table if not exists public.locations (
 create table if not exists public.tasks (
   task_id           uuid primary key default gen_random_uuid(),
 
-  -- 日程
-  date_type         smallint not null, -- 0=日付(YYYY-MM-DD), 1=日時(timestamptz)
-  task_date         date,
-  task_datetime     timestamptz,
-
-  -- 種別
-  schedule_type     smallint not null, -- 0=準備, 1=片付け
+  -- 日程種別
+  event_day_type    smallint not null, -- 0=準々備日, 1=準備日, 2=片付け日
 
   -- 物品/数量
   item_id           uuid not null references public.items(item_id),
@@ -124,6 +119,12 @@ create table if not exists public.tasks (
   -- 場所（出発/到着）
   from_location_id  uuid not null references public.locations(location_id),
   to_location_id    uuid not null references public.locations(location_id),
+
+  -- 時刻
+  scheduled_start_time time not null,
+  scheduled_end_time   time not null,
+  actual_start_time    time,
+  actual_end_time      time,
 
   -- 担当
   created_user_id   uuid not null references public.users(user_id),
@@ -137,16 +138,15 @@ create table if not exists public.tasks (
   created           timestamptz not null default now(),
   modified          timestamptz not null default now(),
 
-  constraint chk_tasks_date_type check (date_type in (0,1)),
-  constraint chk_tasks_schedule_type check (schedule_type in (0,1)),
+  constraint chk_tasks_event_day_type check (event_day_type in (0,1,2)),
   constraint chk_tasks_status check (current_status in (0,1,2)),
   constraint chk_tasks_quantity_positive check (quantity >= 1),
-
-  -- date_type に応じてどちらか必須
-  constraint chk_tasks_date_fields check (
-    (date_type = 0 and task_date is not null and task_datetime is null)
-    or
-    (date_type = 1 and task_datetime is not null and task_date is null)
+  constraint chk_tasks_locations_different check (from_location_id <> to_location_id),
+  constraint chk_tasks_scheduled_time_order check (scheduled_end_time > scheduled_start_time),
+  constraint chk_tasks_actual_time_order check (
+    actual_start_time is null
+    or actual_end_time is null
+    or actual_end_time > actual_start_time
   )
 );
 
@@ -249,12 +249,38 @@ create unique index if not exists uq_locations_sibling_name_active
 on public.locations (parent_location_id, lower(btrim(name)))
 where deleted is null and parent_location_id is not null and name is not null;
 
--- tasks: 検索用
-create index if not exists idx_tasks_item_id on public.tasks(item_id);
-create index if not exists idx_tasks_from_location_id on public.tasks(from_location_id);
-create index if not exists idx_tasks_to_location_id on public.tasks(to_location_id);
-create index if not exists idx_tasks_task_date on public.tasks(task_date);
-create index if not exists idx_tasks_task_datetime on public.tasks(task_datetime);
+-- tasks: 一覧・フィルター最適化（ソフトデリート前提）
+create index if not exists idx_tasks_active_created_desc
+on public.tasks(created desc)
+where deleted is null;
+
+create index if not exists idx_tasks_active_event_day_type
+on public.tasks(event_day_type)
+where deleted is null;
+
+create index if not exists idx_tasks_active_status
+on public.tasks(current_status)
+where deleted is null;
+
+create index if not exists idx_tasks_active_item_id
+on public.tasks(item_id)
+where deleted is null;
+
+create index if not exists idx_tasks_active_leader_user_id
+on public.tasks(leader_user_id)
+where deleted is null;
+
+create index if not exists idx_tasks_active_from_location_id
+on public.tasks(from_location_id)
+where deleted is null;
+
+create index if not exists idx_tasks_active_to_location_id
+on public.tasks(to_location_id)
+where deleted is null;
+
+create index if not exists idx_tasks_active_scheduled_start_time
+on public.tasks(scheduled_start_time)
+where deleted is null;
 
 -- task_activities: 検索用
 create index if not exists idx_task_activities_task_id on public.task_activities(task_id);
