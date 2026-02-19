@@ -65,15 +65,17 @@ begin
     if new.current_status is distinct from old.current_status then
       -- status以外が変わっていないことを保証
       if (new.task_id, new.created, new.modified,
-          new.date_type, new.task_date, new.task_datetime,
-          new.schedule_type, new.item_id, new.quantity,
+          new.event_day_type, new.item_id, new.quantity,
           new.from_location_id, new.to_location_id,
+          new.scheduled_start_time, new.scheduled_end_time,
+          new.actual_start_time, new.actual_end_time,
           new.created_user_id, new.leader_user_id,
           new.note, new.deleted) is distinct from
          (old.task_id, old.created, old.modified,
-          old.date_type, old.task_date, old.task_datetime,
-          old.schedule_type, old.item_id, old.quantity,
+          old.event_day_type, old.item_id, old.quantity,
           old.from_location_id, old.to_location_id,
+          old.scheduled_start_time, old.scheduled_end_time,
+          old.actual_start_time, old.actual_end_time,
           old.created_user_id, old.leader_user_id,
           old.note, old.deleted) then
         raise exception 'permission denied: leader can only change current_status';
