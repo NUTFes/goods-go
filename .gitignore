@@ -32,10 +32,13 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
 
 # vercel
 .vercel
+
+# supabase self-host stack workspace
+supabase/self-host-stack/
 
 # typescript
 *.tsbuildinfo
