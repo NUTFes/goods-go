@@ -66,12 +66,16 @@ begin
       -- status以外が変わっていないことを保証
       if (new.task_id, new.created, new.modified,
           new.date_type, new.task_date, new.task_datetime,
+          new.planned_start_at, new.planned_end_at,
+          new.actual_start_at, new.actual_end_at,
           new.schedule_type, new.item_id, new.quantity,
           new.from_location_id, new.to_location_id,
           new.created_user_id, new.leader_user_id,
           new.note, new.deleted) is distinct from
          (old.task_id, old.created, old.modified,
           old.date_type, old.task_date, old.task_datetime,
+          old.planned_start_at, old.planned_end_at,
+          old.actual_start_at, old.actual_end_at,
           old.schedule_type, old.item_id, old.quantity,
           old.from_location_id, old.to_location_id,
           old.created_user_id, old.leader_user_id,

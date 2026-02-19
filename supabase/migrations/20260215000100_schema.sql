@@ -113,9 +113,13 @@ create table if not exists public.tasks (
   date_type         smallint not null, -- 0=日付(YYYY-MM-DD), 1=日時(timestamptz)
   task_date         date,
   task_datetime     timestamptz,
+  planned_start_at  timestamptz,       -- 予定開始時刻
+  planned_end_at    timestamptz,       -- 予定終了時刻
+  actual_start_at   timestamptz,       -- 作業開始時刻
+  actual_end_at     timestamptz,       -- 作業終了時刻
 
   -- 種別
-  schedule_type     smallint not null, -- 0=準備, 1=片付け
+  schedule_type     smallint not null, -- 0=準備, 1=片付け, 2=準備前日
 
   -- 物品/数量
   item_id           uuid not null references public.items(item_id),
@@ -138,9 +142,23 @@ create table if not exists public.tasks (
   modified          timestamptz not null default now(),
 
   constraint chk_tasks_date_type check (date_type in (0,1)),
-  constraint chk_tasks_schedule_type check (schedule_type in (0,1)),
+  constraint chk_tasks_schedule_type check (schedule_type in (0,1,2)),
   constraint chk_tasks_status check (current_status in (0,1,2)),
   constraint chk_tasks_quantity_positive check (quantity >= 1),
+  constraint chk_tasks_planned_window check (
+    planned_start_at is null
+    or planned_end_at is null
+    or planned_start_at <= planned_end_at
+  ),
+  constraint chk_tasks_actual_window check (
+    actual_start_at is null
+    or actual_end_at is null
+    or actual_start_at <= actual_end_at
+  ),
+  constraint chk_tasks_actual_end_requires_start check (
+    actual_end_at is null
+    or actual_start_at is not null
+  ),
 
   -- date_type に応じてどちらか必須
   constraint chk_tasks_date_fields check (
@@ -199,6 +217,44 @@ begin
       check (email is null or btrim(email) <> '');
   end if;
 end$$;
+
+-- tasks の追加列/制約（既存DBにも追従）
+alter table public.tasks
+  add column if not exists planned_start_at timestamptz,
+  add column if not exists planned_end_at timestamptz,
+  add column if not exists actual_start_at timestamptz,
+  add column if not exists actual_end_at timestamptz;
+
+alter table public.tasks
+  drop constraint if exists chk_tasks_schedule_type;
+alter table public.tasks
+  add constraint chk_tasks_schedule_type check (schedule_type in (0,1,2));
+
+alter table public.tasks
+  drop constraint if exists chk_tasks_planned_window;
+alter table public.tasks
+  add constraint chk_tasks_planned_window check (
+    planned_start_at is null
+    or planned_end_at is null
+    or planned_start_at <= planned_end_at
+  );
+
+alter table public.tasks
+  drop constraint if exists chk_tasks_actual_window;
+alter table public.tasks
+  add constraint chk_tasks_actual_window check (
+    actual_start_at is null
+    or actual_end_at is null
+    or actual_start_at <= actual_end_at
+  );
+
+alter table public.tasks
+  drop constraint if exists chk_tasks_actual_end_requires_start;
+alter table public.tasks
+  add constraint chk_tasks_actual_end_requires_start check (
+    actual_end_at is null
+    or actual_start_at is not null
+  );
 
 do $$
 begin
