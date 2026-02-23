@@ -23,18 +23,12 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 // ---------- 新規登録 ----------
 
-export const registerSchema = z
-  .object({
-    name: z.string().trim().min(3, NAME_MSG).max(60, NAME_MSG),
-    email: z.string().trim().max(254, EMAIL_MSG).regex(EMAIL_REGEX, EMAIL_MSG),
-    password: z
-      .string()
-      .min(8, PASSWORD_MSG)
-      .regex(/^[A-Za-z0-9]+$/, PASSWORD_MSG),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "パスワードが一致しません",
-    path: ["confirmPassword"],
-  });
+export const registerSchema = z.object({
+  name: z.string().trim().min(3, NAME_MSG).max(60, NAME_MSG),
+  email: z.string().trim().max(254, EMAIL_MSG).regex(EMAIL_REGEX, EMAIL_MSG),
+  password: z
+    .string()
+    .min(8, PASSWORD_MSG)
+    .regex(/^[A-Za-z0-9]+$/, PASSWORD_MSG),
+});
 export type RegisterInput = z.infer<typeof registerSchema>;

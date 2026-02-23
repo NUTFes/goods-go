@@ -18,7 +18,9 @@ function extractFieldErrors(
     const key = issue.path[0];
     if (typeof key === "string") {
       if (!fieldErrors[key]) fieldErrors[key] = [];
-      fieldErrors[key].push(issue.message);
+      if (!fieldErrors[key].includes(issue.message)) {
+        fieldErrors[key].push(issue.message);
+      }
     }
   }
   return fieldErrors;
@@ -59,7 +61,6 @@ export async function registerAction(
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
-    confirmPassword: formData.get("confirmPassword"),
   });
   if (!parsed.success) {
     return {

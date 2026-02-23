@@ -128,23 +128,6 @@ export function SignUpForm() {
             <FieldError messages={state.fieldErrors?.password} />
           </div>
 
-          {/* パスワード確認 */}
-          <div className="space-y-3">
-            <Label htmlFor="confirmPassword">パスワード（確認）</Label>
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="••••••••"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="h-9"
-              aria-invalid={!!state.fieldErrors?.confirmPassword}
-            />
-            <FieldError messages={state.fieldErrors?.confirmPassword} />
-          </div>
-
           {/* Button + link */}
           <div className="space-y-3 pt-1">
             <Button
