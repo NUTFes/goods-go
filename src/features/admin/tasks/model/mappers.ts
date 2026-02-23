@@ -17,17 +17,13 @@ export const STATUS_OPTIONS = [
   { value: 2, label: "完了" },
 ] as const;
 
-const eventDayLabelMap: Record<EventDayType, string> = {
-  0: "準々備日",
-  1: "準備日",
-  2: "片付け日",
-};
+const eventDayLabelMap = Object.fromEntries(
+  EVENT_DAY_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<EventDayType, string>;
 
-const statusLabelMap: Record<TaskStatus, string> = {
-  0: "未着手",
-  1: "進行中",
-  2: "完了",
-};
+const statusLabelMap = Object.fromEntries(
+  STATUS_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<TaskStatus, string>;
 
 const eventDayBadgeClassMap: Record<EventDayType, string> = {
   0: "bg-orange-100 text-orange-700",

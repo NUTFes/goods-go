@@ -1,5 +1,7 @@
-export type EventDayType = 0 | 1 | 2;
-export type TaskStatus = 0 | 1 | 2;
+import type { Tables } from "@/types/schema.gen";
+
+export type EventDayType = Tables<"tasks">["event_day_type"] & (0 | 1 | 2);
+export type TaskStatus = Tables<"tasks">["current_status"] & (0 | 1 | 2);
 
 export type TaskFilterState = {
   day: "all" | "0" | "1" | "2";
