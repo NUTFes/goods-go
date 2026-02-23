@@ -79,6 +79,9 @@ function resolveLabel(
   return options.find((option) => option.value === value)?.label ?? null;
 }
 
+const toggleItemClass =
+  "h-8 rounded-full border border-zinc-200 bg-white px-4 text-xs font-normal text-zinc-600 data-[state=on]:border-zinc-900 data-[state=on]:bg-zinc-900 data-[state=on]:text-white hover:bg-zinc-100";
+
 export function TaskFilterBar({
   filters,
   filterOptions,
@@ -149,17 +152,14 @@ export function TaskFilterBar({
               })
             }
           >
-            <ToggleGroupItem
-              value="all"
-              className="h-8 rounded-full border border-zinc-200 bg-white px-4 text-xs font-normal text-zinc-600 data-[state=on]:border-zinc-900 data-[state=on]:bg-zinc-900 data-[state=on]:text-white hover:bg-zinc-100"
-            >
+            <ToggleGroupItem value="all" className={toggleItemClass}>
               全日程
             </ToggleGroupItem>
             {EVENT_DAY_OPTIONS.map((option) => (
               <ToggleGroupItem
                 key={option.value}
                 value={String(option.value)}
-                className="h-8 rounded-full border border-zinc-200 bg-white px-4 text-xs font-normal text-zinc-600 data-[state=on]:border-zinc-900 data-[state=on]:bg-zinc-900 data-[state=on]:text-white hover:bg-zinc-100"
+                className={toggleItemClass}
               >
                 {option.label}
               </ToggleGroupItem>
@@ -182,17 +182,14 @@ export function TaskFilterBar({
               })
             }
           >
-            <ToggleGroupItem
-              value="all"
-              className="h-8 rounded-full border border-zinc-200 bg-white px-4 text-xs font-normal text-zinc-600 data-[state=on]:border-zinc-900 data-[state=on]:bg-zinc-900 data-[state=on]:text-white hover:bg-zinc-100"
-            >
+            <ToggleGroupItem value="all" className={toggleItemClass}>
               すべて
             </ToggleGroupItem>
             {STATUS_OPTIONS.map((option) => (
               <ToggleGroupItem
                 key={option.value}
                 value={String(option.value)}
-                className="h-8 rounded-full border border-zinc-200 bg-white px-4 text-xs font-normal text-zinc-600 data-[state=on]:border-zinc-900 data-[state=on]:bg-zinc-900 data-[state=on]:text-white hover:bg-zinc-100"
+                className={toggleItemClass}
               >
                 {option.label}
               </ToggleGroupItem>
