@@ -29,7 +29,7 @@ function FieldError({ messages }: { messages?: string[] }) {
     <>
       {messages.map((msg) => (
         <div key={msg} className="flex items-start gap-1 text-[#C91111]">
-          <CircleAlert className="mt-[2px] h-3.5 w-3.5 shrink-0" />
+          <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <p className="text-xs leading-5">{msg}</p>
         </div>
       ))}
