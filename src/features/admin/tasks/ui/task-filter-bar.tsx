@@ -1,4 +1,12 @@
-import { Calendar, Filter, ListTodo, Package, User, X } from "lucide-react";
+import {
+  Calendar,
+  Filter,
+  ListTodo,
+  MapPin,
+  Package,
+  User,
+  X,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,7 +62,9 @@ function SelectFilter({
             {icon}
           </span>
         )}
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={placeholder}>
+          {value ? selectedLabel : placeholder}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">すべて</SelectItem>
@@ -126,12 +136,14 @@ export function TaskFilterBar({
       ? {
           key: "fromLocationId" as const,
           label: `From : ${fromLabel}`,
+          icon: <MapPin className="h-3 w-3" aria-hidden="true" />,
         }
       : null,
     toLabel
       ? {
           key: "toLocationId" as const,
           label: `To : ${toLabel}`,
+          icon: <MapPin className="h-3 w-3" aria-hidden="true" />,
         }
       : null,
   ].filter((tag) => tag !== null);
@@ -218,6 +230,7 @@ export function TaskFilterBar({
           />
           <SelectFilter
             value={filters.fromLocationId}
+            icon={<MapPin className="h-4 w-4 text-zinc-500" />}
             placeholder="From"
             options={filterOptions.locations}
             onValueChange={(value) =>
@@ -226,6 +239,7 @@ export function TaskFilterBar({
           />
           <SelectFilter
             value={filters.toLocationId}
+            icon={<MapPin className="h-4 w-4 text-zinc-500" />}
             placeholder="To"
             options={filterOptions.locations}
             onValueChange={(value) =>
