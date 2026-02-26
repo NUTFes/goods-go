@@ -47,6 +47,11 @@ jobs:
   react-doctor:
     name: React Doctor
     runs-on: ubuntu-latest
+    env:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      NO_COLOR: "1"
+      FORCE_COLOR: "0"
     permissions:
       contents: read
       issues: write
