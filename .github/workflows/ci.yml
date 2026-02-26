@@ -44,10 +44,47 @@ jobs:
       - name: TypeScript Check
         run: pnpm exec tsc --noEmit
 
+  react-doctor:
+    name: React Doctor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup mise
+        uses: jdx/mise-action@v3
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: React Doctor
+        id: react_doctor
+        uses: millionco/react-doctor@main
+        with:
+          directory: .
+          project: goods-go
+          verbose: true
+          fail-on: none
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: React Doctor Score Gate
+        run: |
+          score="${{ steps.react_doctor.outputs.score }}"
+          echo "React Doctor score: ${score}"
+
+          if [ "${score}" != "100" ]; then
+            echo "Expected React Doctor score 100, got ${score}"
+            exit 1
+          fi
+
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint-and-format, typecheck]
+    needs: [lint-and-format, typecheck, react-doctor]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
