@@ -40,7 +40,7 @@ jobs:
 
       - name: Biome with reviewdog
         if: github.event_name == 'pull_request'
-        uses: mongolyy/reviewdog-action-biome@eaba62a1e048fb13e4ff5e017ff8c15d00b2c1a2 # v2
+        uses: mongolyy/reviewdog-action-biome@eaba62a1e048fb13e4ff5e017ff8c15d00b2c1a2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
