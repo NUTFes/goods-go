@@ -8,6 +8,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: "24.13.0"
+  PNPM_VERSION: "10.28.1"
+
 jobs:
   quality:
     name: Quality Check
@@ -19,27 +23,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup mise
-        uses: jdx/mise-action@v3
-
-      - name: Get pnpm store path
-        id: pnpm-cache
-        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore pnpm cache
-        uses: actions/cache@v5
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          path: ${{ steps.pnpm-cache.outputs.path }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Biome with reviewdog
         if: github.event_name == 'pull_request'
-        uses: mongolyy/reviewdog-action-biome@v2
+        uses: mongolyy/reviewdog-action-biome@eaba62a1e048fb13e4ff5e017ff8c15d00b2c1a2 # v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
@@ -74,32 +75,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup mise
-        uses: jdx/mise-action@v3
-
-      - name: Get pnpm store path
-        id: pnpm-cache
-        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore pnpm cache
-        uses: actions/cache@v5
-        with:
-          path: ${{ steps.pnpm-cache.outputs.path }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
-
       - name: React Doctor
         id: react_doctor
-        uses: millionco/react-doctor@main
+        uses: millionco/react-doctor@97b21f18ee4c5b530d683ae6626548081a4aad76
         with:
           directory: .
           project: goods-go
           verbose: true
           fail-on: none
+          node-version: "24"
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: React Doctor Score Gate
@@ -120,20 +104,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup mise
-        uses: jdx/mise-action@v3
-
-      - name: Get pnpm store path
-        id: pnpm-cache
-        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore pnpm cache
-        uses: actions/cache@v5
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          path: ${{ steps.pnpm-cache.outputs.path }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
