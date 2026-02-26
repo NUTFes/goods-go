@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: dev.Dockerfile
+    network_mode: host
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
@@ -12,6 +13,5 @@ services:
     volumes:
       - ./src:/app/src
       - ./public:/app/public
-    ports:
-      - "3000:3000"
+      - ./next.config.ts:/app/next.config.ts
     restart: unless-stopped

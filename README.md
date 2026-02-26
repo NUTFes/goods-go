@@ -55,6 +55,13 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 
 自動で作成されます。
 
+## 認証運用ポリシー（現行）
+
+- メールサーバー（SMTP）は運用しません。
+- パスワードリセット機能は提供しません（`forgot-password` / `update-password` ルートは未使用）。
+- アカウント復旧が必要な場合は、管理者によるアカウント削除後に再登録で対応します。
+- Supabase Auth はメール確認不要（`[auth.email].enable_confirmations = false`）で運用します。
+
 ## コマンド一覧
 
 ### 開発（App + Local Supabase）
