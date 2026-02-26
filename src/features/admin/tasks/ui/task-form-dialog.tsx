@@ -10,7 +10,7 @@ import {
   Triangle,
 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { type UseFormReturn, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,6 +43,9 @@ type TaskFormDialogProps = {
   filterOptions: TaskFilterOptions;
   onOpenChange: (open: boolean) => void;
 };
+
+type TaskForm = UseFormReturn<TaskFormInput>;
+type LocationGroups = Record<string, TaskFilterOptions["locations"]>;
 
 function FieldError({ message }: { message?: string }) {
   if (!message) {
@@ -87,16 +90,378 @@ function toDefaultValues(task?: AdminTask | null): TaskFormInput {
   };
 }
 
-function groupedOptions(options: TaskFilterOptions["locations"]) {
-  return options.reduce<Record<string, TaskFilterOptions["locations"]>>(
-    (acc, option) => {
-      if (!acc[option.group]) {
-        acc[option.group] = [];
-      }
-      acc[option.group].push(option);
-      return acc;
-    },
-    {},
+function groupedOptions(
+  options: TaskFilterOptions["locations"],
+): LocationGroups {
+  return options.reduce<LocationGroups>((acc, option) => {
+    if (!acc[option.group]) {
+      acc[option.group] = [];
+    }
+    acc[option.group].push(option);
+    return acc;
+  }, {});
+}
+
+function TaskBasicSection({
+  form,
+  filterOptions,
+}: {
+  form: TaskForm;
+  filterOptions: TaskFilterOptions;
+}) {
+  const eventDayType = useWatch({
+    control: form.control,
+    name: "eventDayType",
+  });
+  const currentStatus = useWatch({
+    control: form.control,
+    name: "currentStatus",
+  });
+  const leaderUserId = useWatch({
+    control: form.control,
+    name: "leaderUserId",
+  });
+
+  return (
+    <section>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="space-y-1.5">
+          <Label className="block text-xs text-zinc-500 font-normal">
+            日付選択
+          </Label>
+          <Select
+            value={String(eventDayType ?? 0)}
+            onValueChange={(value) =>
+              form.setValue("eventDayType", Number(value), {
+                shouldValidate: true,
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="選択してください" />
+            </SelectTrigger>
+            <SelectContent>
+              {EVENT_DAY_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={String(option.value)}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldError message={form.formState.errors.eventDayType?.message} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="block text-xs text-zinc-500 font-normal">
+            ステータス
+          </Label>
+          <Select
+            value={String(currentStatus ?? 0)}
+            onValueChange={(value) =>
+              form.setValue("currentStatus", Number(value), {
+                shouldValidate: true,
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="選択してください" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={String(option.value)}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldError message={form.formState.errors.currentStatus?.message} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="block text-xs text-zinc-500 font-normal">
+            指揮者
+          </Label>
+          <Select
+            value={leaderUserId ?? ""}
+            onValueChange={(value) =>
+              form.setValue("leaderUserId", value, {
+                shouldValidate: true,
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="選択してください" />
+            </SelectTrigger>
+            <SelectContent>
+              {filterOptions.leaders.map((leader) => (
+                <SelectItem key={leader.value} value={leader.value}>
+                  {leader.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldError message={form.formState.errors.leaderUserId?.message} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TaskLocationSection({
+  form,
+  locationGroups,
+}: {
+  form: TaskForm;
+  locationGroups: LocationGroups;
+}) {
+  const fromLocationId = useWatch({
+    control: form.control,
+    name: "fromLocationId",
+  });
+  const toLocationId = useWatch({
+    control: form.control,
+    name: "toLocationId",
+  });
+
+  return (
+    <section>
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+        <MapPin className="h-4 w-4" />
+        場所
+      </h3>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
+        <div className="space-y-1.5">
+          <Label className="block text-xs text-zinc-500 font-normal">
+            From（搬入元）
+          </Label>
+          <Select
+            value={fromLocationId ?? ""}
+            onValueChange={(value) =>
+              form.setValue("fromLocationId", value, {
+                shouldValidate: true,
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="選択してください" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(locationGroups).map(([groupName, options]) => (
+                <SelectGroup key={groupName}>
+                  <SelectLabel>{groupName}</SelectLabel>
+                  {options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldError message={form.formState.errors.fromLocationId?.message} />
+        </div>
+
+        <div className="pt-8 text-zinc-400">
+          <Triangle className="h-4 w-4 rotate-90 fill-current" />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="block text-xs text-zinc-500 font-normal">
+            To（搬入先）
+          </Label>
+          <Select
+            value={toLocationId ?? ""}
+            onValueChange={(value) =>
+              form.setValue("toLocationId", value, {
+                shouldValidate: true,
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="選択してください" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(locationGroups).map(([groupName, options]) => (
+                <SelectGroup key={groupName}>
+                  <SelectLabel>{groupName}</SelectLabel>
+                  {options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldError message={form.formState.errors.toLocationId?.message} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TaskItemSection({
+  form,
+  filterOptions,
+}: {
+  form: TaskForm;
+  filterOptions: TaskFilterOptions;
+}) {
+  const itemId = useWatch({
+    control: form.control,
+    name: "itemId",
+  });
+
+  return (
+    <section>
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+        <Package className="h-4 w-4" />
+        物品
+      </h3>
+      <div className="space-y-1.5">
+        <Label className="block text-xs text-zinc-500 font-normal">
+          物品名・数量選択
+        </Label>
+        <div className="grid grid-cols-[1fr_120px] gap-3">
+          <div className="space-y-1.5">
+            <Select
+              value={itemId ?? ""}
+              onValueChange={(value) =>
+                form.setValue("itemId", value, { shouldValidate: true })
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="物品名" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions.items.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FieldError message={form.formState.errors.itemId?.message} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Input
+              type="number"
+              min={1}
+              placeholder="個数"
+              {...form.register("quantity", {
+                valueAsNumber: true,
+              })}
+            />
+            <FieldError message={form.formState.errors.quantity?.message} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TaskScheduleSection({
+  form,
+  filterOptions,
+}: {
+  form: TaskForm;
+  filterOptions: TaskFilterOptions;
+}) {
+  const scheduledStartTime = useWatch({
+    control: form.control,
+    name: "scheduledStartTime",
+  });
+  const scheduledEndTime = useWatch({
+    control: form.control,
+    name: "scheduledEndTime",
+  });
+
+  return (
+    <section>
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+        <Clock3 className="h-4 w-4" />
+        予定時刻
+      </h3>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
+        <div className="space-y-1.5">
+          <Label className="block text-xs text-zinc-500 font-normal">
+            予定開始時刻
+          </Label>
+          <Select
+            value={scheduledStartTime ?? ""}
+            onValueChange={(value) =>
+              form.setValue("scheduledStartTime", value, {
+                shouldValidate: true,
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="選択してください" />
+            </SelectTrigger>
+            <SelectContent className="max-h-64">
+              {filterOptions.timeOptions.map((time) => (
+                <SelectItem key={time} value={time}>
+                  {time}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldError
+            message={form.formState.errors.scheduledStartTime?.message}
+          />
+        </div>
+
+        <div className="pt-8 text-zinc-400">
+          <Triangle className="h-4 w-4 rotate-90 fill-current" />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="block text-xs text-zinc-500 font-normal">
+            予定終了時刻
+          </Label>
+          <Select
+            value={scheduledEndTime ?? ""}
+            onValueChange={(value) =>
+              form.setValue("scheduledEndTime", value, {
+                shouldValidate: true,
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="選択してください" />
+            </SelectTrigger>
+            <SelectContent className="max-h-64">
+              {filterOptions.timeOptions.map((time) => (
+                <SelectItem key={time} value={time}>
+                  {time}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldError
+            message={form.formState.errors.scheduledEndTime?.message}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TaskNoteSection({ form }: { form: TaskForm }) {
+  return (
+    <section>
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+        <NotebookPen className="h-4 w-4" />
+        タスク備考
+      </h3>
+      <Textarea
+        className="resize-none h-24"
+        placeholder={`補足があれば記入してください\n例：駐車場設営`}
+        {...form.register("note")}
+      />
+      <FieldError message={form.formState.errors.note?.message} />
+    </section>
   );
 }
 
@@ -120,9 +485,16 @@ export function TaskFormDialog({
     [filterOptions.locations],
   );
 
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setSubmitError("");
+    }
+
+    onOpenChange(nextOpen);
+  };
+
   useEffect(() => {
     form.reset(toDefaultValues(task));
-    setSubmitError("");
   }, [form, task]);
 
   const onSubmit = form.handleSubmit((values) => {
@@ -154,12 +526,12 @@ export function TaskFormDialog({
         return;
       }
 
-      onOpenChange(false);
+      handleDialogOpenChange(false);
     });
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
         className="max-w-176 sm:max-w-176 rounded-2xl p-9"
         showCloseButton={false}
@@ -171,310 +543,15 @@ export function TaskFormDialog({
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-8">
-          <section>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label className="block text-xs text-zinc-500 font-normal">
-                  日付選択
-                </Label>
-                <Select
-                  value={String(form.watch("eventDayType"))}
-                  onValueChange={(value) =>
-                    form.setValue("eventDayType", Number(value), {
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="選択してください" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVENT_DAY_OPTIONS.map((option) => (
-                      <SelectItem
-                        key={option.value}
-                        value={String(option.value)}
-                      >
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  message={form.formState.errors.eventDayType?.message}
-                />
-              </div>
+          <TaskBasicSection form={form} filterOptions={filterOptions} />
 
-              <div className="space-y-1.5">
-                <Label className="block text-xs text-zinc-500 font-normal">
-                  ステータス
-                </Label>
-                <Select
-                  value={String(form.watch("currentStatus"))}
-                  onValueChange={(value) =>
-                    form.setValue("currentStatus", Number(value), {
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="選択してください" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map((option) => (
-                      <SelectItem
-                        key={option.value}
-                        value={String(option.value)}
-                      >
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  message={form.formState.errors.currentStatus?.message}
-                />
-              </div>
+          <TaskLocationSection form={form} locationGroups={locationGroups} />
 
-              <div className="space-y-1.5">
-                <Label className="block text-xs text-zinc-500 font-normal">
-                  指揮者
-                </Label>
-                <Select
-                  value={form.watch("leaderUserId")}
-                  onValueChange={(value) =>
-                    form.setValue("leaderUserId", value, {
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="選択してください" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filterOptions.leaders.map((leader) => (
-                      <SelectItem key={leader.value} value={leader.value}>
-                        {leader.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  message={form.formState.errors.leaderUserId?.message}
-                />
-              </div>
-            </div>
-          </section>
+          <TaskItemSection form={form} filterOptions={filterOptions} />
 
-          <section>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <MapPin className="h-4 w-4" />
-              場所
-            </h3>
-            <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
-              <div className="space-y-1.5">
-                <Label className="block text-xs text-zinc-500 font-normal">
-                  From（搬入元）
-                </Label>
-                <Select
-                  value={form.watch("fromLocationId")}
-                  onValueChange={(value) =>
-                    form.setValue("fromLocationId", value, {
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="選択してください" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(locationGroups).map(
-                      ([groupName, options]) => (
-                        <SelectGroup key={groupName}>
-                          <SelectLabel>{groupName}</SelectLabel>
-                          {options.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  message={form.formState.errors.fromLocationId?.message}
-                />
-              </div>
+          <TaskScheduleSection form={form} filterOptions={filterOptions} />
 
-              <div className="pt-8 text-zinc-400">
-                <Triangle className="h-4 w-4 rotate-90 fill-current" />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="block text-xs text-zinc-500 font-normal">
-                  To（搬入先）
-                </Label>
-                <Select
-                  value={form.watch("toLocationId")}
-                  onValueChange={(value) =>
-                    form.setValue("toLocationId", value, {
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="選択してください" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(locationGroups).map(
-                      ([groupName, options]) => (
-                        <SelectGroup key={groupName}>
-                          <SelectLabel>{groupName}</SelectLabel>
-                          {options.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  message={form.formState.errors.toLocationId?.message}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <Package className="h-4 w-4" />
-              物品
-            </h3>
-            <div className="space-y-1.5">
-              <Label className="block text-xs text-zinc-500 font-normal">
-                物品名・数量選択
-              </Label>
-              <div className="grid grid-cols-[1fr_120px] gap-3">
-                <div className="space-y-1.5">
-                  <Select
-                    value={form.watch("itemId")}
-                    onValueChange={(value) =>
-                      form.setValue("itemId", value, { shouldValidate: true })
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="物品名" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filterOptions.items.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError message={form.formState.errors.itemId?.message} />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Input
-                    type="number"
-                    min={1}
-                    placeholder="個数"
-                    {...form.register("quantity", {
-                      valueAsNumber: true,
-                    })}
-                  />
-                  <FieldError
-                    message={form.formState.errors.quantity?.message}
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <Clock3 className="h-4 w-4" />
-              予定時刻
-            </h3>
-            <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
-              <div className="space-y-1.5">
-                <Label className="block text-xs text-zinc-500 font-normal">
-                  予定開始時刻
-                </Label>
-                <Select
-                  value={form.watch("scheduledStartTime")}
-                  onValueChange={(value) =>
-                    form.setValue("scheduledStartTime", value, {
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="選択してください" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-64">
-                    {filterOptions.timeOptions.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  message={form.formState.errors.scheduledStartTime?.message}
-                />
-              </div>
-
-              <div className="pt-8 text-zinc-400">
-                <Triangle className="h-4 w-4 rotate-90 fill-current" />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="block text-xs text-zinc-500 font-normal">
-                  予定終了時刻
-                </Label>
-                <Select
-                  value={form.watch("scheduledEndTime")}
-                  onValueChange={(value) =>
-                    form.setValue("scheduledEndTime", value, {
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="選択してください" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-64">
-                    {filterOptions.timeOptions.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  message={form.formState.errors.scheduledEndTime?.message}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <NotebookPen className="h-4 w-4" />
-              タスク備考
-            </h3>
-            <Textarea
-              className="resize-none h-24"
-              placeholder={`補足があれば記入してください\n例：駐車場設営`}
-              {...form.register("note")}
-            />
-            <FieldError message={form.formState.errors.note?.message} />
-          </section>
+          <TaskNoteSection form={form} />
 
           {submitError ? (
             <p className="flex items-center gap-1 text-sm text-red-600">
@@ -487,7 +564,7 @@ export function TaskFormDialog({
             <Button
               type="button"
               variant="ghost"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleDialogOpenChange(false)}
               disabled={isPending}
             >
               キャンセル

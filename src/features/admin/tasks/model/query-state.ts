@@ -24,24 +24,7 @@ export const taskListQueryStatesParsers = {
   ),
 };
 
-export const searchParamsCache = createSearchParamsCache(
-  taskListQueryStatesParsers,
-);
-
-export const defaultTaskListQueryState: TaskListQueryState = {
-  filters: {
-    day: "all",
-    status: "all",
-    itemId: "",
-    leaderUserId: "",
-    fromLocationId: "",
-    toLocationId: "",
-  },
-  sort: {
-    key: "scheduledStartTime",
-    direction: "asc",
-  },
-};
+const searchParamsCache = createSearchParamsCache(taskListQueryStatesParsers);
 
 export function parseTaskListQueryState(
   searchParams: Record<string, string | string[] | undefined>,

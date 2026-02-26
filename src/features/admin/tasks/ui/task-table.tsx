@@ -28,10 +28,6 @@ type TaskTableProps = {
   onDelete: (task: AdminTask) => void;
 };
 
-function renderTimeValue(value: string | null): string {
-  return value ?? "-";
-}
-
 function sortIconClass(sort: TaskSortState, key: TaskSortKey): string {
   if (sort.key !== key) {
     return "h-3.5 w-3.5 opacity-70";
@@ -151,10 +147,10 @@ export function TaskTable({
                 {task.scheduledEndTime}
               </TableCell>
               <TableCell className="text-center">
-                {renderTimeValue(task.actualStartTime)}
+                {task.actualStartTime ?? "-"}
               </TableCell>
               <TableCell className="text-center">
-                {renderTimeValue(task.actualEndTime)}
+                {task.actualEndTime ?? "-"}
               </TableCell>
               <TableCell className="text-center">
                 {task.leaderName ?? "-"}

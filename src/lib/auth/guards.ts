@@ -2,9 +2,9 @@ import { forbidden, redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
-export type AppRole = 0 | 1 | 2;
+type AppRole = 0 | 1 | 2;
 
-export type CurrentUserProfile = {
+type CurrentUserProfile = {
   userId: string;
   name: string;
   email: string | null;
@@ -15,7 +15,7 @@ function isAppRole(value: unknown): value is AppRole {
   return value === 0 || value === 1 || value === 2;
 }
 
-export const getCurrentUserProfile = cache(
+const getCurrentUserProfile = cache(
   async (): Promise<CurrentUserProfile | null> => {
     const supabase = await createClient();
     const { data } = await supabase.auth.getClaims();
