@@ -16,4 +16,4 @@ COPY postcss.config.mjs .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-CMD pnpm dev
+CMD ["pnpm", "dev", "-H", "0.0.0.0"]

@@ -5,11 +5,15 @@ services:
     build:
       context: .
       dockerfile: dev.Dockerfile
-    network_mode: host
+    ports:
+      - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+      SUPABASE_INTERNAL_URL: http://host.docker.internal:54321
     volumes:
       - ./src:/app/src
       - ./public:/app/public
