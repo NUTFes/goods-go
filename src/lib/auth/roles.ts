@@ -12,7 +12,8 @@ export const APP_ROLE_VALUES = [
   APP_ROLES.USER,
 ] as const;
 
-export type AppRole = Tables<"users">["role"] & (typeof APP_ROLE_VALUES)[number];
+export type AppRole = Tables<"users">["role"] &
+  (typeof APP_ROLE_VALUES)[number];
 
 export function isAppRole(value: unknown): value is AppRole {
   return (
