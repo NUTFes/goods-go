@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // 技大祭メール形式: 数字2桁.小文字1文字.小文字列.nutfes@gmail.com
 // 例: 12.a.kitano.nutfes@gmail.com
-export const EMAIL_REGEX = /^\d{2}\.[a-z]\.[a-z]+\.nutfes@gmail\.com$/;
+const EMAIL_REGEX = /^\d{2}\.[a-z]\.[a-z]+\.nutfes@gmail\.com$/;
 
 const EMAIL_MSG = "正しい形式のメールアドレスにしてください";
 const PASSWORD_MSG = "パスワードは8文字以上の英数字で入力してください";
@@ -19,7 +19,6 @@ export const loginSchema = z.object({
     .min(8, PASSWORD_MSG)
     .regex(/^[A-Za-z0-9]+$/, PASSWORD_MSG),
 });
-export type LoginInput = z.infer<typeof loginSchema>;
 
 // ---------- 新規登録 ----------
 
@@ -31,4 +30,3 @@ export const registerSchema = z.object({
     .min(8, PASSWORD_MSG)
     .regex(/^[A-Za-z0-9]+$/, PASSWORD_MSG),
 });
-export type RegisterInput = z.infer<typeof registerSchema>;

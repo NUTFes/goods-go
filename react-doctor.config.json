@@ -1,0 +1,10 @@
+{
+  "ignore": {
+    "files": [
+      "src/components/ui/**",
+      "src/types/schema.gen.ts",
+      "src/hooks/use-mobile.ts",
+      "src/lib/supabase/**"
+    ]
+  }
+}
