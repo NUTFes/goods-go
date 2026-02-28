@@ -2,6 +2,8 @@
 
 Next.js + Supabase の開発環境
 
+> **本番環境へのデプロイは [docs/deployment.md](docs/deployment.md) を参照してください。**
+
 ## 技術スタック
 
 - Next.js 16 (App Router)
