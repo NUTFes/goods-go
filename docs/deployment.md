@@ -216,16 +216,17 @@ DASHBOARD_USERNAME=admin
 DASHBOARD_PASSWORD=<強力なパスワード>
 
 # --- 公開 URL 設定 ---
+# ※ <your-domain> は実際のドメインに置き換えてください
 
 # アプリケーションからアクセス可能な Supabase の URL
 # Cloudflare Tunnel を使う場合は公開ドメインを指定
-SUPABASE_PUBLIC_URL=https://supabase.goods-go.example.com
-API_EXTERNAL_URL=https://supabase.goods-go.example.com
+SUPABASE_PUBLIC_URL=https://supabase.goods-go.<your-domain>
+API_EXTERNAL_URL=https://supabase.goods-go.<your-domain>
 
 # --- サイト URL 設定 ---
 
 # アプリケーションの URL（認証コールバック等で使用）
-SITE_URL=https://goods-go.example.com
+SITE_URL=https://goods-go.<your-domain>
 ```
 
 > **Warning**: `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY` は本番環境では必ず新しい値を生成してください。デフォルト値のままでは重大なセキュリティリスクとなります。
@@ -359,10 +360,12 @@ TUNNEL_TOKEN=<コピーしたトークン>
 
 Cloudflare ダッシュボードで Public Hostname を設定:
 
+> **Note**: 以下の `<your-domain>` は組織の実際のドメインに置き換えてください。
+
 | 項目 | 値 |
 |------|-----|
 | Subdomain | `goods-go` |
-| Domain | `nutfes.example.com` |
+| Domain | `<your-domain>` |
 | Service Type | HTTP |
 | URL | `app:3000` |
 
@@ -375,7 +378,7 @@ Supabase API を外部からアクセス可能にする場合は、追加の Pub
 | 項目 | 値 |
 |------|-----|
 | Subdomain | `supabase.goods-go` |
-| Domain | `nutfes.example.com` |
+| Domain | `<your-domain>` |
 | Service Type | HTTP |
 | URL | `host.docker.internal:8000` |
 
