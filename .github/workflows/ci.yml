@@ -59,6 +59,9 @@ jobs:
       - name: TypeScript Check
         run: pnpm exec tsc --noEmit
 
+      - name: Knip Check
+        run: pnpm run knip
+
   react-doctor:
     name: React Doctor
     runs-on: ubuntu-latest

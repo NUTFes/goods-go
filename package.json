@@ -14,7 +14,8 @@
     "check": "biome check ./src",
     "check:fix": "biome check ./src --write",
     "prettier": "prettier . '!./src' '!./.next' '!./.pnpm-store' '!./pnpm-lock.yaml' '!./supabase/self-host-stack/**' --check --plugin=prettier-plugin-sh",
-    "prettier:fix": "prettier . '!./src' '!./.next' '!./.pnpm-store' '!./pnpm-lock.yaml' '!./supabase/self-host-stack/**' --write --plugin=prettier-plugin-sh"
+    "prettier:fix": "prettier . '!./src' '!./.next' '!./.pnpm-store' '!./pnpm-lock.yaml' '!./supabase/self-host-stack/**' --write --plugin=prettier-plugin-sh",
+    "knip": "knip"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -75,6 +76,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "knip": "^5.85.0",
     "prettier": "3.8.0",
     "prettier-plugin-sh": "^0.18.0",
     "supabase": "^2.76.9",
