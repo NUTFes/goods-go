@@ -3,8 +3,7 @@ import { z } from "zod";
 const REQUIRED_SELECT_ERROR = "選択してください";
 const QUANTITY_ERROR = "1以上選択してください";
 const TIME_RANGE_ERROR = "終了時刻は開始時刻より後の時間を指定してください";
-const DUPLICATED_LOCATION_ERROR =
-  "搬入元と搬入先には異なる場所を指定してください";
+const DUPLICATED_LOCATION_ERROR = "搬入元と搬入先には異なる場所を指定してください";
 
 const requiredSelect = z
   .string({ error: REQUIRED_SELECT_ERROR })
@@ -29,11 +28,7 @@ export const taskFormSchema = z
     quantity: z.number({ error: QUANTITY_ERROR }).int().min(1),
     scheduledStartTime: timeValueSchema,
     scheduledEndTime: timeValueSchema,
-    note: z
-      .string({ error: "1000文字以内で入力してください" })
-      .trim()
-      .max(1000)
-      .optional(),
+    note: z.string({ error: "1000文字以内で入力してください" }).trim().max(1000).optional(),
   })
   .superRefine((value, context) => {
     if (value.fromLocationId === value.toLocationId) {
@@ -44,9 +39,7 @@ export const taskFormSchema = z
       });
     }
 
-    if (
-      toMinutes(value.scheduledEndTime) <= toMinutes(value.scheduledStartTime)
-    ) {
+    if (toMinutes(value.scheduledEndTime) <= toMinutes(value.scheduledStartTime)) {
       context.addIssue({
         code: "custom",
         path: ["scheduledEndTime"],

@@ -21,9 +21,7 @@ function normalizeFieldErrors(
   return normalized;
 }
 
-function parseTaskInput(
-  input: TaskFormInput,
-): { data: TaskFormInput } | { error: ActionResult } {
+function parseTaskInput(input: TaskFormInput): { data: TaskFormInput } | { error: ActionResult } {
   const parsed = taskFormSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -36,9 +34,7 @@ function parseTaskInput(
   return { data: parsed.data };
 }
 
-export async function createTaskAction(
-  input: TaskFormInput,
-): Promise<ActionResult> {
+export async function createTaskAction(input: TaskFormInput): Promise<ActionResult> {
   const currentUser = await requireAdminUser();
   const parsedInput = parseTaskInput(input);
 

@@ -15,35 +15,32 @@ function isAppRole(value: unknown): value is AppRole {
   return value === 0 || value === 1 || value === 2;
 }
 
-const getCurrentUserProfile = cache(
-  async (): Promise<CurrentUserProfile | null> => {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getClaims();
+const getCurrentUserProfile = cache(async (): Promise<CurrentUserProfile | null> => {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
 
-    const userId =
-      typeof data?.claims?.sub === "string" ? data.claims.sub : null;
-    if (!userId) {
-      return null;
-    }
+  const userId = typeof data?.claims?.sub === "string" ? data.claims.sub : null;
+  if (!userId) {
+    return null;
+  }
 
-    const { data: user, error } = await supabase
-      .from("users")
-      .select("user_id,name,email,role,deleted")
-      .eq("user_id", userId)
-      .maybeSingle();
+  const { data: user, error } = await supabase
+    .from("users")
+    .select("user_id,name,email,role,deleted")
+    .eq("user_id", userId)
+    .maybeSingle();
 
-    if (error || !user || user.deleted !== null || !isAppRole(user.role)) {
-      return null;
-    }
+  if (error || !user || user.deleted !== null || !isAppRole(user.role)) {
+    return null;
+  }
 
-    return {
-      userId: user.user_id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    };
-  },
-);
+  return {
+    userId: user.user_id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+});
 
 export async function requireAuthenticatedUser(): Promise<CurrentUserProfile> {
   const currentUser = await getCurrentUserProfile();
@@ -55,9 +52,7 @@ export async function requireAuthenticatedUser(): Promise<CurrentUserProfile> {
   return currentUser;
 }
 
-export async function requireAdminUser(): Promise<
-  CurrentUserProfile & { role: 0 }
-> {
+export async function requireAdminUser(): Promise<CurrentUserProfile & { role: 0 }> {
   const currentUser = await requireAuthenticatedUser();
 
   if (currentUser.role !== 0) {

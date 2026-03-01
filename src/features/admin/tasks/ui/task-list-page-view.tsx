@@ -22,10 +22,7 @@ type TaskListPageViewProps = {
   filterOptions: TaskFilterOptions;
 };
 
-export function TaskListPageView({
-  tasks,
-  filterOptions,
-}: TaskListPageViewProps) {
+export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps) {
   const [qs, setQs] = useQueryStates(taskListQueryStatesParsers, {
     shallow: false,
   });
@@ -44,11 +41,7 @@ export function TaskListPageView({
   const handleSortChange = (key: TaskSortKey) => {
     startTransition(() => {
       const nextSortDirection =
-        qs.sortKey === key
-          ? qs.sortDirection === "asc"
-            ? "desc"
-            : "asc"
-          : "asc";
+        qs.sortKey === key ? (qs.sortDirection === "asc" ? "desc" : "asc") : "asc";
 
       setQs({ sortKey: key, sortDirection: nextSortDirection });
     });
