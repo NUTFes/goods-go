@@ -1,7 +1,3 @@
 {
-  "recommendations": [
-    "biomejs.biome",
-    "tamasfe.even-better-toml",
-    "esbenp.prettier-vscode"
-  ]
+  "recommendations": ["tamasfe.even-better-toml", "oxc.oxc-vscode"]
 }

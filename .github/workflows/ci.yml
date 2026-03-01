@@ -17,11 +17,14 @@ jobs:
     name: Quality Check
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
@@ -38,23 +41,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Biome with reviewdog
-        if: github.event_name == 'pull_request'
-        uses: mongolyy/reviewdog-action-biome@eaba62a1e048fb13e4ff5e017ff8c15d00b2c1a2
+      - name: Oxlint Check
+        run: pnpm run lint
+
+      - name: Oxfmt Format
+        run: pnpm run fmt
+
+      - name: Commit formatted changes
+        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          filter_mode: added
-          fail_level: error
-          level: error
-          biome_flags: "ci ./src"
-
-      - name: Biome Check (non-PR)
-        if: github.event_name != 'pull_request'
-        run: pnpm exec biome ci ./src
-
-      - name: Prettier Check
-        run: pnpm run prettier
+          commit_message: "style: auto format by oxfmt"
 
       - name: TypeScript Check
         run: pnpm exec tsc --noEmit
