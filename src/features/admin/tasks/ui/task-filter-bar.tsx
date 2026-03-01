@@ -1,12 +1,4 @@
-import {
-  Calendar,
-  Filter,
-  ListTodo,
-  MapPin,
-  Package,
-  User,
-  X,
-} from "lucide-react";
+import { Calendar, Filter, ListTodo, MapPin, Package, User, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,36 +27,24 @@ type SelectFilterProps = {
   onValueChange: (value: string) => void;
 };
 
-function SelectFilter({
-  value,
-  icon,
-  placeholder,
-  options,
-  onValueChange,
-}: SelectFilterProps) {
+function SelectFilter({ value, icon, placeholder, options, onValueChange }: SelectFilterProps) {
   const selectedLabel = options.find((option) => option.value === value)?.label;
 
   return (
     <Select
       value={value || "all"}
-      onValueChange={(nextValue) =>
-        onValueChange(nextValue === "all" ? "" : nextValue)
-      }
+      onValueChange={(nextValue) => onValueChange(nextValue === "all" ? "" : nextValue)}
     >
       <SelectTrigger
         className="h-9 min-w-37 bg-white text-sm"
-        aria-label={
-          selectedLabel ? `${placeholder}: ${selectedLabel}` : placeholder
-        }
+        aria-label={selectedLabel ? `${placeholder}: ${selectedLabel}` : placeholder}
       >
         {icon && (
           <span aria-hidden="true" className="flex items-center justify-center">
             {icon}
           </span>
         )}
-        <SelectValue placeholder={placeholder}>
-          {value ? selectedLabel : placeholder}
-        </SelectValue>
+        <SelectValue placeholder={placeholder}>{value ? selectedLabel : placeholder}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">すべて</SelectItem>
@@ -78,10 +58,7 @@ function SelectFilter({
   );
 }
 
-function resolveLabel(
-  options: { value: string; label: string }[],
-  value: string,
-): string | null {
+function resolveLabel(options: { value: string; label: string }[], value: string): string | null {
   if (!value) {
     return null;
   }
@@ -92,17 +69,10 @@ function resolveLabel(
 const toggleItemClass =
   "h-8 rounded-full border border-zinc-200 bg-white px-4 text-xs font-normal text-zinc-600 data-[state=on]:border-zinc-900 data-[state=on]:bg-zinc-900 data-[state=on]:text-white hover:bg-zinc-100";
 
-export function TaskFilterBar({
-  filters,
-  filterOptions,
-  onChange,
-}: TaskFilterBarProps) {
+export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBarProps) {
   const itemLabel = resolveLabel(filterOptions.items, filters.itemId);
   const leaderLabel = resolveLabel(filterOptions.leaders, filters.leaderUserId);
-  const fromLabel = resolveLabel(
-    filterOptions.locations,
-    filters.fromLocationId,
-  );
+  const fromLabel = resolveLabel(filterOptions.locations, filters.fromLocationId);
   const toLabel = resolveLabel(filterOptions.locations, filters.toLocationId);
 
   const tags = [
@@ -224,27 +194,21 @@ export function TaskFilterBar({
             icon={<User className="h-4 w-4 text-zinc-500" />}
             placeholder="指揮者"
             options={filterOptions.leaders}
-            onValueChange={(value) =>
-              onChange({ ...filters, leaderUserId: value })
-            }
+            onValueChange={(value) => onChange({ ...filters, leaderUserId: value })}
           />
           <SelectFilter
             value={filters.fromLocationId}
             icon={<MapPin className="h-4 w-4 text-zinc-500" />}
             placeholder="From"
             options={filterOptions.locations}
-            onValueChange={(value) =>
-              onChange({ ...filters, fromLocationId: value })
-            }
+            onValueChange={(value) => onChange({ ...filters, fromLocationId: value })}
           />
           <SelectFilter
             value={filters.toLocationId}
             icon={<MapPin className="h-4 w-4 text-zinc-500" />}
             placeholder="To"
             options={filterOptions.locations}
-            onValueChange={(value) =>
-              onChange({ ...filters, toLocationId: value })
-            }
+            onValueChange={(value) => onChange({ ...filters, toLocationId: value })}
           />
         </div>
       </div>
@@ -265,8 +229,7 @@ export function TaskFilterBar({
                 onClick={() =>
                   onChange({
                     ...filters,
-                    [tag.key]:
-                      tag.key === "day" || tag.key === "status" ? "all" : "",
+                    [tag.key]: tag.key === "day" || tag.key === "status" ? "all" : "",
                   })
                 }
                 className="ml-1 rounded-full p-0.5 hover:bg-zinc-100"

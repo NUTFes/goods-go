@@ -1,14 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  AlertCircle,
-  Clock3,
-  MapPin,
-  NotebookPen,
-  Package,
-  Triangle,
-} from "lucide-react";
+import { AlertCircle, Clock3, MapPin, NotebookPen, Package, Triangle } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { type UseFormReturn, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -90,9 +83,7 @@ function toDefaultValues(task?: AdminTask | null): TaskFormInput {
   };
 }
 
-function groupedOptions(
-  options: TaskFilterOptions["locations"],
-): LocationGroups {
+function groupedOptions(options: TaskFilterOptions["locations"]): LocationGroups {
   return options.reduce<LocationGroups>((acc, option) => {
     if (!acc[option.group]) {
       acc[option.group] = [];
@@ -126,9 +117,7 @@ function TaskBasicSection({
     <section>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="space-y-1.5">
-          <Label className="block text-xs text-zinc-500 font-normal">
-            日付選択
-          </Label>
+          <Label className="block text-xs text-zinc-500 font-normal">日付選択</Label>
           <Select
             value={String(eventDayType ?? 0)}
             onValueChange={(value) =>
@@ -152,9 +141,7 @@ function TaskBasicSection({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="block text-xs text-zinc-500 font-normal">
-            ステータス
-          </Label>
+          <Label className="block text-xs text-zinc-500 font-normal">ステータス</Label>
           <Select
             value={String(currentStatus ?? 0)}
             onValueChange={(value) =>
@@ -178,9 +165,7 @@ function TaskBasicSection({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="block text-xs text-zinc-500 font-normal">
-            指揮者
-          </Label>
+          <Label className="block text-xs text-zinc-500 font-normal">指揮者</Label>
           <Select
             value={leaderUserId ?? ""}
             onValueChange={(value) =>
@@ -231,9 +216,7 @@ function TaskLocationSection({
       </h3>
       <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
         <div className="space-y-1.5">
-          <Label className="block text-xs text-zinc-500 font-normal">
-            From（搬入元）
-          </Label>
+          <Label className="block text-xs text-zinc-500 font-normal">From（搬入元）</Label>
           <Select
             value={fromLocationId ?? ""}
             onValueChange={(value) =>
@@ -266,9 +249,7 @@ function TaskLocationSection({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="block text-xs text-zinc-500 font-normal">
-            To（搬入先）
-          </Label>
+          <Label className="block text-xs text-zinc-500 font-normal">To（搬入先）</Label>
           <Select
             value={toLocationId ?? ""}
             onValueChange={(value) =>
@@ -319,16 +300,12 @@ function TaskItemSection({
         物品
       </h3>
       <div className="space-y-1.5">
-        <Label className="block text-xs text-zinc-500 font-normal">
-          物品名・数量選択
-        </Label>
+        <Label className="block text-xs text-zinc-500 font-normal">物品名・数量選択</Label>
         <div className="grid grid-cols-[1fr_120px] gap-3">
           <div className="space-y-1.5">
             <Select
               value={itemId ?? ""}
-              onValueChange={(value) =>
-                form.setValue("itemId", value, { shouldValidate: true })
-              }
+              onValueChange={(value) => form.setValue("itemId", value, { shouldValidate: true })}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="物品名" />
@@ -385,9 +362,7 @@ function TaskScheduleSection({
       </h3>
       <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
         <div className="space-y-1.5">
-          <Label className="block text-xs text-zinc-500 font-normal">
-            予定開始時刻
-          </Label>
+          <Label className="block text-xs text-zinc-500 font-normal">予定開始時刻</Label>
           <Select
             value={scheduledStartTime ?? ""}
             onValueChange={(value) =>
@@ -407,9 +382,7 @@ function TaskScheduleSection({
               ))}
             </SelectContent>
           </Select>
-          <FieldError
-            message={form.formState.errors.scheduledStartTime?.message}
-          />
+          <FieldError message={form.formState.errors.scheduledStartTime?.message} />
         </div>
 
         <div className="pt-8 text-zinc-400">
@@ -417,9 +390,7 @@ function TaskScheduleSection({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="block text-xs text-zinc-500 font-normal">
-            予定終了時刻
-          </Label>
+          <Label className="block text-xs text-zinc-500 font-normal">予定終了時刻</Label>
           <Select
             value={scheduledEndTime ?? ""}
             onValueChange={(value) =>
@@ -439,9 +410,7 @@ function TaskScheduleSection({
               ))}
             </SelectContent>
           </Select>
-          <FieldError
-            message={form.formState.errors.scheduledEndTime?.message}
-          />
+          <FieldError message={form.formState.errors.scheduledEndTime?.message} />
         </div>
       </div>
     </section>
@@ -508,9 +477,7 @@ export function TaskFormDialog({
 
       if (!result.ok) {
         if (result.fieldErrors) {
-          for (const [fieldName, messages] of Object.entries(
-            result.fieldErrors,
-          )) {
+          for (const [fieldName, messages] of Object.entries(result.fieldErrors)) {
             if (!messages || messages.length === 0) {
               continue;
             }
@@ -532,14 +499,9 @@ export function TaskFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent
-        className="max-w-176 sm:max-w-176 rounded-2xl p-9"
-        showCloseButton={false}
-      >
+      <DialogContent className="max-w-176 sm:max-w-176 rounded-2xl p-9" showCloseButton={false}>
         <DialogHeader className="border-b pb-4">
-          <DialogTitle>
-            {mode === "create" ? "タスクを追加" : "タスクを編集"}
-          </DialogTitle>
+          <DialogTitle>{mode === "create" ? "タスクを追加" : "タスクを編集"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-8">

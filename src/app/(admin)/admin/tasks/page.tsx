@@ -6,9 +6,7 @@ type AdminTasksPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function AdminTasksPage({
-  searchParams,
-}: AdminTasksPageProps) {
+export default async function AdminTasksPage({ searchParams }: AdminTasksPageProps) {
   const queryState = parseTaskListQueryState(await searchParams);
 
   const { tasks, filterOptions } = await getAdminTaskListPageData(queryState);

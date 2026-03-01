@@ -1,9 +1,4 @@
-import type {
-  AdminTask,
-  EventDayType,
-  TaskSortState,
-  TaskStatus,
-} from "./types";
+import type { AdminTask, EventDayType, TaskSortState, TaskStatus } from "./types";
 
 export const EVENT_DAY_OPTIONS = [
   { value: 0, label: "準々備日" },
@@ -21,9 +16,10 @@ const eventDayLabelMap = Object.fromEntries(
   EVENT_DAY_OPTIONS.map((o) => [o.value, o.label]),
 ) as Record<EventDayType, string>;
 
-const statusLabelMap = Object.fromEntries(
-  STATUS_OPTIONS.map((o) => [o.value, o.label]),
-) as Record<TaskStatus, string>;
+const statusLabelMap = Object.fromEntries(STATUS_OPTIONS.map((o) => [o.value, o.label])) as Record<
+  TaskStatus,
+  string
+>;
 
 const eventDayBadgeClassMap: Record<EventDayType, string> = {
   0: "bg-orange-100 text-orange-700",
@@ -64,19 +60,13 @@ export function buildQuarterHourOptions(): string[] {
   const options: string[] = [];
   for (let hour = 0; hour < 24; hour += 1) {
     for (let minute = 0; minute < 60; minute += 15) {
-      options.push(
-        `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-      );
+      options.push(`${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`);
     }
   }
   return options;
 }
 
-function compareTaskBySort(
-  left: AdminTask,
-  right: AdminTask,
-  sort: TaskSortState,
-): number {
+function compareTaskBySort(left: AdminTask, right: AdminTask, sort: TaskSortState): number {
   const direction = sort.direction === "asc" ? 1 : -1;
 
   switch (sort.key) {
@@ -90,18 +80,12 @@ function compareTaskBySort(
       return (left.quantity - right.quantity) * direction;
     }
     case "scheduledStartTime":
-      return (
-        left.scheduledStartTime.localeCompare(right.scheduledStartTime) *
-        direction
-      );
+      return left.scheduledStartTime.localeCompare(right.scheduledStartTime) * direction;
     default:
       return 0;
   }
 }
 
-export function sortAdminTasks(
-  tasks: AdminTask[],
-  sort: TaskSortState,
-): AdminTask[] {
+export function sortAdminTasks(tasks: AdminTask[], sort: TaskSortState): AdminTask[] {
   return tasks.toSorted((left, right) => compareTaskBySort(left, right, sort));
 }

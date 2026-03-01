@@ -20,11 +20,7 @@ type TaskDeleteDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export function TaskDeleteDialog({
-  open,
-  task,
-  onOpenChange,
-}: TaskDeleteDialogProps) {
+export function TaskDeleteDialog({ open, task, onOpenChange }: TaskDeleteDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -49,15 +45,11 @@ export function TaskDeleteDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-134 sm:max-w-134 rounded-xl">
-        <AlertDialogTitle className="sr-only">
-          タスクの削除確認
-        </AlertDialogTitle>
+        <AlertDialogTitle className="sr-only">タスクの削除確認</AlertDialogTitle>
         <div className="space-y-4">
           <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs text-zinc-500 font-normal">
-                From (搬入元)
-              </Label>
+              <Label className="text-xs text-zinc-500 font-normal">From (搬入元)</Label>
               <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900">
                 {task.fromLocationName}
               </div>
@@ -66,9 +58,7 @@ export function TaskDeleteDialog({
               <Triangle className="h-4 w-4 rotate-90 fill-current" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-zinc-500 font-normal">
-                To (搬入先)
-              </Label>
+              <Label className="text-xs text-zinc-500 font-normal">To (搬入先)</Label>
               <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900">
                 {task.toLocationName}
               </div>
@@ -76,17 +66,13 @@ export function TaskDeleteDialog({
           </div>
 
           <div className="space-y-1.5 pt-2">
-            <Label className="text-xs text-zinc-500 font-normal">
-              物品名・数量
-            </Label>
+            <Label className="text-xs text-zinc-500 font-normal">物品名・数量</Label>
             <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900">
               {`${task.itemName} × ${task.quantity}`}
             </div>
           </div>
 
-          <p className="text-sm font-medium text-zinc-900 pt-6 px-1">
-            この項目を削除しますか？
-          </p>
+          <p className="text-sm font-medium text-zinc-900 pt-6 px-1">この項目を削除しますか？</p>
 
           {errorMessage ? (
             <p className="flex items-center justify-center gap-1 text-sm text-red-600">
