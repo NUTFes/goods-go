@@ -153,8 +153,13 @@ mise run prod:supabase:down
 docker compose -f compose.prod.yml down
 
 # 2. 実データを物理削除（重要！）
-sudo rm -rf supabase/self-host-stack/volumes/db/data
-sudo rm -rf supabase/self-host-stack/volumes/storage
+ROOT_DIR="$(pwd)"
+if [[ ! -d "${ROOT_DIR}/supabase/self-host-stack/volumes" ]]; then
+  echo "supabase volume path not found: ${ROOT_DIR}/supabase/self-host-stack/volumes" >&2
+  exit 1
+fi
+sudo rm -rf "${ROOT_DIR}/supabase/self-host-stack/volumes/db/data"
+sudo rm -rf "${ROOT_DIR}/supabase/self-host-stack/volumes/storage"
 
 # 3. 再デプロイ
 mise run prod:deploy
@@ -165,3 +170,4 @@ mise run prod:deploy
 - `mise run prod:*` 実行時、`NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` は self-host 側 `.env` から自動注入されます
 - `SUPABASE_DB_URL` を root `.env`（または環境変数）に設定すると、prod migration の接続先を上書きできます
 - `SUPABASE_DB_PUSH_INCLUDE_SEED=true` で prod migration 時に `supabase/seed.sql` を同時適用できます
+- `INFRA_PROD_SKIP_APP_BUILD=true` を指定すると、`mise run prod:up` / `mise run prod:deploy` の app build を省略して高速化できます（既存イメージを再利用）

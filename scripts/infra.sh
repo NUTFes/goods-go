@@ -69,6 +69,17 @@ read_bool_option() {
   echo "${default_value}"
 }
 
+read_app_env_value() {
+  local variable_name="$1"
+
+  if [[ -n "${!variable_name:-}" ]]; then
+    echo "${!variable_name}"
+    return
+  fi
+
+  read_env_value "${APP_ENV_FILE}" "${variable_name}"
+}
+
 ensure_sslmode_disable() {
   local db_url="$1"
 
@@ -93,6 +104,24 @@ require_stack_files() {
 
   if [[ ! -f "${STACK_ENV_FILE}" ]]; then
     echo "[infra] ${STACK_ENV_FILE} is missing" >&2
+    exit 1
+  fi
+}
+
+ensure_prod_prerequisites() {
+  ensure_commands docker
+  require_stack_files
+
+  local tunnel_token
+  tunnel_token="$(read_app_env_value "TUNNEL_TOKEN")"
+  if [[ -z "${tunnel_token}" ]]; then
+    echo "[infra] TUNNEL_TOKEN is missing in environment or ${APP_ENV_FILE}" >&2
+    exit 1
+  fi
+
+  local stack_network="${STACK_COMPOSE_PROJECT}_default"
+  if ! docker network inspect "${stack_network}" > /dev/null 2>&1; then
+    echo "[infra] ${stack_network} network is missing. Run 'bash scripts/infra.sh supabase up' first." >&2
     exit 1
   fi
 }
@@ -431,7 +460,16 @@ supabase_update_stack() {
 }
 
 prod_up() {
-  ensure_commands docker
+  ensure_prod_prerequisites
+
+  local skip_build
+  skip_build="$(read_bool_option "INFRA_PROD_SKIP_APP_BUILD" "false")"
+  if [[ "${skip_build}" == "true" ]]; then
+    echo "[infra] skip app image build (INFRA_PROD_SKIP_APP_BUILD=true)"
+    prod_compose up -d
+    return
+  fi
+
   prod_compose up -d --build
 }
 

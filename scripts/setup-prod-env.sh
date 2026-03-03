@@ -4,8 +4,7 @@ set -euo pipefail
 # Generate production-ready secrets for the Supabase self-host stack.
 #
 # Usage:
-#   bash scripts/setup-prod-env.sh                          # preview only
-#   bash scripts/setup-prod-env.sh --apply                  # write to .env
+#   bash scripts/setup-prod-env.sh --domain example.com     # preview only
 #   bash scripts/setup-prod-env.sh --apply --domain example.com
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -17,6 +16,16 @@ API_DOMAIN=""
 STUDIO_DOMAIN=""
 APPLY=false
 
+require_option_value() {
+  local option_name="$1"
+  local option_value="${2:-}"
+
+  if [[ -z "${option_value}" || "${option_value}" == --* ]]; then
+    echo "[setup] ${option_name} requires a value" >&2
+    exit 1
+  fi
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --apply)
@@ -24,18 +33,22 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --domain)
+      require_option_value "--domain" "${2:-}"
       DOMAIN="$2"
       shift 2
       ;;
     --app-domain)
+      require_option_value "--app-domain" "${2:-}"
       APP_DOMAIN="$2"
       shift 2
       ;;
     --api-domain)
+      require_option_value "--api-domain" "${2:-}"
       API_DOMAIN="$2"
       shift 2
       ;;
     --studio-domain)
+      require_option_value "--studio-domain" "${2:-}"
       STUDIO_DOMAIN="$2"
       shift 2
       ;;
@@ -169,6 +182,7 @@ if [[ ! -f "${STACK_ENV_FILE}" ]]; then
 fi
 
 cp "${STACK_ENV_FILE}" "${STACK_ENV_FILE}.bak"
+chmod 600 "${STACK_ENV_FILE}.bak"
 echo "[setup] Backup saved to ${STACK_ENV_FILE}.bak"
 
 for key in "${!SECRETS[@]}"; do
@@ -177,6 +191,8 @@ for key in "${!SECRETS[@]}"; do
   escaped_val="$(printf '%s' "${local_val}" | sed 's/[&/\]/\\&/g')"
   sed -i "s|^${key}=.*|${key}=${escaped_val}|" "${STACK_ENV_FILE}"
 done
+
+chmod 600 "${STACK_ENV_FILE}"
 
 echo "[setup] ✅ ${STACK_ENV_FILE} updated."
 echo ""
