@@ -3,23 +3,22 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-echo "============================================"
-echo "*** 本番環境の完全リセット (Hard Reset) ***"
-echo "============================================"
-echo "※ 注意: データベース、ストレージの中身がすべて消去されます。"
-echo "※ 実行中に sudo パスワードを求められる場合があります。"
+echo "Hard Reset - Production Environment"
 echo ""
-read -p "本当に実行しますか？ (y/N): " answer
+echo "WARNING: All database and storage contents will be completely deleted."
+echo "NOTE: You may be prompted for your sudo password during execution."
+echo ""
+read -p "Are you sure you want to proceed? (y/N): " answer
 if [[ "$answer" != "y" && "$answer" != "Y" ]]; then
-  echo "キャンセルしました。"
+  echo "Canceled."
   exit 0
 fi
 
-echo "[1/3] コンテナの停止と削除..."
+echo "[1/3] Stopping and removing containers..."
 bash "${ROOT_DIR}/scripts/infra.sh" prod down
 bash "${ROOT_DIR}/scripts/infra.sh" supabase down
 
-echo "[2/3] マウントされたボリュームデータの物理削除..."
+echo "[2/3] Physically deleting mounted volume data..."
 VOLUMES_DIR="${ROOT_DIR}/supabase/self-host-stack/volumes"
 
 if [[ -d "${VOLUMES_DIR}/db/data" ]]; then
@@ -32,6 +31,6 @@ if [[ -d "${VOLUMES_DIR}/storage" ]]; then
   echo "  -> Deleted: ${VOLUMES_DIR}/storage"
 fi
 
-echo "[3/3] 完了"
-echo "デプロイを再実行するには以下を実行してください。"
+echo "[3/3] Complete"
+echo "To deploy again, please run:"
 echo "  mise run prod:deploy"
