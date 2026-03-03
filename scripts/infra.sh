@@ -7,6 +7,7 @@ APP_ENV_FILE="${ROOT_DIR}/.env"
 STACK_DIR="${ROOT_DIR}/supabase/self-host-stack"
 STACK_ENV_FILE="${STACK_DIR}/.env"
 STACK_COMPOSE_FILE="${STACK_DIR}/docker-compose.yml"
+STACK_OVERRIDE_FILE="${ROOT_DIR}/supabase/compose.stack-override.yml"
 STACK_COMPOSE_PROJECT="goods-go-supabase-prod"
 
 usage() {
@@ -230,6 +231,10 @@ stack_compose() {
     --env-file "${STACK_ENV_FILE}"
     -f "${STACK_COMPOSE_FILE}"
   )
+
+  if [[ -f "${STACK_OVERRIDE_FILE}" ]]; then
+    compose_args+=(-f "${STACK_OVERRIDE_FILE}")
+  fi
 
   docker compose "${compose_args[@]}" "$@"
 }

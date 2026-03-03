@@ -1,0 +1,18 @@
+# Compose override for self-host-stack
+# Applied automatically by infra.sh when present.
+# Disables: realtime, edge-functions, vector
+# Keeps: db, supavisor, kong, auth, rest, meta, storage, studio, analytics, imgproxy
+
+services:
+  # ---- Disabled services ----
+  realtime:
+    entrypoint: ["echo", "Service disabled"]
+    restart: "no"
+
+  functions:
+    entrypoint: ["echo", "Service disabled"]
+    restart: "no"
+
+  vector:
+    entrypoint: ["echo", "Service disabled"]
+    restart: "no"
