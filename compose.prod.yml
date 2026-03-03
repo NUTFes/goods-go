@@ -26,3 +26,19 @@ services:
     restart: always
     depends_on:
       - app
+
+  dozzle-agent:
+    container_name: goods-go-dozzle-agent
+    image: amir20/dozzle:latest
+    command: agent
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "7007:7007"
+    environment:
+      - DOZZLE_HOSTNAME=goods-go-prod
+    restart: always
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 5s
+      retries: 5
