@@ -178,7 +178,7 @@ fi
 if [[ ! -f "${STACK_ENV_FILE}" ]]; then
   echo "[setup] ${STACK_ENV_FILE} not found. Automatically updating stack..."
   bash "${ROOT_DIR}/scripts/infra.sh" supabase update-stack
-  
+
   if [[ ! -f "${STACK_ENV_FILE}" ]]; then
     echo "[setup] Failed to download Supabase stack (or .env is missing)." >&2
     exit 1
