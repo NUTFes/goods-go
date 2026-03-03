@@ -135,6 +135,7 @@ declare -A SECRETS=(
   [SITE_URL]="https://${APP_DOMAIN}"
   [API_EXTERNAL_URL]="https://${API_DOMAIN}"
   [SUPABASE_PUBLIC_URL]="https://${API_DOMAIN}"
+  [ENABLE_EMAIL_AUTOCONFIRM]="true"
 )
 
 # ---------------------------------------------------------------------------
