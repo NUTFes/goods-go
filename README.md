@@ -53,7 +53,18 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 
 ### 2) self-host 側 `supabase/self-host-stack/.env`
 
-自動で作成されます。
+初回セットアップ時に、本番用のパスワードやJWTシークレットを自動生成して適用します。
+
+```bash
+# ① 公式のDockerファイルを引っ張ってくる
+mise run supabase:update-stack
+
+# ② 秘密情報の生成と適用 (対象のドメインを指定)
+bash scripts/setup-prod-env.sh --domain goods-go.nutfes.net --apply
+```
+
+> **Warning**
+> 後から `POSTGRES_PASSWORD` を変更した場合、DBコンテナを立ち上げ直すだけでは反映されません（古いパスワードで初期化されたデータが残るため）。その場合は下記の「フルリセット」手順を実行してください。
 
 ## 認証運用ポリシー（現行）
 
@@ -131,11 +142,23 @@ mise run prod:supabase:down
 
 ## フルリセット
 
-`mise run prod:supabase:reset` は `supabase/self-host-stack/docker/reset.sh` を実行し、
-コンテナ・ボリューム・`.env` を含む初期化を行います。
+`mise run prod:supabase:reset` は `supabase/self-host-stack/docker/reset.sh` を実行し、コンテナ・ボリューム・`.env` を含む初期化を行います。
 
-- 通常は確認プロンプトが表示されます
-- CI等で無人実行する場合のみ `INFRA_SUPABASE_RESET_AUTO_CONFIRM=true` を指定してください
+**⚠️ 注意: パスワードを変更した場合の完全リセット**
+DBのパスワード（`POSTGRES_PASSWORD`）を変更した際など、認証エラー（`FATAL 28P01 (invalid_password)`）が消えない場合は、ホスト側にマウントされている実データを物理的に削除する必要があります。
+
+```bash
+# 1. コンテナを完全停止
+mise run prod:supabase:down
+docker compose -f compose.prod.yml down
+
+# 2. 実データを物理削除（重要！）
+sudo rm -rf supabase/self-host-stack/volumes/db/data
+sudo rm -rf supabase/self-host-stack/volumes/storage
+
+# 3. 再デプロイ
+mise run prod:deploy
+```
 
 ## 補足
 
