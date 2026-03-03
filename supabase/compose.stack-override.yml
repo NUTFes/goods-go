@@ -2,17 +2,35 @@
 # Applied automatically by infra.sh when present.
 # Disables: realtime, edge-functions, vector
 # Keeps: db, supavisor, kong, auth, rest, meta, storage, studio, analytics, imgproxy
+#
+# Strategy: replace entrypoint with a no-op that keeps the container "running"
+# so that depends_on / healthcheck conditions are still satisfied.
 
 services:
   # ---- Disabled services ----
   realtime:
-    entrypoint: ["echo", "Service disabled"]
+    entrypoint: ["sh", "-c", "exec tail -f /dev/null"]
     restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "true"]
+      interval: 10s
+      timeout: 3s
+      retries: 1
 
   functions:
-    entrypoint: ["echo", "Service disabled"]
+    entrypoint: ["sh", "-c", "exec tail -f /dev/null"]
     restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "true"]
+      interval: 10s
+      timeout: 3s
+      retries: 1
 
   vector:
-    entrypoint: ["echo", "Service disabled"]
+    entrypoint: ["sh", "-c", "exec tail -f /dev/null"]
     restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "true"]
+      interval: 10s
+      timeout: 3s
+      retries: 1
