@@ -13,6 +13,8 @@ STACK_ENV_FILE="${ROOT_DIR}/supabase/self-host-stack/.env"
 
 DOMAIN=""
 APP_DOMAIN=""
+API_DOMAIN=""
+STUDIO_DOMAIN=""
 APPLY=false
 
 while [[ $# -gt 0 ]]; do
@@ -27,6 +29,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --app-domain)
       APP_DOMAIN="$2"
+      shift 2
+      ;;
+    --api-domain)
+      API_DOMAIN="$2"
+      shift 2
+      ;;
+    --studio-domain)
+      STUDIO_DOMAIN="$2"
       shift 2
       ;;
     *)
@@ -50,6 +60,20 @@ fi
 
 if [[ -z "${APP_DOMAIN}" ]]; then
   APP_DOMAIN="${DOMAIN}"
+fi
+
+# Derive api/studio domains from base domain if not set
+# e.g. goods-go.nutfes.net -> goods-go-api.nutfes.net
+if [[ -z "${API_DOMAIN}" ]]; then
+  local_prefix="${DOMAIN%%.*}"
+  local_suffix="${DOMAIN#*.}"
+  API_DOMAIN="${local_prefix}-api.${local_suffix}"
+fi
+
+if [[ -z "${STUDIO_DOMAIN}" ]]; then
+  local_prefix="${DOMAIN%%.*}"
+  local_suffix="${DOMAIN#*.}"
+  STUDIO_DOMAIN="${local_prefix}-studio.${local_suffix}"
 fi
 
 # ---------------------------------------------------------------------------
@@ -109,8 +133,8 @@ declare -A SECRETS=(
   [S3_PROTOCOL_ACCESS_KEY_SECRET]="${S3_KEY_SECRET}"
   [POOLER_TENANT_ID]="goods-go"
   [SITE_URL]="https://${APP_DOMAIN}"
-  [API_EXTERNAL_URL]="https://api.${DOMAIN}"
-  [SUPABASE_PUBLIC_URL]="https://api.${DOMAIN}"
+  [API_EXTERNAL_URL]="https://${API_DOMAIN}"
+  [SUPABASE_PUBLIC_URL]="https://${API_DOMAIN}"
 )
 
 # ---------------------------------------------------------------------------
@@ -124,9 +148,9 @@ for key in "${!SECRETS[@]}"; do
 done
 echo "============================================"
 echo ""
-echo "  Domain (API):    https://api.${DOMAIN}"
 echo "  Domain (App):    https://${APP_DOMAIN}"
-echo "  Domain (Studio): https://studio.${DOMAIN}"
+echo "  Domain (API):    https://${API_DOMAIN}"
+echo "  Domain (Studio): https://${STUDIO_DOMAIN}"
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -159,5 +183,5 @@ echo "Next steps:"
 echo "  1. Restart the stack:  mise run prod:supabase:down && mise run prod:deploy"
 echo "  2. Configure Cloudflare Tunnel public hostnames:"
 echo "     - ${APP_DOMAIN}          -> http://goods-go-prod:3000"
-echo "     - api.${DOMAIN}          -> http://supabase-kong:8000"
-echo "     - studio.${DOMAIN}       -> http://supabase-studio:3000"
+echo "     - ${API_DOMAIN}          -> http://supabase-kong:8000"
+echo "     - ${STUDIO_DOMAIN}       -> http://supabase-studio:3000"
