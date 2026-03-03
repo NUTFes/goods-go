@@ -17,10 +17,22 @@ APPLY=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --apply) APPLY=true; shift ;;
-    --domain) DOMAIN="$2"; shift 2 ;;
-    --app-domain) APP_DOMAIN="$2"; shift 2 ;;
-    *) echo "Unknown option: $1" >&2; exit 1 ;;
+    --apply)
+      APPLY=true
+      shift
+      ;;
+    --domain)
+      DOMAIN="$2"
+      shift 2
+      ;;
+    --app-domain)
+      APP_DOMAIN="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      exit 1
+      ;;
   esac
 done
 
