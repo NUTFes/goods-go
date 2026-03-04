@@ -1,19 +1,14 @@
 import { forbidden, redirect } from "next/navigation";
 import { cache } from "react";
+import { APP_ROLES, type AppRole, isAppRole } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 
-type AppRole = 0 | 1 | 2;
-
-type CurrentUserProfile = {
+export type CurrentUserProfile = {
   userId: string;
   name: string;
   email: string | null;
   role: AppRole;
 };
-
-function isAppRole(value: unknown): value is AppRole {
-  return value === 0 || value === 1 || value === 2;
-}
 
 const getCurrentUserProfile = cache(
   async (): Promise<CurrentUserProfile | null> => {
@@ -55,17 +50,20 @@ export async function requireAuthenticatedUser(): Promise<CurrentUserProfile> {
   return currentUser;
 }
 
-export async function requireAdminUser(): Promise<
-  CurrentUserProfile & { role: 0 }
-> {
+export async function requireUserWithRoles<
+  const TRoles extends readonly AppRole[],
+>(roles: TRoles): Promise<CurrentUserProfile & { role: TRoles[number] }> {
   const currentUser = await requireAuthenticatedUser();
 
-  if (currentUser.role !== 0) {
+  if (!roles.some((role) => role === currentUser.role)) {
     forbidden();
   }
 
-  return {
-    ...currentUser,
-    role: 0,
-  };
+  return currentUser as CurrentUserProfile & { role: TRoles[number] };
+}
+
+export async function requireAdminUser(): Promise<
+  CurrentUserProfile & { role: typeof APP_ROLES.ADMIN }
+> {
+  return requireUserWithRoles([APP_ROLES.ADMIN] as const);
 }

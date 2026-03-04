@@ -1,4 +1,5 @@
 import { requireAdminUser } from "@/lib/auth/guards";
+import { APP_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/schema.gen";
 import {
@@ -94,7 +95,7 @@ export async function getAdminTaskListPageData(
         .from("users")
         .select("user_id,name,role")
         .is("deleted", null)
-        .in("role", [0, 1]),
+        .in("role", [APP_ROLES.ADMIN, APP_ROLES.LEADER]),
     ]);
 
   if (tasksResult.error) {
