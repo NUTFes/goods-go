@@ -1,4 +1,5 @@
 import { requireAdminUser } from "@/lib/auth/guards";
+import { APP_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/schema.gen";
 import { buildQuarterHourOptions, normalizeTimeValue, sortAdminTasks } from "../model/mappers";
@@ -63,7 +64,11 @@ export async function getAdminTaskListPageData(
     tasksQuery,
     supabase.from("items").select("item_id,name").is("deleted", null),
     supabase.from("locations").select("location_id,name").is("deleted", null),
-    supabase.from("users").select("user_id,name,role").is("deleted", null).in("role", [0, 1]),
+    supabase
+      .from("users")
+      .select("user_id,name,role")
+      .is("deleted", null)
+      .in("role", [APP_ROLES.ADMIN, APP_ROLES.LEADER]),
   ]);
 
   if (tasksResult.error) {

@@ -140,6 +140,11 @@ alias = "supabase:update-stack"
 description = "公式から self-hosted Supabase stack を最新化"
 run = "bash scripts/infra.sh supabase update-stack"
 
+[tasks."49:prod:setup"]
+alias = "prod:setup"
+description = "本番環境のセットアップ (Secretsの生成と適用)"
+run = "bash scripts/setup-prod-env.sh"
+
 # --- App Production ---
 
 [tasks."50:prod:up"]
@@ -166,3 +171,8 @@ run = "bash scripts/infra.sh prod deploy"
 alias = "prod:status"
 description = "本番アプリ環境の状態を確認"
 run = "bash scripts/infra.sh prod status"
+
+[tasks."55:prod:hard-reset"]
+alias = "prod:hard-reset"
+description = "物理ファイルも削除する本番環境の完全リセット (sudo使用)"
+run = "bash scripts/prod-hard-reset.sh"
