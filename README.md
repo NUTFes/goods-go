@@ -142,3 +142,57 @@ mise run prod:supabase:down
 - `mise run prod:*` 実行時、`NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` は self-host 側 `.env` から自動注入されます
 - `SUPABASE_DB_URL` を root `.env`（または環境変数）に設定すると、prod migration の接続先を上書きできます
 - `SUPABASE_DB_PUSH_INCLUDE_SEED=true` で prod migration 時に `supabase/seed.sql` を同時適用できます
+
+## Dozzle アラート連携 (Slack)
+
+Dozzle v10 では強力なアラートシステムが導入され、特定の条件を満たすコンテナログに対して通知を送信することができます。
+以下に、SlackのIncoming Webhookを利用した連携手順と、新規アラート対象の追加方法を記載します。
+
+※ アラートと通知先の設定は Dozzle 内の `/data` ディレクトリに保存されるため、Dockerコンテナの再起動時に設定を保持するにはボリュームマウントが必要です。
+
+### 1. Slack での Incoming Webhook 設定
+
+まず、Slack側で通知を受け取るためのWebhook URLを発行します。
+
+1. Slackのワークスペースで「App」または「インテグレーション」の管理画面を開きます。
+2. **Incoming Webhooks** アプリを検索してワークスペースに追加します。
+3. 通知を送りたいチャンネルを選択し、「Incoming Webhook インテグレーションの追加」をクリックします。
+4. 発行された **Webhook URL** をコピーして控えておきます。
+
+### 2. Dozzle への通知先 (Destination) 登録
+
+次に、取得したWebhook URLをDozzleに登録します。
+
+1. Dozzleの管理画面を開き、**Notifications**（通知）ページに移動します。
+2. **Add Destination**（通知先の追加）をクリックします。
+3. 種類として **Webhook** を選択し、先ほど控えた Slack の Webhook URL を入力します。
+4. DozzleにはSlack向けの組み込みペイロードテンプレートが用意されているため、Slack用のフォーマット（Blocks および Markdown 対応）を選択できます。
+5. 保存する前に **Test** ボタンをクリックし、Slackにテスト通知が届くか確認します。
+6. 問題なければ設定を保存します。
+
+### 3. 新規アラート対象の追加（アラートルールの作成）
+
+通知先を設定したら、どのようなログが流れたときに通知するか（アラートルール）を設定します。
+Dozzleのアラートは以下の2つのフィルターの組み合わせで動作します：
+
+- **Container filter**（コンテナフィルター）: どのコンテナを監視対象にするか
+- **Log filter**（ログフィルター）: どのようなログメッセージが出力されたときにアラートをトリガーするか
+
+#### アラートルールの設定手順：
+
+1. Dozzleの管理画面から **Alerts**（アラート）ページに移動し、**New Alert**（新規アラート作成）をクリックします。
+2. **Container filter** を設定します。（例: 特定の名前のコンテナのみ、または全てのコンテナ）
+3. **Log filter** を設定します。特定のエラー文字列（例: `error`、`Exception` など）を正規表現やテキスト一致で指定します。
+4. ログが両方のフィルターに一致した場合に、登録済みの通知先（Slack）へ通知が送信されます。
+
+#### 通知ペイロードで利用可能な変数（参考）
+
+独自のペイロードテンプレートを作成する場合、以下の変数を使用して柔軟な通知メッセージを構成できます：
+
+- `{{.Container.Name}}` : コンテナ名
+- `{{.Container.Image}}` : コンテナイメージ
+- `{{.Container.State}}` : コンテナの状態
+- `{{.Log.Message}}` : ログメッセージ本文
+- `{{.Log.Level}}` : ログレベル
+- `{{.Log.Timestamp}}` : ログのタイムスタンプ
+- `{{.Subscription.Name}}` : アラートルール名
