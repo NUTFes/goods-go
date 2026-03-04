@@ -192,7 +192,7 @@ echo "[setup] Backup saved to ${STACK_ENV_FILE}.bak"
 for key in "${!SECRETS[@]}"; do
   local_val="${SECRETS[${key}]}"
   # Escape special chars for sed
-  escaped_val="$(printf '%s' "${local_val}" | sed 's/[&/\]/\\&/g')"
+  escaped_val="$(printf '%s' "${local_val}" | sed 's/[&/\|]/\\&/g')"
   sed -i "s|^${key}=.*|${key}=${escaped_val}|" "${STACK_ENV_FILE}"
 done
 
