@@ -6,13 +6,7 @@ import { useActionState, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -35,19 +29,14 @@ function FieldError({ messages }: { messages?: string[] }) {
 }
 
 export function LoginForm() {
-  const [state, formAction, isPending] = useActionState(
-    loginAction,
-    initialState,
-  );
+  const [state, formAction, isPending] = useActionState(loginAction, initialState);
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-xl">ログイン</CardTitle>
-        <CardDescription>
-          メールアドレスとパスワードを入力してログインしてください
-        </CardDescription>
+        <CardDescription>メールアドレスとパスワードを入力してログインしてください</CardDescription>
       </CardHeader>
       <CardContent>
         {state.error && (
@@ -92,16 +81,10 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={
-                  showPassword ? "パスワードを隠す" : "パスワードを表示"
-                }
+                aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-muted"
               >
-                {showPassword ? (
-                  <Eye className="h-4 w-4" />
-                ) : (
-                  <EyeOff className="h-4 w-4" />
-                )}
+                {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               </button>
             </div>
             <FieldError messages={state.fieldErrors?.password} />

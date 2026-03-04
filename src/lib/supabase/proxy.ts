@@ -6,8 +6,7 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  const supabaseUrl =
-    process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
@@ -46,9 +45,7 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims;
 
   const publicPaths = ["/login", "/register"];
-  const isPublicPath = publicPaths.some((p) =>
-    request.nextUrl.pathname.startsWith(p),
-  );
+  const isPublicPath = publicPaths.some((p) => request.nextUrl.pathname.startsWith(p));
 
   if (user && isPublicPath) {
     const url = request.nextUrl.clone();

@@ -29,32 +29,22 @@ run = "docker compose -f compose.dev.yml up --build -d"
 [tasks."20:lint"]
 alias = "lint"
 description = "Lintチェック"
-run = "pnpm exec biome lint ./src"
+run = "pnpm run lint"
 
 [tasks."21:lint:fix"]
 alias = "lint:fix"
 description = "Lint修正"
-run = "pnpm exec biome lint --write ./src"
+run = "pnpm run lint:fix"
 
-[tasks."22:format:check"]
-alias = "format:check"
+[tasks."22:fmt:check"]
+alias = "fmt:check"
 description = "フォーマット確認"
-run = "pnpm exec biome format ./src"
+run = "pnpm run fmt:check ."
 
-[tasks."23:format"]
-alias = "format"
+[tasks."23:fmt"]
+alias = "fmt"
 description = "フォーマット適用"
-run = "pnpm exec biome format --write ./src"
-
-[tasks."24:check"]
-alias = "check"
-description = "総合チェック (Lint + Format + Import Sort)"
-run = "pnpm exec biome check ./src"
-
-[tasks."25:check:fix"]
-alias = "check:fix"
-description = "総合チェック & 修正 (インポートソートを含む)"
-run = "pnpm exec biome check --write ./src"
+run = "pnpm run fmt ."
 
 [tasks."26:clean"]
 alias = "clean"

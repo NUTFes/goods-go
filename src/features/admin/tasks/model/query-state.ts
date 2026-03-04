@@ -1,15 +1,9 @@
-import {
-  createSearchParamsCache,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs/server";
+import { createSearchParamsCache, parseAsString, parseAsStringLiteral } from "nuqs/server";
 import type { TaskListQueryState } from "./types";
 
 export const taskListQueryStatesParsers = {
   day: parseAsStringLiteral(["all", "0", "1", "2"] as const).withDefault("all"),
-  status: parseAsStringLiteral(["all", "0", "1", "2"] as const).withDefault(
-    "all",
-  ),
+  status: parseAsStringLiteral(["all", "0", "1", "2"] as const).withDefault("all"),
   itemId: parseAsString.withDefault(""),
   leaderUserId: parseAsString.withDefault(""),
   fromLocationId: parseAsString.withDefault(""),
@@ -19,9 +13,7 @@ export const taskListQueryStatesParsers = {
     "itemAndQuantity",
     "scheduledStartTime",
   ] as const).withDefault("scheduledStartTime"),
-  sortDirection: parseAsStringLiteral(["asc", "desc"] as const).withDefault(
-    "asc",
-  ),
+  sortDirection: parseAsStringLiteral(["asc", "desc"] as const).withDefault("asc"),
 };
 
 const searchParamsCache = createSearchParamsCache(taskListQueryStatesParsers);

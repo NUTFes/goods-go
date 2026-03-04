@@ -15,8 +15,7 @@ services:
       SUPABASE_INTERNAL_URL: ${SUPABASE_INTERNAL_URL:-http://supabase-kong:8000}
     restart: always
     healthcheck:
-      test:
-        ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -2,26 +2,15 @@ import { requireAdminUser } from "@/lib/auth/guards";
 import { APP_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/schema.gen";
-import {
-  buildQuarterHourOptions,
-  normalizeTimeValue,
-  sortAdminTasks,
-} from "../model/mappers";
-import type {
-  AdminTaskListPageData,
-  TaskFormOption,
-  TaskListQueryState,
-} from "../model/types";
+import { buildQuarterHourOptions, normalizeTimeValue, sortAdminTasks } from "../model/mappers";
+import type { AdminTaskListPageData, TaskFormOption, TaskListQueryState } from "../model/types";
 
 type TaskRow = Tables<"tasks">;
 type ItemRow = Tables<"items">;
 type LocationRow = Tables<"locations">;
 type LeaderRow = Tables<"users">;
 
-function toTaskFormOption(
-  rows: { id: string; name: string }[],
-  group: string,
-): TaskFormOption[] {
+function toTaskFormOption(rows: { id: string; name: string }[], group: string): TaskFormOption[] {
   return rows
     .map((row) => ({
       value: row.id,
@@ -46,17 +35,11 @@ export async function getAdminTaskListPageData(
     .is("deleted", null);
 
   if (queryState.filters.day !== "all") {
-    tasksQuery = tasksQuery.eq(
-      "event_day_type",
-      Number(queryState.filters.day),
-    );
+    tasksQuery = tasksQuery.eq("event_day_type", Number(queryState.filters.day));
   }
 
   if (queryState.filters.status !== "all") {
-    tasksQuery = tasksQuery.eq(
-      "current_status",
-      Number(queryState.filters.status),
-    );
+    tasksQuery = tasksQuery.eq("current_status", Number(queryState.filters.status));
   }
 
   if (queryState.filters.itemId) {
@@ -64,39 +47,29 @@ export async function getAdminTaskListPageData(
   }
 
   if (queryState.filters.leaderUserId) {
-    tasksQuery = tasksQuery.eq(
-      "leader_user_id",
-      queryState.filters.leaderUserId,
-    );
+    tasksQuery = tasksQuery.eq("leader_user_id", queryState.filters.leaderUserId);
   }
 
   if (queryState.filters.fromLocationId) {
-    tasksQuery = tasksQuery.eq(
-      "from_location_id",
-      queryState.filters.fromLocationId,
-    );
+    tasksQuery = tasksQuery.eq("from_location_id", queryState.filters.fromLocationId);
   }
 
   if (queryState.filters.toLocationId) {
-    tasksQuery = tasksQuery.eq(
-      "to_location_id",
-      queryState.filters.toLocationId,
-    );
+    tasksQuery = tasksQuery.eq("to_location_id", queryState.filters.toLocationId);
   }
 
   tasksQuery = tasksQuery.order("created", { ascending: false });
 
-  const [tasksResult, itemsResult, locationsResult, leadersResult] =
-    await Promise.all([
-      tasksQuery,
-      supabase.from("items").select("item_id,name").is("deleted", null),
-      supabase.from("locations").select("location_id,name").is("deleted", null),
-      supabase
-        .from("users")
-        .select("user_id,name,role")
-        .is("deleted", null)
-        .in("role", [APP_ROLES.ADMIN, APP_ROLES.LEADER]),
-    ]);
+  const [tasksResult, itemsResult, locationsResult, leadersResult] = await Promise.all([
+    tasksQuery,
+    supabase.from("items").select("item_id,name").is("deleted", null),
+    supabase.from("locations").select("location_id,name").is("deleted", null),
+    supabase
+      .from("users")
+      .select("user_id,name,role")
+      .is("deleted", null)
+      .in("role", [APP_ROLES.ADMIN, APP_ROLES.LEADER]),
+  ]);
 
   if (tasksResult.error) {
     throw new Error(tasksResult.error.message);
@@ -119,15 +92,11 @@ export async function getAdminTaskListPageData(
   const locationRows = (locationsResult.data ?? []) as LocationRow[];
   const leaderRows = (leadersResult.data ?? []) as LeaderRow[];
 
-  const itemNameById = new Map(
-    itemRows.map((item) => [item.item_id, item.name]),
-  );
+  const itemNameById = new Map(itemRows.map((item) => [item.item_id, item.name]));
   const locationNameById = new Map(
     locationRows.map((location) => [location.location_id, location.name]),
   );
-  const leaderNameById = new Map(
-    leaderRows.map((leader) => [leader.user_id, leader.name]),
-  );
+  const leaderNameById = new Map(leaderRows.map((leader) => [leader.user_id, leader.name]));
 
   const tasks = sortAdminTasks(
     tasksRows.map((task) => ({
@@ -146,9 +115,7 @@ export async function getAdminTaskListPageData(
       actualStartTime: normalizeTimeValue(task.actual_start_time),
       actualEndTime: normalizeTimeValue(task.actual_end_time),
       leaderUserId: task.leader_user_id,
-      leaderName: task.leader_user_id
-        ? (leaderNameById.get(task.leader_user_id) ?? null)
-        : null,
+      leaderName: task.leader_user_id ? (leaderNameById.get(task.leader_user_id) ?? null) : null,
       note: task.note,
     })),
     queryState.sort,

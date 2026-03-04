@@ -1,11 +1,7 @@
 import { AdminHeader } from "@/components/layout/admin-header";
 import { requireAdminUser } from "@/lib/auth/guards";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const currentUser = await requireAdminUser();
 
   return (

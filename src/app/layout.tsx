@@ -38,9 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${lineSeedJP.variable} ${geistMono.variable} antialiased font-sans`}
-      >
+      <body className={`${lineSeedJP.variable} ${geistMono.variable} antialiased font-sans`}>
         <NuqsAdapter>{children}</NuqsAdapter>
       </body>
     </html>
