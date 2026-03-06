@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/setup-cd-pipeline
   workflow_dispatch:
 
 concurrency:
@@ -17,12 +18,15 @@ jobs:
     steps:
       - name: Deploy to Production
         run: |
-          echo "Deploying to production..."
+          echo "Deploying to production branch: ${GITHUB_REF_NAME}..."
 
           cd /root/goods-go
 
-          git fetch origin main
-          git reset --hard origin/main
+          git fetch origin ${GITHUB_REF_NAME}
+
+          # detached HEAD状態にならないよう、現在のブランチを最新の origin ブランチにリセット
+          git checkout ${GITHUB_REF_NAME} || git checkout -b ${GITHUB_REF_NAME}
+          git reset --hard origin/${GITHUB_REF_NAME}
 
           export PATH="$HOME/.local/bin:$PATH"
           eval "$(mise activate bash)"
