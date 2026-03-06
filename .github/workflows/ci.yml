@@ -123,3 +123,27 @@ jobs:
 
       - name: Build
         run: pnpm run build
+
+  deploy:
+    name: CD (Continuous Deployment)
+    runs-on: self-hosted
+    needs: [build]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/setup-cd-pipeline'
+    steps:
+      - name: Deploy to Production
+        run: |
+          # GITHUB_REF_NAMEは現在発火しているブランチ名 (main や feature/setup-cd-pipeline など)
+          echo "Deploying to production branch: ${GITHUB_REF_NAME}..."
+          
+          cd /root/goods-go
+          
+          git fetch origin ${GITHUB_REF_NAME}
+          
+          # detached HEAD状態にならないよう、現在のブランチを最新の origin ブランチにリセット
+          git checkout ${GITHUB_REF_NAME} || git checkout -b ${GITHUB_REF_NAME}
+          git reset --hard origin/${GITHUB_REF_NAME}
+          
+          export PATH="$HOME/.local/bin:$PATH"
+          eval "$(mise activate bash)"
+          
+          mise run prod:deploy
