@@ -6,7 +6,8 @@ WORKDIR /app
 
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 
-RUN npm install -g pnpm && pnpm i
+RUN npm install -g pnpm
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm i
 
 COPY src ./src
 COPY public ./public

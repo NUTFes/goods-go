@@ -1,0 +1,30 @@
+name: CD (Continuous Deployment)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy to Production
+        run: |
+          echo "Deploying to production..."
+          
+          cd /root/goods-go
+          
+          git fetch origin main
+          git reset --hard origin/main
+          
+          export PATH="$HOME/.local/bin:$PATH"
+          eval "$(mise activate bash)"
+          
+          mise run prod:deploy

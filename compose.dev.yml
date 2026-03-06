@@ -14,8 +14,9 @@ services:
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
       SUPABASE_INTERNAL_URL: http://host.docker.internal:54321
+    init: true
     volumes:
-      - ./src:/app/src
-      - ./public:/app/public
-      - ./next.config.ts:/app/next.config.ts
+      - .:/app
+      - /app/node_modules
+      - /app/.next
     restart: unless-stopped
