@@ -1,7 +1,10 @@
 name: CD (Continuous Deployment)
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
     branches:
       - main
       - feature/setup-cd-pipeline
@@ -14,19 +17,22 @@ concurrency:
 jobs:
   deploy:
     runs-on: self-hosted
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    env:
+      TARGET_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
 
     steps:
       - name: Deploy to Production
         run: |
-          echo "Deploying to production branch: ${GITHUB_REF_NAME}..."
+          echo "Deploying to production branch: ${TARGET_BRANCH}..."
 
           cd /root/goods-go
 
-          git fetch origin ${GITHUB_REF_NAME}
+          git fetch origin ${TARGET_BRANCH}
 
           # detached HEAD状態にならないよう、現在のブランチを最新の origin ブランチにリセット
-          git checkout ${GITHUB_REF_NAME} || git checkout -b ${GITHUB_REF_NAME}
-          git reset --hard origin/${GITHUB_REF_NAME}
+          git checkout ${TARGET_BRANCH} || git checkout -b ${TARGET_BRANCH}
+          git reset --hard origin/${TARGET_BRANCH}
 
           export PATH="$HOME/.local/bin:$PATH"
           eval "$(mise activate bash)"
