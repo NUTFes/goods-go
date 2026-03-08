@@ -10,7 +10,8 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "fmt:check": "oxfmt --check",
+    "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
