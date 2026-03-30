@@ -77,7 +77,7 @@ export function UserTaskHeader({
   const disableAdminSwitch = currentRole !== APP_ROLES.ADMIN;
 
   return (
-    <header className="bg-[#121212] text-[#fafafa]">
+    <header className="sticky top-0 bg-[#121212] text-[#fafafa]">
       <div className="mx-auto w-full max-w-3xl space-y-4 px-6 pb-1 pt-4 sm:px-4">
         <div className="flex justify-end">
           <Popover open={open} onOpenChange={setOpen}>
