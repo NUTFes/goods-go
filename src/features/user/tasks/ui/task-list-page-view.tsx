@@ -1,9 +1,11 @@
 "use client";
 
 import { Funnel } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { APP_ROLES, type AppRole } from "@/lib/auth/roles";
 import { userTaskQueryStatesParsers } from "../model/query-state";
 import type {
@@ -32,6 +34,7 @@ function isTaskStatus(value: number): value is TaskStatus {
 }
 
 export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskListPageViewProps) {
+  const router = useRouter();
   const [qs, setQs] = useQueryStates(userTaskQueryStatesParsers, { shallow: false });
   const [isPending, startTransition] = useTransition();
 
@@ -81,6 +84,12 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
     });
   };
 
+  const handleRefresh = () => {
+    startTransition(() => {
+      router.refresh();
+    });
+  };
+
   return (
     <main className="min-h-dvh bg-[#f3f4f6]">
       <h1 className="sr-only">タスク一覧</h1>
@@ -101,7 +110,18 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
           表示中のタスク一覧
         </h2>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="rounded-xl border-[#121212] text-xs"
+            onClick={handleRefresh}
+            disabled={isPending}
+          >
+            {isPending ? <Spinner className="size-3.5" aria-label="更新中" /> : null}
+            {isPending ? "更新中..." : "更新"}
+          </Button>
           <Button
             type="button"
             size="lg"
