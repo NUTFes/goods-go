@@ -13,3 +13,13 @@ export type AppRole = Tables<"users">["role"] & (typeof APP_ROLE_VALUES)[number]
 export function isAppRole(value: unknown): value is AppRole {
   return typeof value === "number" && APP_ROLE_VALUES.some((roleValue) => roleValue === value);
 }
+
+export function getAppRoleLabel(role: AppRole): string {
+  if (role === APP_ROLES.ADMIN) {
+    return "管理者";
+  }
+  if (role === APP_ROLES.LEADER) {
+    return "指揮者";
+  }
+  return "ユーザー";
+}

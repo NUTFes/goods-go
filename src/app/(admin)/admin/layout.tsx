@@ -6,7 +6,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-dvh bg-gray-100">
-      <AdminHeader userName={currentUser.name} />
+      <AdminHeader currentUserName={currentUser.name} currentUserRole={currentUser.role} />
       {children}
     </div>
   );
