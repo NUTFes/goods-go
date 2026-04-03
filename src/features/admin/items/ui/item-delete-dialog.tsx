@@ -24,6 +24,10 @@ export function ItemDeleteDialog({ open, item, onOpenChange }: ItemDeleteDialogP
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState("");
 
+  useEffect(() => {
+    setErrorMessage("");
+  }, [item, open]);
+
   if (!item) {
     return null;
   }
