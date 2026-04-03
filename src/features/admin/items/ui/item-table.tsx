@@ -20,8 +20,8 @@ type ItemTableProps = {
 
 export function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200">
-      <Table>
+    <div className="mx-auto max-w-3xl overflow-hidden rounded-lg border border-zinc-200">
+      <Table className="table-fixed">
         <TableHeader className="[&_tr]:border-none">
           <TableRow className="bg-zinc-900 hover:bg-zinc-900 [&>th]:px-4">
             <TableHead className="h-11 text-center text-white first:rounded-tl-lg">物品名</TableHead>
