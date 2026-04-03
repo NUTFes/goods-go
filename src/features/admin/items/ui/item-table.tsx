@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AdminItem } from "../model/types";
 
 type ItemTableProps = {
@@ -34,7 +35,16 @@ export function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
         <TableBody>
           {items.map((item) => (
             <TableRow key={item.itemId} className="bg-white hover:bg-transparent [&>td]:px-4">
-              <TableCell className="text-center font-medium">{item.name}</TableCell>
+              <TableCell className="text-center font-medium">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="block max-w-64 truncate">{item.name}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={8}>
+                    {item.name}
+                  </TooltipContent>
+                </Tooltip>
+              </TableCell>
               <TableCell className="px-2 text-center">
                 <Button type="button" variant="ghost" size="icon" onClick={() => onEdit(item)} aria-label="編集">
                   <Pencil className="h-4 w-4 text-green-600" aria-hidden="true" />
