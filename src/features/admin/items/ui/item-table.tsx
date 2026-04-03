@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,39 @@ type ItemTableProps = {
   onDelete: (item: AdminItem) => void;
 };
 
+function ItemNameCell({ name }: { name: string }) {
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const element = textRef.current;
+    if (!element) {
+      return;
+    }
+
+    setIsTruncated(element.scrollWidth > element.clientWidth);
+  }, [name]);
+
+  const text = (
+    <span ref={textRef} className="block max-w-64 truncate">
+      {name}
+    </span>
+  );
+
+  if (!isTruncated) {
+    return text;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{text}</TooltipTrigger>
+      <TooltipContent side="top" sideOffset={8}>
+        {name}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
   return (
     <div className="mx-auto w-fit max-w-2xl overflow-hidden rounded-lg border border-zinc-200 [&_[data-slot=table-container]]:overflow-x-hidden">
@@ -36,14 +70,7 @@ export function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
           {items.map((item) => (
             <TableRow key={item.itemId} className="bg-white hover:bg-transparent [&>td]:px-4">
               <TableCell className="text-center font-medium">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="block max-w-64 truncate">{item.name}</span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" sideOffset={8}>
-                    {item.name}
-                  </TooltipContent>
-                </Tooltip>
+                <ItemNameCell name={item.name} />
               </TableCell>
               <TableCell className="px-2 text-center">
                 <Button type="button" variant="ghost" size="icon" onClick={() => onEdit(item)} aria-label="編集">
