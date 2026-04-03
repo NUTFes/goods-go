@@ -20,7 +20,7 @@ type ItemTableProps = {
 
 export function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
   return (
-    <div className="mx-auto w-fit overflow-hidden rounded-lg border border-zinc-200 [&_[data-slot=table-container]]:overflow-x-hidden">
+    <div className="mx-auto w-fit max-w-2xl overflow-hidden rounded-lg border border-zinc-200 [&_[data-slot=table-container]]:overflow-x-hidden">
       <Table className="mx-auto w-auto table-auto">
         <TableHeader className="[&_tr]:border-none">
           <TableRow className="bg-zinc-900 hover:bg-zinc-900 [&>th]:px-4">
