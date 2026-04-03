@@ -59,7 +59,7 @@ export async function createItemAction(input: ItemFormInput): Promise<ActionResu
     return toItemActionError("物品の追加に失敗しました");
   }
 
-  revalidatePath("/admin/goods");
+  revalidatePath("/admin/items");
   refresh();
   return { ok: true };
 }
@@ -93,7 +93,7 @@ export async function updateItemAction(
     return toItemActionError("物品の保存に失敗しました");
   }
 
-  revalidatePath("/admin/goods");
+  revalidatePath("/admin/items");
   refresh();
   return { ok: true };
 }
@@ -116,7 +116,7 @@ export async function deleteItemAction(itemId: string): Promise<ActionResult> {
     return toItemActionError("物品の削除に失敗しました");
   }
 
-  revalidatePath("/admin/goods");
+  revalidatePath("/admin/items");
   refresh();
   return { ok: true };
 }
