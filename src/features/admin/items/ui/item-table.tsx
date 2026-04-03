@@ -63,7 +63,9 @@ export function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
               物品名
             </TableHead>
             <TableHead className="h-11 w-12 min-w-12 px-2 text-center text-white">編集</TableHead>
-            <TableHead className="h-11 w-12 min-w-12 px-2 text-center text-white last:rounded-tr-lg">削除</TableHead>
+            <TableHead className="h-11 w-12 min-w-12 px-2 text-center text-white last:rounded-tr-lg">
+              削除
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -73,12 +75,24 @@ export function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
                 <ItemNameCell name={item.name} />
               </TableCell>
               <TableCell className="px-2 text-center">
-                <Button type="button" variant="ghost" size="icon" onClick={() => onEdit(item)} aria-label="編集">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEdit(item)}
+                  aria-label="編集"
+                >
                   <Pencil className="h-4 w-4 text-green-600" aria-hidden="true" />
                 </Button>
               </TableCell>
               <TableCell className="px-2 text-center">
-                <Button type="button" variant="ghost" size="icon" onClick={() => onDelete(item)} aria-label="削除">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(item)}
+                  aria-label="削除"
+                >
                   <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
                 </Button>
               </TableCell>
