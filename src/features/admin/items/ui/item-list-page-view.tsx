@@ -45,6 +45,7 @@ export function ItemListPageView({ items }: ItemListPageViewProps) {
       <ItemFormDialog mode="create" open={createOpen} onOpenChange={setCreateOpen} />
 
       <ItemFormDialog
+        key={editingItem?.itemId ?? "item-edit-dialog-empty"}
         mode="edit"
         open={editingItem !== null}
         item={editingItem}
@@ -56,6 +57,7 @@ export function ItemListPageView({ items }: ItemListPageViewProps) {
       />
 
       <ItemDeleteDialog
+        key={deletingItem?.itemId ?? "item-delete-dialog-empty"}
         open={deletingItem !== null}
         item={deletingItem}
         onOpenChange={(open) => {
