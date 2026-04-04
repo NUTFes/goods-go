@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +24,12 @@ export function ItemDeleteDialog({ open, item, onOpenChange }: ItemDeleteDialogP
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    setErrorMessage("");
-  }, [item, open]);
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setErrorMessage("");
+    }
+    onOpenChange(nextOpen);
+  };
 
   if (!item) {
     return null;
@@ -42,12 +45,12 @@ export function ItemDeleteDialog({ open, item, onOpenChange }: ItemDeleteDialogP
         return;
       }
 
-      onOpenChange(false);
+      handleOpenChange(false);
     });
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent className="max-w-xl rounded-xl">
         <AlertDialogTitle className="sr-only">物品の削除確認</AlertDialogTitle>
         <div className="space-y-4">

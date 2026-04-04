@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Package } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,11 +53,14 @@ export function ItemFormDialog({ mode, open, item, onOpenChange }: ItemFormDialo
     defaultValues: toDefaultValues(item),
   });
 
-  useEffect(() => {
-    form.reset(toDefaultValues(item));
-    form.clearErrors();
-    setSubmitError("");
-  }, [form, item, open]);
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      form.reset(toDefaultValues(item));
+      form.clearErrors();
+      setSubmitError("");
+    }
+    onOpenChange(nextOpen);
+  };
 
   const handleSubmit = form.handleSubmit((values) => {
     setSubmitError("");
@@ -81,12 +84,12 @@ export function ItemFormDialog({ mode, open, item, onOpenChange }: ItemFormDialo
         return;
       }
 
-      onOpenChange(false);
+      handleOpenChange(false);
     });
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-xl rounded-xl">
         <DialogHeader>
           <DialogTitle>{mode === "create" ? "物品を追加" : "物品を編集"}</DialogTitle>
@@ -124,7 +127,7 @@ export function ItemFormDialog({ mode, open, item, onOpenChange }: ItemFormDialo
             <Button
               type="button"
               variant="ghost"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleOpenChange(false)}
               disabled={isPending}
             >
               キャンセル

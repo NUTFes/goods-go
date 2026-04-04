@@ -39,6 +39,21 @@ function toItemActionError(message: string): ActionResult {
   return { ok: false, message };
 }
 
+async function isItemUsedInActiveTasks(itemId: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("tasks")
+    .select("task_id", { count: "exact", head: true })
+    .eq("item_id", itemId)
+    .is("deleted", null);
+
+  if (error) {
+    return true;
+  }
+
+  return (count ?? 0) > 0;
+}
+
 export async function createItemAction(input: ItemFormInput): Promise<ActionResult> {
   await requireAdminUser();
 
@@ -80,17 +95,23 @@ export async function updateItemAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("items")
     .update({ name: parsedInput.data.name })
     .eq("item_id", itemId)
-    .is("deleted", null);
+    .is("deleted", null)
+    .select("item_id")
+    .maybeSingle();
 
   if (error) {
     if (error.code === "23505") {
       return toItemActionError("同じ名前の物品がすでに存在します");
     }
     return toItemActionError("物品の保存に失敗しました");
+  }
+
+  if (!data) {
+    return toItemActionError("対象の物品が見つかりません");
   }
 
   revalidatePath("/admin/items");
@@ -105,15 +126,25 @@ export async function deleteItemAction(itemId: string): Promise<ActionResult> {
     return toItemActionError("対象の物品が見つかりません");
   }
 
+  if (await isItemUsedInActiveTasks(itemId)) {
+    return toItemActionError("タスクで使用中の物品は削除できません");
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("items")
     .update({ deleted: new Date().toISOString() })
     .eq("item_id", itemId)
-    .is("deleted", null);
+    .is("deleted", null)
+    .select("item_id")
+    .maybeSingle();
 
   if (error) {
     return toItemActionError("物品の削除に失敗しました");
+  }
+
+  if (!data) {
+    return toItemActionError("対象の物品が見つかりません");
   }
 
   revalidatePath("/admin/items");
