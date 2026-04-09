@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -52,9 +52,10 @@ function LocationTreeNode({
       >
         <div
           className={cn(
-            "flex min-h-14 items-center justify-between border-b px-4 py-1",
+            "flex min-h-14 items-center justify-between border-b px-4 py-1 transition-colors duration-200 ease-out motion-reduce:transition-none",
             location.depth === 0 ? "border-black" : "border-zinc-300",
             rowBackgroundClass(hasChildren, isExpanded),
+            !isExpanded && "hover:bg-black/[0.02]",
           )}
         >
           <div className="min-w-0 flex-1">
@@ -62,13 +63,14 @@ function LocationTreeNode({
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
-                  className="flex min-h-11 items-center gap-3 text-left text-[18px] font-normal text-[#0a0a0a] outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+                  className="group flex min-h-11 items-center gap-3 text-left text-[18px] font-normal text-[#0a0a0a] outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
                 >
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4 shrink-0" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0" />
-                  )}
+                  <ChevronRight
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none",
+                      isExpanded && "rotate-90",
+                    )}
+                  />
                   <span className="truncate">{location.name}</span>
                 </button>
               </CollapsibleTrigger>
@@ -85,7 +87,7 @@ function LocationTreeNode({
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="h-11 w-11 rounded-md text-black hover:bg-zinc-200"
+                className="h-11 w-11 rounded-md text-black transition-colors duration-200 hover:bg-black/5"
                 aria-label={`${location.name}の配下に場所を追加`}
                 onClick={() => onCreateChild(location)}
               >
@@ -98,7 +100,7 @@ function LocationTreeNode({
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="h-11 w-11 rounded-md hover:bg-zinc-200"
+              className="h-11 w-11 rounded-md transition-colors duration-200 hover:bg-black/5"
               aria-label={`${location.name}を編集`}
               onClick={() => onEdit(location)}
             >
@@ -108,7 +110,7 @@ function LocationTreeNode({
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="h-11 w-11 rounded-md hover:bg-zinc-200"
+              className="h-11 w-11 rounded-md transition-colors duration-200 hover:bg-black/5"
               aria-label={`${location.name}を削除`}
               onClick={() => onDelete(location)}
             >
@@ -118,7 +120,7 @@ function LocationTreeNode({
         </div>
 
         {hasChildren ? (
-          <CollapsibleContent>
+          <CollapsibleContent className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
             <div className="ml-6 border-l border-zinc-300">
               {location.children.map((child) => (
                 <LocationTreeNode
