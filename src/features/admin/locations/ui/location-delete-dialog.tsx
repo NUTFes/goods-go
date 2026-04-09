@@ -44,13 +44,17 @@ export function LocationDeleteDialog({ open, location, onOpenChange }: LocationD
     setErrorMessage("");
 
     startTransition(async () => {
-      const result = await deleteLocationAction(location.locationId);
-      if (!result.ok) {
-        setErrorMessage(result.message ?? "削除に失敗しました");
-        return;
-      }
+      try {
+        const result = await deleteLocationAction(location.locationId);
+        if (!result.ok) {
+          setErrorMessage(result.message ?? "削除に失敗しました");
+          return;
+        }
 
-      handleOpenChange(false);
+        handleOpenChange(false);
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "削除に失敗しました");
+      }
     });
   };
 

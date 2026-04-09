@@ -28,7 +28,14 @@ export function LocationListPageView({ locations }: LocationListPageViewProps) {
   const [deletingLocation, setDeletingLocation] = useState<AdminLocation | null>(null);
 
   useEffect(() => {
-    setExpandedIds(new Set(expandableIds));
+    setExpandedIds((current) => {
+      if (current.size === 0) {
+        return new Set(expandableIds);
+      }
+
+      const allowed = new Set(expandableIds);
+      return new Set([...current].filter((id) => allowed.has(id)));
+    });
   }, [expandableIds]);
 
   return (
