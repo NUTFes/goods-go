@@ -55,7 +55,6 @@ function LocationTreeNode({
             "flex min-h-14 items-center justify-between border-b px-4 py-1 transition-colors duration-200 ease-out motion-reduce:transition-none",
             location.depth === 0 ? "border-black" : "border-zinc-300",
             rowBackgroundClass(hasChildren, isExpanded),
-            !isExpanded && "hover:bg-black/[0.02]",
           )}
         >
           <div className="min-w-0 flex-1">
@@ -65,12 +64,19 @@ function LocationTreeNode({
                   type="button"
                   className="group flex min-h-11 items-center gap-3 text-left text-[18px] font-normal text-[#0a0a0a] outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
                 >
-                  <ChevronRight
+                  <span
                     className={cn(
-                      "h-4 w-4 shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none",
-                      isExpanded && "rotate-90",
+                      "flex size-7 shrink-0 items-center justify-center rounded-full transition-colors duration-200 ease-out motion-reduce:transition-none",
+                      isExpanded ? "bg-black/5" : "bg-transparent group-hover:bg-black/5",
                     )}
-                  />
+                  >
+                    <ChevronRight
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-transform duration-300 ease-out motion-reduce:transition-none",
+                        isExpanded && "rotate-90",
+                      )}
+                    />
+                  </span>
                   <span className="truncate">{location.name}</span>
                 </button>
               </CollapsibleTrigger>
@@ -120,7 +126,14 @@ function LocationTreeNode({
         </div>
 
         {hasChildren ? (
-          <CollapsibleContent className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+          <CollapsibleContent
+            className={cn(
+              "overflow-hidden",
+              "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+              "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+              "data-[state=open]:slide-in-from-top-1 data-[state=closed]:slide-out-to-top-1",
+            )}
+          >
             <div className="ml-6 border-l border-zinc-300">
               {location.children.map((child) => (
                 <LocationTreeNode
