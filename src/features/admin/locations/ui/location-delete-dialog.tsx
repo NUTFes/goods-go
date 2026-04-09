@@ -24,11 +24,7 @@ function getLabel(location: AdminLocation) {
   return location.depth === 0 ? "エリア名" : "場所名";
 }
 
-export function LocationDeleteDialog({
-  open,
-  location,
-  onOpenChange,
-}: LocationDeleteDialogProps) {
+export function LocationDeleteDialog({ open, location, onOpenChange }: LocationDeleteDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -71,7 +67,9 @@ export function LocationDeleteDialog({
             </div>
           </div>
 
-          <p className="px-6 text-center text-base font-normal text-black">この項目を削除しますか？</p>
+          <p className="px-6 text-center text-base font-normal text-black">
+            この項目を削除しますか？
+          </p>
 
           {errorMessage ? (
             <p className="flex items-center justify-center gap-1 text-sm text-[#c91111]">

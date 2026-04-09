@@ -5,7 +5,13 @@ import { AlertCircle } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type LocationFormInput, locationFormSchema } from "../model/schema";
@@ -142,10 +148,7 @@ export function LocationFormDialog({
           </DialogHeader>
 
           <div className="space-y-1 px-9 pb-5">
-            <Label
-              htmlFor="location-name"
-              className="text-sm font-normal leading-5 text-[#364153]"
-            >
+            <Label htmlFor="location-name" className="text-sm font-normal leading-5 text-[#364153]">
               {getFieldLabel(mode, reference)}
             </Label>
             <Input
@@ -173,7 +176,13 @@ export function LocationFormDialog({
               className="h-9 rounded-[10px] bg-[#0017c1] px-4 text-sm font-normal text-white hover:bg-[#0014ab]"
               disabled={isPending}
             >
-              {isPending ? (mode === "create" ? "追加中..." : "保存中...") : mode === "create" ? "追加" : "保存"}
+              {isPending
+                ? mode === "create"
+                  ? "追加中..."
+                  : "保存中..."
+                : mode === "create"
+                  ? "追加"
+                  : "保存"}
             </Button>
           </DialogFooter>
         </form>
