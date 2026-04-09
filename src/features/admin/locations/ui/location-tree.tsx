@@ -25,14 +25,6 @@ function canCreateChild(location: AdminLocation) {
 }
 
 function rowBackgroundClass(location: AdminLocation, hasChildren: boolean) {
-  if (location.depth === 0) {
-    return "bg-white";
-  }
-
-  if (hasChildren) {
-    return "bg-[#f3f4f6]";
-  }
-
   return "bg-white";
 }
 
