@@ -32,10 +32,6 @@ function rowBackgroundClass(hasChildren: boolean, isExpanded: boolean) {
   return "bg-transparent";
 }
 
-function rowBackgroundClass(location: AdminLocation, hasChildren: boolean) {
-  return "bg-white";
-}
-
 function LocationTreeNode({
   location,
   expandedIds,
