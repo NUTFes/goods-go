@@ -24,6 +24,14 @@ function canCreateChild(location: AdminLocation) {
   return location.depth < 2;
 }
 
+function rowBackgroundClass(hasChildren: boolean, isExpanded: boolean) {
+  if (hasChildren && isExpanded) {
+    return "bg-[#f3f4f6]";
+  }
+
+  return "bg-transparent";
+}
+
 function rowBackgroundClass(location: AdminLocation, hasChildren: boolean) {
   return "bg-white";
 }
@@ -50,7 +58,7 @@ function LocationTreeNode({
           className={cn(
             "flex min-h-14 items-center justify-between border-b px-4 py-1",
             location.depth === 0 ? "border-black" : "border-zinc-300",
-            rowBackgroundClass(location, hasChildren),
+            rowBackgroundClass(hasChildren, isExpanded),
           )}
         >
           <div className="min-w-0 flex-1">
