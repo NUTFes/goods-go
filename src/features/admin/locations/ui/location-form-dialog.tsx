@@ -158,8 +158,15 @@ export function LocationFormDialog({
               className="h-[42px] rounded-[10px] border-zinc-300 px-3 text-base placeholder:text-black/50"
               {...form.register("name")}
             />
-            <FieldError message={form.formState.errors.name?.message ?? submitError} />
+            <FieldError message={form.formState.errors.name?.message} />
           </div>
+
+          {submitError ? (
+            <p className="flex items-center justify-center gap-1 px-9 pb-5 text-sm text-[#c91111]">
+              <AlertCircle className="h-4 w-4" />
+              {submitError}
+            </p>
+          ) : null}
 
           <DialogFooter className="gap-3 px-9 pb-9 sm:justify-end">
             <Button
