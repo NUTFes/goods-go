@@ -121,9 +121,10 @@ export function LocationFormDialog({
     setSubmitError("");
 
     startTransition(async () => {
-      const result = await (mode === "create"
-        ? createLocationAction(parentLocation?.locationId ?? null, values)
-        : updateLocationAction(location?.locationId ?? "", values)
+      const result = await (
+        mode === "create"
+          ? createLocationAction(parentLocation?.locationId ?? null, values)
+          : updateLocationAction(location?.locationId ?? "", values)
       ).catch(() => {
         setSubmitError(mode === "create" ? "場所の追加に失敗しました" : "場所の保存に失敗しました");
         return null;
