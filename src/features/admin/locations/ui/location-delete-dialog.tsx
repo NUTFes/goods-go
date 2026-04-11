@@ -44,17 +44,21 @@ export function LocationDeleteDialog({ open, location, onOpenChange }: LocationD
     setErrorMessage("");
 
     startTransition(async () => {
-      try {
-        const result = await deleteLocationAction(location.locationId);
-        if (!result.ok) {
-          setErrorMessage(result.message ?? "削除に失敗しました");
-          return;
-        }
-
-        handleOpenChange(false);
-      } catch (error) {
+      const result = await deleteLocationAction(location.locationId).catch((error: unknown) => {
         setErrorMessage(error instanceof Error ? error.message : "削除に失敗しました");
+        return null;
+      });
+
+      if (!result) {
+        return;
       }
+
+      if (!result.ok) {
+        setErrorMessage(result.message ?? "削除に失敗しました");
+        return;
+      }
+
+      handleOpenChange(false);
     });
   };
 
@@ -89,11 +93,11 @@ export function LocationDeleteDialog({ open, location, onOpenChange }: LocationD
           </AlertDialogCancel>
           <AlertDialogAction
             className="h-9 rounded-[10px] bg-[#c91111] px-6 text-sm font-normal text-white hover:bg-[#b10f0f]"
+            disabled={isPending}
+            aria-busy={isPending}
             onClick={(event) => {
               event.preventDefault();
-              if (!isPending) {
-                handleDelete();
-              }
+              handleDelete();
             }}
           >
             {isPending ? "削除中..." : "削除"}
