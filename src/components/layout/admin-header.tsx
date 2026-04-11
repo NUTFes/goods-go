@@ -18,7 +18,7 @@ type AdminHeaderProps = {
 const navItems = [
   { href: "/admin/tasks", label: "タスク一覧", enabled: true },
   { href: "/admin/items", label: "物品一覧", enabled: true },
-  { href: "/admin/locations", label: "場所一覧", enabled: false },
+  { href: "/admin/locations", label: "場所一覧", enabled: true },
 ] as const;
 
 type SwitchRowProps = {
