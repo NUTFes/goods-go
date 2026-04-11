@@ -1,7 +1,7 @@
 "use client";
 
 import { CirclePlus, FoldVertical, UnfoldVertical } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useReducer, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { AdminLocation } from "../model/types";
 import { LocationDeleteDialog } from "./location-delete-dialog";
@@ -19,24 +19,52 @@ function collectExpandableIds(locations: AdminLocation[]): string[] {
   ]);
 }
 
+type DialogState = {
+  createRootOpen: boolean;
+  parentLocation: AdminLocation | null;
+  editingLocation: AdminLocation | null;
+  deletingLocation: AdminLocation | null;
+};
+
+type DialogAction =
+  | { type: "open-create-root" }
+  | { type: "open-create-child"; location: AdminLocation }
+  | { type: "open-edit"; location: AdminLocation }
+  | { type: "open-delete"; location: AdminLocation }
+  | { type: "close-create" }
+  | { type: "close-edit" }
+  | { type: "close-delete" };
+
+const initialDialogState: DialogState = {
+  createRootOpen: false,
+  parentLocation: null,
+  editingLocation: null,
+  deletingLocation: null,
+};
+
+function dialogReducer(state: DialogState, action: DialogAction): DialogState {
+  switch (action.type) {
+    case "open-create-root":
+      return { ...state, createRootOpen: true, parentLocation: null };
+    case "open-create-child":
+      return { ...state, createRootOpen: false, parentLocation: action.location };
+    case "open-edit":
+      return { ...state, editingLocation: action.location };
+    case "open-delete":
+      return { ...state, deletingLocation: action.location };
+    case "close-create":
+      return { ...state, createRootOpen: false, parentLocation: null };
+    case "close-edit":
+      return { ...state, editingLocation: null };
+    case "close-delete":
+      return { ...state, deletingLocation: null };
+  }
+}
+
 export function LocationListPageView({ locations }: LocationListPageViewProps) {
   const expandableIds = useMemo(() => collectExpandableIds(locations), [locations]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set(expandableIds));
-  const [createRootOpen, setCreateRootOpen] = useState(false);
-  const [parentLocation, setParentLocation] = useState<AdminLocation | null>(null);
-  const [editingLocation, setEditingLocation] = useState<AdminLocation | null>(null);
-  const [deletingLocation, setDeletingLocation] = useState<AdminLocation | null>(null);
-
-  useEffect(() => {
-    setExpandedIds((current) => {
-      if (current.size === 0) {
-        return new Set(expandableIds);
-      }
-
-      const allowed = new Set(expandableIds);
-      return new Set([...current].filter((id) => allowed.has(id)));
-    });
-  }, [expandableIds]);
+  const [dialogState, dispatchDialog] = useReducer(dialogReducer, initialDialogState);
 
   return (
     <main className="px-6 py-6 md:px-16 md:py-8">
@@ -47,7 +75,7 @@ export function LocationListPageView({ locations }: LocationListPageViewProps) {
           <Button
             type="button"
             className="h-[52px] rounded-[10px] bg-black px-4 text-sm font-normal text-white hover:bg-zinc-800"
-            onClick={() => setCreateRootOpen(true)}
+            onClick={() => dispatchDialog({ type: "open-create-root" })}
           >
             <CirclePlus className="h-4 w-4" />
             エリアを追加
@@ -93,44 +121,43 @@ export function LocationListPageView({ locations }: LocationListPageViewProps) {
               return next;
             });
           }}
-          onCreateChild={(location) => setParentLocation(location)}
-          onEdit={(location) => setEditingLocation(location)}
-          onDelete={(location) => setDeletingLocation(location)}
+          onCreateChild={(location) => dispatchDialog({ type: "open-create-child", location })}
+          onEdit={(location) => dispatchDialog({ type: "open-edit", location })}
+          onDelete={(location) => dispatchDialog({ type: "open-delete", location })}
         />
       </div>
 
       <LocationFormDialog
-        key={parentLocation?.locationId ?? "location-create-root"}
+        key={dialogState.parentLocation?.locationId ?? "location-create-root"}
         mode="create"
-        open={createRootOpen || parentLocation !== null}
-        parentLocation={parentLocation}
+        open={dialogState.createRootOpen || dialogState.parentLocation !== null}
+        parentLocation={dialogState.parentLocation}
         onOpenChange={(open) => {
           if (!open) {
-            setCreateRootOpen(false);
-            setParentLocation(null);
+            dispatchDialog({ type: "close-create" });
           }
         }}
       />
 
       <LocationFormDialog
-        key={editingLocation?.locationId ?? "location-edit-empty"}
+        key={dialogState.editingLocation?.locationId ?? "location-edit-empty"}
         mode="edit"
-        open={editingLocation !== null}
-        location={editingLocation}
+        open={dialogState.editingLocation !== null}
+        location={dialogState.editingLocation}
         onOpenChange={(open) => {
           if (!open) {
-            setEditingLocation(null);
+            dispatchDialog({ type: "close-edit" });
           }
         }}
       />
 
       <LocationDeleteDialog
-        key={deletingLocation?.locationId ?? "location-delete-empty"}
-        open={deletingLocation !== null}
-        location={deletingLocation}
+        key={dialogState.deletingLocation?.locationId ?? "location-delete-empty"}
+        open={dialogState.deletingLocation !== null}
+        location={dialogState.deletingLocation}
         onOpenChange={(open) => {
           if (!open) {
-            setDeletingLocation(null);
+            dispatchDialog({ type: "close-delete" });
           }
         }}
       />
