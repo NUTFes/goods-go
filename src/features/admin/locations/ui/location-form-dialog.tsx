@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle } from "lucide-react";
-import { useId, useState, useTransition } from "react";
+import { useId, useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +53,10 @@ function getCreateTitle(parentLocation?: AdminLocation | null) {
   return `${parentLocation.name}に場所を追加`;
 }
 
+function getEditTitle(location?: AdminLocation | null) {
+  return (location?.depth ?? 0) <= 0 ? "エリアを編集" : "場所を編集";
+}
+
 function getFieldLabel(mode: "create" | "edit", reference?: AdminLocation | null) {
   const depth = reference?.depth ?? -1;
 
@@ -93,10 +97,12 @@ export function LocationFormDialog({
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState("");
   const nameInputId = useId();
+  const formValues = useMemo(() => toDefaultValues(location), [location]);
 
   const form = useForm<LocationFormInput>({
     resolver: zodResolver(locationFormSchema),
-    defaultValues: toDefaultValues(location),
+    defaultValues: formValues,
+    values: formValues,
   });
 
   const reference = mode === "edit" ? location : parentLocation;
@@ -144,7 +150,7 @@ export function LocationFormDialog({
         <form onSubmit={handleSubmit}>
           <DialogHeader className="px-9 pt-9 pb-5">
             <DialogTitle className="border-b border-zinc-200 pb-3 text-left text-[20px] font-normal text-[#0a0a0a]">
-              {mode === "create" ? getCreateTitle(parentLocation) : "エリアを編集"}
+              {mode === "create" ? getCreateTitle(parentLocation) : getEditTitle(location)}
             </DialogTitle>
           </DialogHeader>
 
