@@ -32,7 +32,7 @@ function FieldError({ message }: { message?: string }) {
   }
 
   return (
-    <p className="flex items-center gap-1 text-xs text-[#c91111]">
+    <p role="alert" aria-live="polite" className="flex items-center gap-1 text-xs text-[#c91111]">
       <AlertCircle className="h-3.5 w-3.5" />
       {message}
     </p>
@@ -121,10 +121,17 @@ export function LocationFormDialog({
     setSubmitError("");
 
     startTransition(async () => {
-      const result =
-        mode === "create"
-          ? await createLocationAction(parentLocation?.locationId ?? null, values)
-          : await updateLocationAction(location?.locationId ?? "", values);
+      const result = await (mode === "create"
+        ? createLocationAction(parentLocation?.locationId ?? null, values)
+        : updateLocationAction(location?.locationId ?? "", values)
+      ).catch(() => {
+        setSubmitError(mode === "create" ? "場所の追加に失敗しました" : "場所の保存に失敗しました");
+        return null;
+      });
+
+      if (!result) {
+        return;
+      }
 
       if (!result.ok) {
         if (result.fieldErrors) {
@@ -169,7 +176,11 @@ export function LocationFormDialog({
           </div>
 
           {submitError ? (
-            <p className="flex items-center justify-center gap-1 px-9 pb-5 text-sm text-[#c91111]">
+            <p
+              role="alert"
+              aria-live="polite"
+              className="flex items-center justify-center gap-1 px-9 pb-5 text-sm text-[#c91111]"
+            >
               <AlertCircle className="h-4 w-4" />
               {submitError}
             </p>
