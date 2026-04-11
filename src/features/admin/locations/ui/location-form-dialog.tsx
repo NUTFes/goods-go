@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,6 +92,7 @@ export function LocationFormDialog({
 }: LocationFormDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState("");
+  const nameInputId = useId();
 
   const form = useForm<LocationFormInput>({
     resolver: zodResolver(locationFormSchema),
@@ -148,11 +149,11 @@ export function LocationFormDialog({
           </DialogHeader>
 
           <div className="space-y-1 px-9 pb-5">
-            <Label htmlFor="location-name" className="text-sm font-normal leading-5 text-[#364153]">
+            <Label htmlFor={nameInputId} className="text-sm font-normal leading-5 text-[#364153]">
               {getFieldLabel(mode, reference)}
             </Label>
             <Input
-              id="location-name"
+              id={nameInputId}
               placeholder={getPlaceholder(parentLocation)}
               autoComplete="off"
               className="h-[42px] rounded-[10px] border-zinc-300 px-3 text-base placeholder:text-black/50"
