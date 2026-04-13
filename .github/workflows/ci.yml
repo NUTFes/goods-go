@@ -39,7 +39,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Takumi Guard
-        uses: flatt-security/setup-takumi-guard-npm@8f53b50568e4466f2d92504f349c05b9ffcb8b59
+        uses: flatt-security/setup-takumi-guard-npm@3c4ad0e8c9e81d0efbccff304adac60e42e3f32d
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
@@ -116,7 +116,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Takumi Guard
-        uses: flatt-security/setup-takumi-guard-npm@8f53b50568e4466f2d92504f349c05b9ffcb8b59
+        uses: flatt-security/setup-takumi-guard-npm@3c4ad0e8c9e81d0efbccff304adac60e42e3f32d
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
