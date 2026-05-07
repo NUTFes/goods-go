@@ -36,10 +36,39 @@ function sortIconClass(sort: TaskSortState, key: TaskSortKey): string {
   return sort.direction === "asc" ? "h-3.5 w-3.5" : "h-3.5 w-3.5 rotate-180";
 }
 
+function TruncatedCellText({
+  value,
+  className = "max-w-[112px]",
+}: {
+  value: string;
+  className?: string;
+}) {
+  return (
+    <span className={`block truncate ${className}`} title={value}>
+      {value}
+    </span>
+  );
+}
+
 export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete }: TaskTableProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200">
-      <Table>
+      <Table className="min-w-[1312px] table-fixed">
+        <colgroup>
+          <col className="w-[86px]" />
+          <col className="w-[106px]" />
+          <col className="w-[112px]" />
+          <col className="w-[112px]" />
+          <col className="w-[114px]" />
+          <col className="w-[128px]" />
+          <col className="w-[100px]" />
+          <col className="w-[100px]" />
+          <col className="w-[100px]" />
+          <col className="w-[128px]" />
+          <col className="w-[108px]" />
+          <col className="w-[56px]" />
+          <col className="w-[56px]" />
+        </colgroup>
         <TableHeader className="[&_tr]:border-none">
           <TableRow className="bg-zinc-900 hover:bg-zinc-900 [&>th]:px-4">
             <TableHead className="h-11 text-white text-center first:rounded-tl-lg">日付</TableHead>
@@ -110,15 +139,28 @@ export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete 
                   {getStatusLabel(task.currentStatus)}
                 </Badge>
               </TableCell>
-              <TableCell className="text-center">{task.fromLocationName}</TableCell>
-              <TableCell className="text-center">{task.toLocationName}</TableCell>
-              <TableCell className="text-center">{`${task.itemName} × ${task.quantity}`}</TableCell>
+              <TableCell className="text-center">
+                <TruncatedCellText value={task.fromLocationName} />
+              </TableCell>
+              <TableCell className="text-center">
+                <TruncatedCellText value={task.toLocationName} />
+              </TableCell>
+              <TableCell className="text-center">
+                <TruncatedCellText
+                  value={`${task.itemName} × ${task.quantity}`}
+                  className="max-w-[120px]"
+                />
+              </TableCell>
               <TableCell className="text-center">{task.scheduledStartTime}</TableCell>
               <TableCell className="text-center">{task.scheduledEndTime}</TableCell>
               <TableCell className="text-center">{task.actualStartTime ?? "-"}</TableCell>
               <TableCell className="text-center">{task.actualEndTime ?? "-"}</TableCell>
-              <TableCell className="text-center">{task.leaderName ?? "-"}</TableCell>
-              <TableCell className="text-center min-w-50">{task.note || "-"}</TableCell>
+              <TableCell className="text-center">
+                <TruncatedCellText value={task.leaderName ?? "-"} className="max-w-[120px]" />
+              </TableCell>
+              <TableCell className="text-center">
+                <TruncatedCellText value={task.note || "-"} className="max-w-[104px]" />
+              </TableCell>
               <TableCell className="text-center bg-white sticky right-14 before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-linear-to-r before:from-transparent before:to-black/4 before:pointer-events-none before:content-[''] z-10 border-l border-zinc-200">
                 <Button
                   type="button"
