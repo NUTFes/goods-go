@@ -21,6 +21,8 @@ function toTaskFormOption(rows: { id: string; name: string }[], group: string): 
     .sort((left, right) => left.label.localeCompare(right.label, "ja"));
 }
 
+// Admin 側の場所フィルター仕様。今は User と同じく末端だけを候補にするが、
+// 将来 Admin だけ中間階層を見せたい場合はこの変換だけを変更する。
 function toLocationFormOptions(rows: LocationRow[]): TaskFormOption[] {
   return getLeafLocationsWithRootGroup(rows).map(({ location, rootGroup }) => ({
     value: location.location_id,

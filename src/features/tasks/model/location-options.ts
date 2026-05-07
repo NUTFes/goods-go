@@ -15,6 +15,8 @@ export type LeafLocationWithGroup = {
   rootGroup: string;
 };
 
+// User/Admin でフィルター表示仕様が分かれる可能性があるため、
+// ここでは画面用ラベルまでは作らず、共通の階層解釈だけを返す。
 export function getLeafLocationsWithRootGroup(
   rows: HierarchicalLocationRow[],
 ): LeafLocationWithGroup[] {
