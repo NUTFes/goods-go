@@ -1,6 +1,7 @@
 import { requireAdminUser } from "@/lib/auth/guards";
 import { APP_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import { toLeafLocationFilterOptions } from "@/features/tasks/model/location-options";
 import type { Tables } from "@/types/schema.gen";
 import { buildQuarterHourOptions, normalizeTimeValue, sortAdminTasks } from "../model/mappers";
 import type { AdminTaskListPageData, TaskFormOption, TaskListQueryState } from "../model/types";
@@ -18,46 +19,6 @@ function toTaskFormOption(rows: { id: string; name: string }[], group: string): 
       group,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, "ja"));
-}
-
-function toLocationFormOptions(rows: LocationRow[]): TaskFormOption[] {
-  const childParentIds = new Set(
-    rows
-      .map((row) => row.parent_location_id)
-      .filter((parentId): parentId is string => parentId !== null),
-  );
-  const locationById = new Map(rows.map((row) => [row.location_id, row]));
-
-  function findRootGroup(row: LocationRow): string {
-    let current = row;
-    const visited = new Set<string>();
-
-    while (current.parent_location_id && !visited.has(current.location_id)) {
-      visited.add(current.location_id);
-      const parent = locationById.get(current.parent_location_id);
-      if (!parent) {
-        break;
-      }
-      current = parent;
-    }
-
-    return current.name;
-  }
-
-  return rows
-    .filter((row) => !childParentIds.has(row.location_id))
-    .map((row) => ({
-      value: row.location_id,
-      label: row.name,
-      group: row.parent_location_id ? findRootGroup(row) : "",
-    }))
-    .sort((left, right) => {
-      const groupResult = left.group.localeCompare(right.group, "ja");
-      if (groupResult !== 0) {
-        return groupResult;
-      }
-      return left.label.localeCompare(right.label, "ja");
-    });
 }
 
 export async function getAdminTaskListPageData(
@@ -172,7 +133,7 @@ export async function getAdminTaskListPageData(
         leaderRows.map((leader) => ({ id: leader.user_id, name: leader.name })),
         "指揮者",
       ),
-      locations: toLocationFormOptions(locationRows),
+      locations: toLeafLocationFilterOptions(locationRows),
       timeOptions: buildQuarterHourOptions(),
     },
   };
