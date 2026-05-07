@@ -29,6 +29,8 @@ function toFilterOption(
     .sort((left, right) => left.label.localeCompare(right.label, "ja"));
 }
 
+// User 側の場所フィルター仕様。運搬担当者が迷わないよう末端だけを候補にする。
+// Admin と別の見せ方が必要になった場合は、この変換だけを変更する。
 function toLocationFilterOptions(rows: LocationRow[]): UserTaskFilterOption[] {
   return getLeafLocationsWithRootGroup(rows).map(({ location, rootGroup }) => ({
     value: location.location_id,
