@@ -1,6 +1,7 @@
 import { APP_ROLES } from "@/lib/auth/roles";
 import { requireAuthenticatedUser } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
+import { toLeafLocationFilterOptions } from "@/features/tasks/model/location-options";
 import type { Tables } from "@/types/schema.gen";
 import { normalizeTimeValue } from "../model/mappers";
 import type {
@@ -134,22 +135,6 @@ export async function getUserTaskListPageData(
   );
   const userNameById = new Map((usersResult.data ?? []).map((user) => [user.user_id, user.name]));
   userNameById.set(currentUser.userId, currentUser.name);
-  const locationById = new Map(locationRows.map((location) => [location.location_id, location]));
-
-  const locationOptions = toFilterOption(
-    locationRows.map((location) => {
-      const parent =
-        location.parent_location_id && locationById.get(location.parent_location_id)
-          ? locationById.get(location.parent_location_id)?.name
-          : null;
-
-      return {
-        id: location.location_id,
-        name: location.name,
-        group: parent ?? location.name,
-      };
-    }),
-  );
 
   return {
     currentUser: {
@@ -171,7 +156,7 @@ export async function getUserTaskListPageData(
       items: toFilterOption(
         itemRows.map((item) => ({ id: item.item_id, name: item.name, group: "物品" })),
       ),
-      locations: locationOptions,
+      locations: toLeafLocationFilterOptions(locationRows),
     },
   };
 }
