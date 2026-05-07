@@ -1,7 +1,7 @@
 import { APP_ROLES } from "@/lib/auth/roles";
 import { requireAuthenticatedUser } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
-import { toLeafLocationFilterOptions } from "@/features/tasks/model/location-options";
+import { getLeafLocationsWithRootGroup } from "@/features/tasks/model/location-options";
 import type { Tables } from "@/types/schema.gen";
 import { normalizeTimeValue } from "../model/mappers";
 import type {
@@ -27,6 +27,14 @@ function toFilterOption(
       group: row.group,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, "ja"));
+}
+
+function toLocationFilterOptions(rows: LocationRow[]): UserTaskFilterOption[] {
+  return getLeafLocationsWithRootGroup(rows).map(({ location, rootGroup }) => ({
+    value: location.location_id,
+    label: location.name,
+    group: rootGroup,
+  }));
 }
 
 function mapTask(
@@ -156,7 +164,7 @@ export async function getUserTaskListPageData(
       items: toFilterOption(
         itemRows.map((item) => ({ id: item.item_id, name: item.name, group: "物品" })),
       ),
-      locations: toLeafLocationFilterOptions(locationRows),
+      locations: toLocationFilterOptions(locationRows),
     },
   };
 }

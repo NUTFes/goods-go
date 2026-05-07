@@ -1,7 +1,7 @@
 import { requireAdminUser } from "@/lib/auth/guards";
 import { APP_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
-import { toLeafLocationFilterOptions } from "@/features/tasks/model/location-options";
+import { getLeafLocationsWithRootGroup } from "@/features/tasks/model/location-options";
 import type { Tables } from "@/types/schema.gen";
 import { buildQuarterHourOptions, normalizeTimeValue, sortAdminTasks } from "../model/mappers";
 import type { AdminTaskListPageData, TaskFormOption, TaskListQueryState } from "../model/types";
@@ -19,6 +19,14 @@ function toTaskFormOption(rows: { id: string; name: string }[], group: string): 
       group,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, "ja"));
+}
+
+function toLocationFormOptions(rows: LocationRow[]): TaskFormOption[] {
+  return getLeafLocationsWithRootGroup(rows).map(({ location, rootGroup }) => ({
+    value: location.location_id,
+    label: location.name,
+    group: rootGroup,
+  }));
 }
 
 export async function getAdminTaskListPageData(
@@ -133,7 +141,7 @@ export async function getAdminTaskListPageData(
         leaderRows.map((leader) => ({ id: leader.user_id, name: leader.name })),
         "指揮者",
       ),
-      locations: toLeafLocationFilterOptions(locationRows),
+      locations: toLocationFormOptions(locationRows),
       timeOptions: buildQuarterHourOptions(),
     },
   };
