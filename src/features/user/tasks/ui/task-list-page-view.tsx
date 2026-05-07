@@ -34,7 +34,7 @@ function isTaskStatus(value: number): value is TaskStatus {
 }
 
 export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskListPageViewProps) {
-  const router = useRouter();
+  const { refresh } = useRouter();
   const [qs, setQs] = useQueryStates(userTaskQueryStatesParsers, { shallow: false });
   const [isPending, startTransition] = useTransition();
 
@@ -46,7 +46,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
     toLocationId: "",
     itemIds: [],
   });
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
 
   const filters: UserTaskFilterState = useMemo(
     () => ({
@@ -57,10 +57,6 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
       itemIds: qs.itemIds.filter((itemId) => itemId.length > 0),
     }),
     [qs.day, qs.fromLocationId, qs.itemIds, qs.statuses, qs.toLocationId],
-  );
-  const selectedTask = useMemo(
-    () => tasks.find((task) => task.taskId === selectedTaskId) ?? null,
-    [selectedTaskId, tasks],
   );
 
   const canEditStatus =
@@ -86,7 +82,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
 
   const handleRefresh = () => {
     startTransition(() => {
-      router.refresh();
+      refresh();
     });
   };
 
@@ -143,7 +139,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
           <ul role="list" className="space-y-2">
             {tasks.map((task) => (
               <li key={task.taskId}>
-                <TaskCard task={task} onClick={() => setSelectedTaskId(task.taskId)} />
+                <TaskCard task={task} onClick={() => setSelectedTask(task)} />
               </li>
             ))}
           </ul>
@@ -179,7 +175,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
         canEditNote={canEditNote}
         onOpenChange={(open) => {
           if (!open) {
-            setSelectedTaskId(null);
+            setSelectedTask(null);
           }
         }}
       />

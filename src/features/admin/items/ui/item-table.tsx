@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,31 +20,11 @@ type ItemTableProps = {
 };
 
 function ItemNameCell({ name }: { name: string }) {
-  const textRef = useRef<HTMLSpanElement>(null);
-  const [isTruncated, setIsTruncated] = useState(false);
-
-  useEffect(() => {
-    const element = textRef.current;
-    if (!element) {
-      return;
-    }
-
-    setIsTruncated(element.scrollWidth > element.clientWidth);
-  }, [name]);
-
-  const text = (
-    <span ref={textRef} className="block max-w-64 truncate">
-      {name}
-    </span>
-  );
-
-  if (!isTruncated) {
-    return text;
-  }
-
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{text}</TooltipTrigger>
+      <TooltipTrigger asChild>
+        <span className="block max-w-64 truncate">{name}</span>
+      </TooltipTrigger>
       <TooltipContent side="top" sideOffset={8}>
         {name}
       </TooltipContent>
