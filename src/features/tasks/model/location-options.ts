@@ -10,9 +10,14 @@ export type LocationFilterOption = {
   group: string;
 };
 
-export function toLeafLocationFilterOptions(
+export type LeafLocationWithGroup = {
+  location: HierarchicalLocationRow;
+  rootGroup: string;
+};
+
+export function getLeafLocationsWithRootGroup(
   rows: HierarchicalLocationRow[],
-): LocationFilterOption[] {
+): LeafLocationWithGroup[] {
   const childParentIds = new Set(
     rows
       .map((row) => row.parent_location_id)
@@ -39,15 +44,14 @@ export function toLeafLocationFilterOptions(
   return rows
     .filter((row) => !childParentIds.has(row.location_id))
     .map((row) => ({
-      value: row.location_id,
-      label: row.name,
-      group: row.parent_location_id ? findRootGroup(row) : "",
+      location: row,
+      rootGroup: row.parent_location_id ? findRootGroup(row) : "",
     }))
     .sort((left, right) => {
-      const groupResult = left.group.localeCompare(right.group, "ja");
+      const groupResult = left.rootGroup.localeCompare(right.rootGroup, "ja");
       if (groupResult !== 0) {
         return groupResult;
       }
-      return left.label.localeCompare(right.label, "ja");
+      return left.location.name.localeCompare(right.location.name, "ja");
     });
 }
