@@ -1,17 +1,21 @@
 import { Calendar, Filter, ListTodo, MapPin, Package, User, X } from "lucide-react";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EVENT_DAY_OPTIONS, STATUS_OPTIONS } from "../model/mappers";
 import type { TaskFilterOptions, TaskFilterState } from "../model/types";
+
+type FilterOption = { value: string; label: string; group: string };
 
 type TaskFilterBarProps = {
   filters: TaskFilterState;
@@ -23,12 +27,32 @@ type SelectFilterProps = {
   value: string;
   icon?: ReactNode;
   placeholder: string;
-  options: { value: string; label: string }[];
+  options: FilterOption[];
+  className?: string;
+  showGroups?: boolean;
   onValueChange: (value: string) => void;
 };
 
-function SelectFilter({ value, icon, placeholder, options, onValueChange }: SelectFilterProps) {
+function groupOptions(options: FilterOption[]): Map<string, FilterOption[]> {
+  return options.reduce((groups, option) => {
+    const groupOptions = groups.get(option.group) ?? [];
+    groupOptions.push(option);
+    groups.set(option.group, groupOptions);
+    return groups;
+  }, new Map<string, FilterOption[]>());
+}
+
+function SelectFilter({
+  value,
+  icon,
+  placeholder,
+  options,
+  className = "w-[148px]",
+  showGroups = false,
+  onValueChange,
+}: SelectFilterProps) {
   const selectedLabel = options.find((option) => option.value === value)?.label;
+  const optionGroups = groupOptions(options);
 
   return (
     <Select
@@ -36,7 +60,7 @@ function SelectFilter({ value, icon, placeholder, options, onValueChange }: Sele
       onValueChange={(nextValue) => onValueChange(nextValue === "all" ? "" : nextValue)}
     >
       <SelectTrigger
-        className="h-9 min-w-37 bg-white text-sm"
+        className={`h-9 bg-white text-sm ${className}`}
         aria-label={selectedLabel ? `${placeholder}: ${selectedLabel}` : placeholder}
       >
         {icon && (
@@ -46,13 +70,40 @@ function SelectFilter({ value, icon, placeholder, options, onValueChange }: Sele
         )}
         <SelectValue placeholder={placeholder}>{value ? selectedLabel : placeholder}</SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="max-w-[280px]">
         <SelectItem value="all">すべて</SelectItem>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
+        {showGroups
+          ? Array.from(optionGroups.entries()).map(([groupName, groupItems]) =>
+              groupName ? (
+                <SelectGroup key={groupName}>
+                  <SelectLabel>{groupName}</SelectLabel>
+                  {groupItems.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <span className="block max-w-[232px] truncate" title={option.label}>
+                        {option.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ) : (
+                <Fragment key="ungrouped-location-options">
+                  {groupItems.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <span className="block max-w-[232px] truncate" title={option.label}>
+                        {option.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </Fragment>
+              ),
+            )
+          : options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                <span className="block max-w-[232px] truncate" title={option.label}>
+                  {option.label}
+                </span>
+              </SelectItem>
+            ))}
       </SelectContent>
     </Select>
   );
@@ -187,6 +238,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
             icon={<Package className="h-4 w-4 text-zinc-500" />}
             placeholder="物品選択"
             options={filterOptions.items}
+            className="w-[180px]"
             onValueChange={(value) => onChange({ ...filters, itemId: value })}
           />
           <SelectFilter
@@ -194,6 +246,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
             icon={<User className="h-4 w-4 text-zinc-500" />}
             placeholder="指揮者"
             options={filterOptions.leaders}
+            className="w-[160px]"
             onValueChange={(value) => onChange({ ...filters, leaderUserId: value })}
           />
           <SelectFilter
@@ -201,6 +254,8 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
             icon={<MapPin className="h-4 w-4 text-zinc-500" />}
             placeholder="From"
             options={filterOptions.locations}
+            className="w-[180px]"
+            showGroups
             onValueChange={(value) => onChange({ ...filters, fromLocationId: value })}
           />
           <SelectFilter
@@ -208,6 +263,8 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
             icon={<MapPin className="h-4 w-4 text-zinc-500" />}
             placeholder="To"
             options={filterOptions.locations}
+            className="w-[180px]"
+            showGroups
             onValueChange={(value) => onChange({ ...filters, toLocationId: value })}
           />
         </div>
@@ -223,7 +280,9 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
               className="gap-1 rounded-full border-zinc-900 bg-white px-3 py-1 text-zinc-900 font-normal"
             >
               {tag.icon}
-              <span>{tag.label}</span>
+              <span className="max-w-[192px] truncate" title={tag.label}>
+                {tag.label}
+              </span>
               <button
                 type="button"
                 onClick={() =>

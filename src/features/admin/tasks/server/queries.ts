@@ -20,6 +20,46 @@ function toTaskFormOption(rows: { id: string; name: string }[], group: string): 
     .sort((left, right) => left.label.localeCompare(right.label, "ja"));
 }
 
+function toLocationFormOptions(rows: LocationRow[]): TaskFormOption[] {
+  const childParentIds = new Set(
+    rows
+      .map((row) => row.parent_location_id)
+      .filter((parentId): parentId is string => parentId !== null),
+  );
+  const locationById = new Map(rows.map((row) => [row.location_id, row]));
+
+  function findRootGroup(row: LocationRow): string {
+    let current = row;
+    const visited = new Set<string>();
+
+    while (current.parent_location_id && !visited.has(current.location_id)) {
+      visited.add(current.location_id);
+      const parent = locationById.get(current.parent_location_id);
+      if (!parent) {
+        break;
+      }
+      current = parent;
+    }
+
+    return current.name;
+  }
+
+  return rows
+    .filter((row) => !childParentIds.has(row.location_id))
+    .map((row) => ({
+      value: row.location_id,
+      label: row.name,
+      group: row.parent_location_id ? findRootGroup(row) : "",
+    }))
+    .sort((left, right) => {
+      const groupResult = left.group.localeCompare(right.group, "ja");
+      if (groupResult !== 0) {
+        return groupResult;
+      }
+      return left.label.localeCompare(right.label, "ja");
+    });
+}
+
 export async function getAdminTaskListPageData(
   queryState: TaskListQueryState,
 ): Promise<AdminTaskListPageData> {
@@ -63,7 +103,7 @@ export async function getAdminTaskListPageData(
   const [tasksResult, itemsResult, locationsResult, leadersResult] = await Promise.all([
     tasksQuery,
     supabase.from("items").select("item_id,name").is("deleted", null),
-    supabase.from("locations").select("location_id,name").is("deleted", null),
+    supabase.from("locations").select("location_id,name,parent_location_id").is("deleted", null),
     supabase
       .from("users")
       .select("user_id,name,role")
@@ -132,13 +172,7 @@ export async function getAdminTaskListPageData(
         leaderRows.map((leader) => ({ id: leader.user_id, name: leader.name })),
         "指揮者",
       ),
-      locations: toTaskFormOption(
-        locationRows.map((location) => ({
-          id: location.location_id,
-          name: location.name,
-        })),
-        "場所",
-      ),
+      locations: toLocationFormOptions(locationRows),
       timeOptions: buildQuarterHourOptions(),
     },
   };
