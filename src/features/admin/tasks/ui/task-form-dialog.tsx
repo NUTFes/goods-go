@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Clock3, MapPin, NotebookPen, Package, Triangle } from "lucide-react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { Fragment, useEffect, useMemo, useState, useTransition } from "react";
 import { type UseFormReturn, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -229,16 +229,26 @@ function TaskLocationSection({
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(locationGroups).map(([groupName, options]) => (
-                <SelectGroup key={groupName}>
-                  <SelectLabel>{groupName}</SelectLabel>
-                  {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
+              {Object.entries(locationGroups).map(([groupName, options]) =>
+                groupName ? (
+                  <SelectGroup key={groupName}>
+                    <SelectLabel>{groupName}</SelectLabel>
+                    {options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ) : (
+                  <Fragment key="ungrouped-from-locations">
+                    {options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </Fragment>
+                ),
+              )}
             </SelectContent>
           </Select>
           <FieldError message={form.formState.errors.fromLocationId?.message} />
@@ -262,16 +272,26 @@ function TaskLocationSection({
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(locationGroups).map(([groupName, options]) => (
-                <SelectGroup key={groupName}>
-                  <SelectLabel>{groupName}</SelectLabel>
-                  {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
+              {Object.entries(locationGroups).map(([groupName, options]) =>
+                groupName ? (
+                  <SelectGroup key={groupName}>
+                    <SelectLabel>{groupName}</SelectLabel>
+                    {options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ) : (
+                  <Fragment key="ungrouped-to-locations">
+                    {options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </Fragment>
+                ),
+              )}
             </SelectContent>
           </Select>
           <FieldError message={form.formState.errors.toLocationId?.message} />
