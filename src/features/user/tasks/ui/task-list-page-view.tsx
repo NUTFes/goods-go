@@ -46,7 +46,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
     toLocationId: "",
     itemIds: [],
   });
-  const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const filters: UserTaskFilterState = useMemo(
     () => ({
@@ -58,6 +58,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
     }),
     [qs.day, qs.fromLocationId, qs.itemIds, qs.statuses, qs.toLocationId],
   );
+  const selectedTask = tasks.find((task) => task.taskId === selectedTaskId) ?? null;
 
   const canEditStatus =
     currentUser.role === APP_ROLES.ADMIN || currentUser.role === APP_ROLES.LEADER;
@@ -139,7 +140,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
           <ul role="list" className="space-y-2">
             {tasks.map((task) => (
               <li key={task.taskId}>
-                <TaskCard task={task} onClick={() => setSelectedTask(task)} />
+                <TaskCard task={task} onClick={() => setSelectedTaskId(task.taskId)} />
               </li>
             ))}
           </ul>
@@ -168,14 +169,14 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
       ) : null}
 
       <TaskDetailDialog
-        key={`${selectedTask?.taskId ?? "none"}:${selectedTask?.currentStatus ?? "-1"}:${selectedTask?.note ?? ""}`}
-        open={selectedTask !== null}
+        key={`${selectedTaskId ?? "none"}:${selectedTask?.currentStatus ?? "-1"}:${selectedTask?.note ?? ""}`}
+        open={selectedTaskId !== null}
         task={selectedTask}
         canEditStatus={canEditStatus}
         canEditNote={canEditNote}
         onOpenChange={(open) => {
           if (!open) {
-            setSelectedTask(null);
+            setSelectedTaskId(null);
           }
         }}
       />
