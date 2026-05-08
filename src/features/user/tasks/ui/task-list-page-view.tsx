@@ -58,7 +58,10 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
     }),
     [qs.day, qs.fromLocationId, qs.itemIds, qs.statuses, qs.toLocationId],
   );
-  const selectedTask = tasks.find((task) => task.taskId === selectedTaskId) ?? null;
+  const selectedTask = useMemo(
+    () => tasks.find((task) => task.taskId === selectedTaskId) ?? null,
+    [selectedTaskId, tasks],
+  );
 
   const canEditStatus =
     currentUser.role === APP_ROLES.ADMIN || currentUser.role === APP_ROLES.LEADER;
