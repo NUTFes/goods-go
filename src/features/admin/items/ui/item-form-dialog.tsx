@@ -134,7 +134,7 @@ export function ItemFormDialog({ mode, open, item, onOpenChange }: ItemFormDialo
             </Button>
             <Button
               type="submit"
-              className="bg-black text-white hover:bg-zinc-800"
+              className="bg-zinc-950 text-white hover:bg-zinc-800"
               disabled={isPending}
             >
               {isPending

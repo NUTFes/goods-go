@@ -74,7 +74,7 @@ export function LocationListPageView({ locations }: LocationListPageViewProps) {
         <div className="flex justify-end">
           <Button
             type="button"
-            className="h-[52px] rounded-[10px] bg-black px-4 text-sm font-normal text-white hover:bg-zinc-800"
+            className="h-[52px] rounded-[10px] bg-zinc-950 px-4 text-sm font-normal text-white hover:bg-zinc-800"
             onClick={() => dispatchDialog({ type: "open-create-root" })}
           >
             <CirclePlus className="h-4 w-4" />

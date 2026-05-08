@@ -1,7 +1,7 @@
 "use client";
 
 import { Triangle } from "lucide-react";
-import { useMemo, type Dispatch, type SetStateAction } from "react";
+import { Fragment, useMemo, type Dispatch, type SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -14,7 +14,9 @@ import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -36,6 +38,44 @@ type FilterChipProps = {
   selected: boolean;
   onClick: () => void;
 };
+
+type LocationOption = UserTaskFilterOptions["locations"][number];
+
+function groupLocationOptions(options: LocationOption[]): Map<string, LocationOption[]> {
+  return options.reduce((groups, option) => {
+    const groupOptions = groups.get(option.group) ?? [];
+    groupOptions.push(option);
+    groups.set(option.group, groupOptions);
+    return groups;
+  }, new Map<string, LocationOption[]>());
+}
+
+function LocationSelectOptions({ options }: { options: Map<string, LocationOption[]> }) {
+  return Array.from(options.entries()).map(([groupName, groupItems]) =>
+    groupName ? (
+      <SelectGroup key={groupName}>
+        <SelectLabel>{groupName}</SelectLabel>
+        {groupItems.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            <span className="block max-w-[232px] truncate" title={option.label}>
+              {option.label}
+            </span>
+          </SelectItem>
+        ))}
+      </SelectGroup>
+    ) : (
+      <Fragment key="ungrouped-location-options">
+        {groupItems.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            <span className="block max-w-[232px] truncate" title={option.label}>
+              {option.label}
+            </span>
+          </SelectItem>
+        ))}
+      </Fragment>
+    ),
+  );
+}
 
 function FilterChip({ label, selected, onClick }: FilterChipProps) {
   return (
@@ -68,7 +108,7 @@ export function TaskFilterSheet({
   const descriptionId = "task-filter-sheet-description";
 
   const locationGroups = useMemo(() => {
-    return filterOptions.locations.map((option) => ({ value: option.value, label: option.label }));
+    return groupLocationOptions(filterOptions.locations);
   }, [filterOptions.locations]);
 
   const toggleStatus = (status: 0 | 1 | 2) => {
@@ -156,11 +196,7 @@ export function TaskFilterSheet({
                   </SelectTrigger>
                   <SelectContent className="rounded-lg p-1 shadow-[0px_4px_6px_rgba(0,0,0,0.1),0px_2px_4px_rgba(0,0,0,0.1)]">
                     <SelectItem value="__none__">未選択</SelectItem>
-                    {locationGroups.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    <LocationSelectOptions options={locationGroups} />
                   </SelectContent>
                 </Select>
 
@@ -193,11 +229,7 @@ export function TaskFilterSheet({
                   </SelectTrigger>
                   <SelectContent className="rounded-lg p-1 shadow-[0px_4px_6px_rgba(0,0,0,0.1),0px_2px_4px_rgba(0,0,0,0.1)]">
                     <SelectItem value="__none__">未選択</SelectItem>
-                    {locationGroups.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    <LocationSelectOptions options={locationGroups} />
                   </SelectContent>
                 </Select>
               </div>

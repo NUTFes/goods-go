@@ -34,7 +34,7 @@ function isTaskStatus(value: number): value is TaskStatus {
 }
 
 export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskListPageViewProps) {
-  const router = useRouter();
+  const { refresh } = useRouter();
   const [qs, setQs] = useQueryStates(userTaskQueryStatesParsers, { shallow: false });
   const [isPending, startTransition] = useTransition();
 
@@ -86,7 +86,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
 
   const handleRefresh = () => {
     startTransition(() => {
-      router.refresh();
+      refresh();
     });
   };
 
@@ -172,8 +172,8 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
       ) : null}
 
       <TaskDetailDialog
-        key={`${selectedTask?.taskId ?? "none"}:${selectedTask?.currentStatus ?? "-1"}:${selectedTask?.note ?? ""}`}
-        open={selectedTask !== null}
+        key={`${selectedTaskId ?? "none"}:${selectedTask?.currentStatus ?? "-1"}:${selectedTask?.note ?? ""}`}
+        open={selectedTaskId !== null}
         task={selectedTask}
         canEditStatus={canEditStatus}
         canEditNote={canEditNote}

@@ -27,7 +27,7 @@ export function ItemListPageView({ items }: ItemListPageViewProps) {
           </div>
           <Button
             type="button"
-            className="bg-black text-white hover:bg-zinc-800"
+            className="bg-zinc-950 text-white hover:bg-zinc-800"
             onClick={() => setCreateOpen(true)}
           >
             <CirclePlus className="h-4 w-4" />

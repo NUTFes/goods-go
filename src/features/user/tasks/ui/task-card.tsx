@@ -36,10 +36,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
           <div className="mt-3 space-y-2">
             <p className="flex items-center gap-1.5 font-bold">
               <span className="text-base sm:text-lg">{task.fromLocationName}</span>
-              <span
-                className="inline-block h-0 w-0 border-y-[7px] border-l-10 border-y-transparent border-l-[#919191]"
-                aria-hidden="true"
-              />
+              <ChevronRight className="size-4 shrink-0 text-[#919191]" aria-hidden="true" />
               <span className="sr-only">から</span>
               <span className="text-base sm:text-lg">{task.toLocationName}</span>
             </p>

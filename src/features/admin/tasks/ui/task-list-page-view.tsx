@@ -67,7 +67,7 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
         <div className="flex justify-end">
           <Button
             type="button"
-            className="bg-black text-white hover:bg-zinc-800"
+            className="bg-zinc-950 text-white hover:bg-zinc-800"
             disabled={isPending}
             onClick={() => setCreateOpen(true)}
           >

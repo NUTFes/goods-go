@@ -1,6 +1,7 @@
 import { requireAdminUser } from "@/lib/auth/guards";
 import { APP_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import { getLeafLocationsWithRootGroup } from "@/features/tasks/model/location-options";
 import type { Tables } from "@/types/schema.gen";
 import { buildQuarterHourOptions, normalizeTimeValue, sortAdminTasks } from "../model/mappers";
 import type { AdminTaskListPageData, TaskFormOption, TaskListQueryState } from "../model/types";
@@ -18,6 +19,16 @@ function toTaskFormOption(rows: { id: string; name: string }[], group: string): 
       group,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, "ja"));
+}
+
+// Admin 側の場所フィルター仕様。今は User と同じく末端だけを候補にするが、
+// 将来 Admin だけ中間階層を見せたい場合はこの変換だけを変更する。
+function toLocationFormOptions(rows: LocationRow[]): TaskFormOption[] {
+  return getLeafLocationsWithRootGroup(rows).map(({ location, rootGroup }) => ({
+    value: location.location_id,
+    label: location.name,
+    group: rootGroup,
+  }));
 }
 
 export async function getAdminTaskListPageData(
@@ -63,7 +74,7 @@ export async function getAdminTaskListPageData(
   const [tasksResult, itemsResult, locationsResult, leadersResult] = await Promise.all([
     tasksQuery,
     supabase.from("items").select("item_id,name").is("deleted", null),
-    supabase.from("locations").select("location_id,name").is("deleted", null),
+    supabase.from("locations").select("location_id,name,parent_location_id").is("deleted", null),
     supabase
       .from("users")
       .select("user_id,name,role")
@@ -132,13 +143,7 @@ export async function getAdminTaskListPageData(
         leaderRows.map((leader) => ({ id: leader.user_id, name: leader.name })),
         "指揮者",
       ),
-      locations: toTaskFormOption(
-        locationRows.map((location) => ({
-          id: location.location_id,
-          name: location.name,
-        })),
-        "場所",
-      ),
+      locations: toLocationFormOptions(locationRows),
       timeOptions: buildQuarterHourOptions(),
     },
   };
