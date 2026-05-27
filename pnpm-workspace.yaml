@@ -1,6 +1,9 @@
 packages:
   - .
 
+minimumReleaseAge: 10080
+trustPolicy: no-downgrade
+
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
