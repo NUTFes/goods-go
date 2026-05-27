@@ -47,6 +47,7 @@ export async function requireAuthenticatedUser(): Promise<CurrentUserProfile> {
   return currentUser;
 }
 
+// react-doctor-disable-next-line deslop/unused-export
 export async function requireUserWithRoles<const TRoles extends readonly AppRole[]>(
   roles: TRoles,
 ): Promise<CurrentUserProfile & { role: TRoles[number] }> {
