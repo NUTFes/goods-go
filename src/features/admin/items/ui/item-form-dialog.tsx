@@ -32,7 +32,7 @@ function FieldError({ message }: { message?: string }) {
 
   return (
     <p className="mt-1 flex items-center gap-1 text-xs text-red-600">
-      <AlertCircle className="h-3.5 w-3.5" />
+      <AlertCircle className="size-3.5" />
       {message}
     </p>
   );
@@ -98,7 +98,7 @@ export function ItemFormDialog({ mode, open, item, onOpenChange }: ItemFormDialo
         <form onSubmit={handleSubmit} className="space-y-5">
           <section>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <Package className="h-4 w-4" />
+              <Package className="size-4" />
               物品情報
             </h3>
 
@@ -118,7 +118,7 @@ export function ItemFormDialog({ mode, open, item, onOpenChange }: ItemFormDialo
 
           {submitError ? (
             <p className="flex items-center gap-1 text-sm text-red-600">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="size-4" />
               {submitError}
             </p>
           ) : null}

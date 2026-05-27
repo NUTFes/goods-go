@@ -143,28 +143,28 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
       ? {
           key: "itemId" as const,
           label: itemLabel,
-          icon: <Package className="h-3 w-3" aria-hidden="true" />,
+          icon: <Package className="size-3" aria-hidden="true" />,
         }
       : null,
     leaderLabel
       ? {
           key: "leaderUserId" as const,
           label: leaderLabel,
-          icon: <User className="h-3 w-3" aria-hidden="true" />,
+          icon: <User className="size-3" aria-hidden="true" />,
         }
       : null,
     fromLabel
       ? {
           key: "fromLocationId" as const,
           label: `From : ${fromLabel}`,
-          icon: <MapPin className="h-3 w-3" aria-hidden="true" />,
+          icon: <MapPin className="size-3" aria-hidden="true" />,
         }
       : null,
     toLabel
       ? {
           key: "toLocationId" as const,
           label: `To : ${toLabel}`,
-          icon: <MapPin className="h-3 w-3" aria-hidden="true" />,
+          icon: <MapPin className="size-3" aria-hidden="true" />,
         }
       : null,
   ].filter((tag) => tag !== null);
@@ -173,7 +173,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
     <section className="space-y-4 rounded-[10px] border bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-zinc-600" aria-hidden="true" />
+          <Calendar className="size-4 text-zinc-600" aria-hidden="true" />
           <span className="text-sm font-medium text-zinc-700">日程</span>
           <ToggleGroup
             type="single"
@@ -203,7 +203,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
         <div className="mx-2 h-6 w-px bg-zinc-200" />
 
         <div className="flex items-center gap-2">
-          <ListTodo className="h-4 w-4 text-zinc-600" aria-hidden="true" />
+          <ListTodo className="size-4 text-zinc-600" aria-hidden="true" />
           <span className="text-sm font-medium text-zinc-700">ステータス</span>
           <ToggleGroup
             type="single"
@@ -235,7 +235,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
         <div className="flex flex-wrap items-center gap-3">
           <SelectFilter
             value={filters.itemId}
-            icon={<Package className="h-4 w-4 text-zinc-500" />}
+            icon={<Package className="size-4 text-zinc-500" />}
             placeholder="物品選択"
             options={filterOptions.items}
             className="w-[180px]"
@@ -243,7 +243,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
           />
           <SelectFilter
             value={filters.leaderUserId}
-            icon={<User className="h-4 w-4 text-zinc-500" />}
+            icon={<User className="size-4 text-zinc-500" />}
             placeholder="指揮者"
             options={filterOptions.leaders}
             className="w-[160px]"
@@ -251,7 +251,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
           />
           <SelectFilter
             value={filters.fromLocationId}
-            icon={<MapPin className="h-4 w-4 text-zinc-500" />}
+            icon={<MapPin className="size-4 text-zinc-500" />}
             placeholder="From"
             options={filterOptions.locations}
             className="w-[180px]"
@@ -260,7 +260,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
           />
           <SelectFilter
             value={filters.toLocationId}
-            icon={<MapPin className="h-4 w-4 text-zinc-500" />}
+            icon={<MapPin className="size-4 text-zinc-500" />}
             placeholder="To"
             options={filterOptions.locations}
             className="w-[180px]"
@@ -272,7 +272,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <Filter className="h-4 w-4 text-zinc-600" aria-hidden="true" />
+          <Filter className="size-4 text-zinc-600" aria-hidden="true" />
           {tags.map((tag) => (
             <Badge
               key={tag.key}
@@ -294,7 +294,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
                 className="ml-1 rounded-full p-0.5 hover:bg-zinc-100"
                 aria-label={`${tag.label}フィルターを削除`}
               >
-                <X className="h-3 w-3" aria-hidden="true" />
+                <X className="size-3" aria-hidden="true" />
               </button>
             </Badge>
           ))}

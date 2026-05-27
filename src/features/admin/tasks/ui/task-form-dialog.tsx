@@ -47,7 +47,7 @@ function FieldError({ message }: { message?: string }) {
 
   return (
     <p className="mt-1 flex items-center gap-1 text-xs text-red-600">
-      <AlertCircle className="h-3.5 w-3.5" />
+      <AlertCircle className="size-3.5" />
       {message}
     </p>
   );
@@ -211,7 +211,7 @@ function TaskLocationSection({
   return (
     <section>
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-        <MapPin className="h-4 w-4" />
+        <MapPin className="size-4" />
         場所
       </h3>
       <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
@@ -255,7 +255,7 @@ function TaskLocationSection({
         </div>
 
         <div className="pt-8 text-zinc-400">
-          <Triangle className="h-4 w-4 rotate-90 fill-current" />
+          <Triangle className="size-4 rotate-90 fill-current" />
         </div>
 
         <div className="space-y-1.5">
@@ -316,7 +316,7 @@ function TaskItemSection({
   return (
     <section>
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-        <Package className="h-4 w-4" />
+        <Package className="size-4" />
         物品
       </h3>
       <div className="space-y-1.5">
@@ -377,7 +377,7 @@ function TaskScheduleSection({
   return (
     <section>
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-        <Clock3 className="h-4 w-4" />
+        <Clock3 className="size-4" />
         予定時刻
       </h3>
       <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
@@ -406,7 +406,7 @@ function TaskScheduleSection({
         </div>
 
         <div className="pt-8 text-zinc-400">
-          <Triangle className="h-4 w-4 rotate-90 fill-current" />
+          <Triangle className="size-4 rotate-90 fill-current" />
         </div>
 
         <div className="space-y-1.5">
@@ -441,7 +441,7 @@ function TaskNoteSection({ form }: { form: TaskForm }) {
   return (
     <section>
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-        <NotebookPen className="h-4 w-4" />
+        <NotebookPen className="size-4" />
         タスク備考
       </h3>
       <Textarea
@@ -537,7 +537,7 @@ export function TaskFormDialog({
 
           {submitError ? (
             <p className="flex items-center gap-1 text-sm text-red-600">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="size-4" />
               {submitError}
             </p>
           ) : null}

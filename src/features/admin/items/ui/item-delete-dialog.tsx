@@ -65,7 +65,7 @@ export function ItemDeleteDialog({ open, item, onOpenChange }: ItemDeleteDialogP
 
           {errorMessage ? (
             <p className="flex items-center justify-center gap-1 text-sm text-red-600">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="size-4" />
               {errorMessage}
             </p>
           ) : null}

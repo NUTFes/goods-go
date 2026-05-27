@@ -167,7 +167,7 @@ export function TaskDetailDialog({
                       <span className="flex items-center gap-1.5">
                         <span
                           className={cn(
-                            "inline-block h-2.5 w-2.5 rounded-full",
+                            "inline-block size-2.5 rounded-full",
                             getStatusDotClass(status),
                           )}
                         />
@@ -228,7 +228,7 @@ export function TaskDetailDialog({
               aria-live="assertive"
               className="flex items-center gap-1 text-xs text-red-600"
             >
-              <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
+              <AlertCircle className="size-3.5" aria-hidden="true" />
               {errorMessage}
             </p>
           ) : null}

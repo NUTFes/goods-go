@@ -81,7 +81,7 @@ export function LocationDeleteDialog({ open, location, onOpenChange }: LocationD
 
           {errorMessage ? (
             <p className="flex items-center justify-center gap-1 text-sm text-[#c91111]">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="size-4" />
               {errorMessage}
             </p>
           ) : null}

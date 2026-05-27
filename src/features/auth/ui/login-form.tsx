@@ -20,7 +20,7 @@ function FieldError({ messages }: { messages?: string[] }) {
     <>
       {messages.map((msg) => (
         <div key={msg} className="flex items-start gap-1 text-[#C91111]">
-          <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <CircleAlert className="mt-0.5 size-3.5 shrink-0" />
           <p className="text-xs leading-5">{msg}</p>
         </div>
       ))}
@@ -84,7 +84,7 @@ export function LoginForm() {
                 aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-muted"
               >
-                {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                {showPassword ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
               </button>
             </div>
             <FieldError messages={state.fieldErrors?.password} />

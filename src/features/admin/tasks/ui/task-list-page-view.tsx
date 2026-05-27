@@ -71,7 +71,7 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
             disabled={isPending}
             onClick={() => setCreateOpen(true)}
           >
-            <CirclePlus className="h-4 w-4" />
+            <CirclePlus className="size-4" />
             タスクを追加
           </Button>
         </div>

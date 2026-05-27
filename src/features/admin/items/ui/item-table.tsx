@@ -61,7 +61,7 @@ export function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
                   onClick={() => onEdit(item)}
                   aria-label="編集"
                 >
-                  <Pencil className="h-4 w-4 text-green-600" aria-hidden="true" />
+                  <Pencil className="size-4 text-green-600" aria-hidden="true" />
                 </Button>
               </TableCell>
               <TableCell className="px-2 text-center">
@@ -72,7 +72,7 @@ export function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
                   onClick={() => onDelete(item)}
                   aria-label="削除"
                 >
-                  <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
+                  <Trash2 className="size-4 text-red-600" aria-hidden="true" />
                 </Button>
               </TableCell>
             </TableRow>
