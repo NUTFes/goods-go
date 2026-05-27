@@ -77,7 +77,7 @@ export function LocationListPageView({ locations }: LocationListPageViewProps) {
             className="bg-zinc-950 text-white hover:bg-zinc-800"
             onClick={() => dispatchDialog({ type: "open-create-root" })}
           >
-            <CirclePlus className="h-4 w-4" />
+            <CirclePlus className="size-4" />
             エリアを追加
           </Button>
         </div>
