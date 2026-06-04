@@ -73,6 +73,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: React Doctor
         id: react_doctor
@@ -81,6 +83,7 @@ jobs:
           directory: .
           project: goods-go
           verbose: true
+          diff: ${{ github.base_ref || 'main' }}
           fail-on: none
           node-version: "24"
           github-token: ${{ secrets.GITHUB_TOKEN }}
