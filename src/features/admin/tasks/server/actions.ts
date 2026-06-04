@@ -82,7 +82,7 @@ export async function updateTaskAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({
       event_day_type: parsedInput.data.eventDayType,
@@ -97,10 +97,16 @@ export async function updateTaskAction(
       note: parsedInput.data.note?.trim() || null,
     })
     .eq("task_id", taskId)
-    .is("deleted", null);
+    .is("deleted", null)
+    .select("task_id")
+    .maybeSingle();
 
   if (error) {
     return { ok: false, message: "タスクの保存に失敗しました" };
+  }
+
+  if (!data) {
+    return { ok: false, message: "対象のタスクはすでに削除されたか、見つかりません" };
   }
 
   revalidatePath("/admin/tasks");
@@ -116,14 +122,20 @@ export async function deleteTaskAction(taskId: string): Promise<ActionResult> {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({ deleted: new Date().toISOString() })
     .eq("task_id", taskId)
-    .is("deleted", null);
+    .is("deleted", null)
+    .select("task_id")
+    .maybeSingle();
 
   if (error) {
     return { ok: false, message: "削除に失敗しました" };
+  }
+
+  if (!data) {
+    return { ok: false, message: "対象のタスクはすでに削除されたか、見つかりません" };
   }
 
   revalidatePath("/admin/tasks");
