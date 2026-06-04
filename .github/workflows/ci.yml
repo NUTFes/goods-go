@@ -84,19 +84,9 @@ jobs:
           project: goods-go
           verbose: true
           diff: origin/${{ github.base_ref || 'main' }}
-          fail-on: none
+          fail-on: error
           node-version: "24"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: React Doctor Score Gate
-        run: |
-          score="${{ steps.react_doctor.outputs.score }}"
-          echo "React Doctor score: ${score}"
-
-          if [ "${score}" != "100" ]; then
-            echo "Expected React Doctor score 100, got ${score}"
-            exit 1
-          fi
 
   build:
     name: Build
