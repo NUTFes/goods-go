@@ -44,10 +44,12 @@ export async function updateSession(request: NextRequest) {
 
   const user = data?.claims;
 
-  const publicPaths = ["/login", "/register"];
-  const isPublicPath = publicPaths.some((p) => request.nextUrl.pathname.startsWith(p));
+  const authPagePaths = new Set(["/login", "/register"]);
+  const publicPaths = new Set(["/api/health", ...authPagePaths]);
+  const isAuthPagePath = authPagePaths.has(request.nextUrl.pathname);
+  const isPublicPath = publicPaths.has(request.nextUrl.pathname);
 
-  if (user && isPublicPath) {
+  if (user && isAuthPagePath) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
