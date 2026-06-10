@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { logoutAction } from "@/features/auth/server/actions";
 import { APP_ROLES, getAppRoleLabel, type AppRole } from "@/lib/auth/roles";
+import { GoodsGoLogo } from "./goods-go-logo";
 
 type AdminHeaderProps = {
   currentUserName: string;
@@ -70,8 +71,8 @@ export function AdminHeader({ currentUserName, currentUserRole }: AdminHeaderPro
     <header className="sticky top-0 z-50 h-15 w-full bg-zinc-900 text-white">
       <div className="mx-auto flex h-full w-full items-center justify-between px-8">
         <div className="flex h-full items-center gap-8">
-          <Link href="/admin/tasks" className="text-lg font-bold">
-            物品GO
+          <Link href="/admin/tasks" className="flex h-full items-center" aria-label="Goods Go">
+            <GoodsGoLogo className="h-[38px]" />
           </Link>
           <nav className="flex h-full items-center">
             {navItems.map((item) => {

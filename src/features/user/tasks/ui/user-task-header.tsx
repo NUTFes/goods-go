@@ -3,6 +3,7 @@
 import { ChevronRight, CircleUserRound, LogOut, Shield, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { GoodsGoLogo } from "@/components/layout/goods-go-logo";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
@@ -79,7 +80,10 @@ export function UserTaskHeader({
   return (
     <header className="sticky top-0 bg-[#121212] text-[#fafafa]">
       <div className="mx-auto w-full max-w-3xl space-y-4 px-6 pb-1 pt-4 sm:px-4">
-        <div className="flex justify-end">
+        <div className="flex min-h-12 items-center justify-between">
+          <Link href="/tasks" aria-label="Goods Go">
+            <GoodsGoLogo className="h-12" />
+          </Link>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
