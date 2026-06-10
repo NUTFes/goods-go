@@ -10,8 +10,8 @@ export function GoodsGoLogo({ className }: GoodsGoLogoProps) {
     <Image
       src="/goods-go-logo.png"
       alt="Goods Go"
-      width={608}
-      height={190}
+      width={154}
+      height={48}
       className={cn("h-auto w-auto", className)}
       priority
     />
