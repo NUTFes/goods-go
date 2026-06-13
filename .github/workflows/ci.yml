@@ -17,14 +17,10 @@ jobs:
     name: Quality Check
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          ref: ${{ github.head_ref }}
-          persist-credentials: true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
@@ -47,16 +43,81 @@ jobs:
       - name: Oxlint Check
         run: pnpm run lint
 
-      - name: Oxfmt Format
-        run: pnpm run fmt
-
-      - name: Commit formatted changes
-        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9
-        with:
-          commit_message: "style: auto format by oxfmt"
+      - name: Oxfmt Format Check
+        run: pnpm run fmt:check .
 
       - name: TypeScript Check
-        run: pnpm exec tsc --noEmit
+        run: pnpm run typecheck
+
+  infrastructure:
+    name: Infrastructure Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate shell syntax
+        run: bash -n scripts/*.sh scripts/lib/*.sh
+
+      - name: Validate development Compose
+        run: |
+          printf '%s\n' \
+            'NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321' \
+            'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=ci-placeholder' \
+            > .env.dev.generated
+          docker compose --env-file .env.dev.generated -f compose.dev.yml config --quiet
+
+      - name: Fetch pinned Supabase self-host stack
+        run: bash scripts/prod-stack.sh sync
+
+      - name: Validate production Compose
+        run: |
+          cp supabase/self-host-stack/docker/.env.example supabase/self-host-stack/docker/.env
+          mkdir -p secrets
+          printf 'ci-placeholder' > secrets/cloudflare-tunnel-token
+          bash scripts/prod-stack.sh config
+          bash scripts/prod-app.sh config
+          ! grep -Eq 'image:.*:latest' compose.prod.yml
+          ! grep -q '/var/run/docker.sock' compose.prod.yml
+
+  supabase:
+    name: Supabase Migration Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Validate migrations
+        run: |
+          pnpm exec supabase start > /dev/null
+          pnpm exec supabase db reset --local
+          pnpm exec supabase db lint --local --fail-on error
+          pnpm exec supabase gen types typescript --local > /tmp/schema.gen.ts
+          pnpm exec oxfmt /tmp/schema.gen.ts
+          diff -u src/types/schema.gen.ts /tmp/schema.gen.ts
+
+      - name: Stop Supabase
+        if: always()
+        run: pnpm exec supabase stop --project-id goods-go || true
 
   react-doctor:
     name: React Doctor
@@ -91,7 +152,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [quality, react-doctor]
+    needs: [quality, infrastructure, supabase, react-doctor]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
