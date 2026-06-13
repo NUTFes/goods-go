@@ -4,7 +4,10 @@ import { z } from "zod";
 
 // 技大祭メール形式: 数字2桁.小文字1文字.小文字列.nutfes@gmail.com
 // 例: 12.a.kitano.nutfes@gmail.com
-const EMAIL_REGEX = /^\d{2}\.[a-z]\.[a-z]+\.nutfes@gmail\.com$/;
+const isDev = process.env.NODE_ENV !== "production";
+const EMAIL_REGEX = isDev
+  ? /^(\d{2}\.[a-z]\.[a-z]+\.nutfes@gmail\.com|nutfes\.info@gmail\.com|[^@\s]+@goods-go\.local)$/
+  : /^(\d{2}\.[a-z]\.[a-z]+\.nutfes@gmail\.com|nutfes\.info@gmail\.com)$/;
 
 const EMAIL_MSG = "正しい形式のメールアドレスにしてください";
 const PASSWORD_MSG = "パスワードは8文字以上の英数字で入力してください";

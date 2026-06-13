@@ -2,177 +2,238 @@
 node = "24.13.0"
 pnpm = "10.28.1"
 
-# --- App Development (Local) ---
+# ------------------------------------------------------------------------------
+# 01. Development
+# ------------------------------------------------------------------------------
 
-[tasks."10:up"]
-alias = "up"
-description = "開発環境起動 (Next.js + Supabase local)"
-run = "bash scripts/infra.sh dev up"
+[tasks."01_dev:10_up"]
+alias = ["dev", "up", "dev:up"]
+description = "Docker 開発環境を起動"
+run = "bash scripts/dev.sh up"
 
-[tasks."11:down"]
-alias = "down"
-description = "開発環境停止 (Next.js + Supabase local)"
-run = "bash scripts/infra.sh dev down"
+[tasks."01_dev:20_status"]
+alias = ["status", "dev:status"]
+description = "開発環境の状態を表示"
+run = "bash scripts/dev.sh status"
 
-[tasks."12:logs"]
-alias = "logs"
-description = "開発環境ログ表示"
-run = "bash scripts/infra.sh dev logs"
+[tasks."01_dev:30_logs"]
+alias = ["logs", "dev:logs"]
+description = "開発アプリのログを表示"
+run = "bash scripts/dev.sh logs"
 
-[tasks."13:build"]
-alias = "build"
-description = "開発環境をビルドして起動"
-run = "docker compose -f compose.dev.yml up --build -d"
+[tasks."01_dev:40_down"]
+alias = ["down", "dev:down"]
+description = "Docker 開発環境を停止"
+run = "bash scripts/dev.sh down"
 
-# --- Code Quality ---
+# ------------------------------------------------------------------------------
+# 02. Check
+# ------------------------------------------------------------------------------
 
-[tasks."20:lint"]
-alias = "lint"
-description = "Lintチェック"
-run = "pnpm run lint"
-
-[tasks."21:lint:fix"]
-alias = "lint:fix"
-description = "Lint修正"
-run = "pnpm run lint:fix"
-
-[tasks."22:fmt:check"]
-alias = "fmt:check"
-description = "フォーマット確認"
-run = "pnpm run fmt:check ."
-
-[tasks."23:fmt"]
+[tasks."02_check:10_fmt"]
 alias = "fmt"
-description = "フォーマット適用"
+description = "フォーマットを適用"
 run = "pnpm run fmt ."
 
-[tasks."26:clean"]
-alias = "clean"
-description = "ビルド成果物を削除"
-run = "rm -rf .next node_modules"
+[tasks."02_check:20_fmt_check"]
+alias = "fmt:check"
+description = "フォーマットを確認"
+run = "pnpm run fmt:check ."
 
-[tasks."25:clean:docker"]
-alias = "clean:docker"
-description = "Dockerリソースを削除"
-run = "docker compose -f compose.dev.yml down -v --rmi local"
+[tasks."02_check:30_lint"]
+alias = "lint"
+description = "Lint を実行"
+run = "pnpm run lint"
 
-# --- Supabase Development (Local) ---
+[tasks."02_check:40_lint_fix"]
+alias = "lint:fix"
+description = "Lint を修正"
+run = "pnpm run lint:fix"
 
-[tasks."30:supabase:start"]
-alias = "supabase:start"
-description = "Supabaseローカル環境を起動"
-run = "pnpm exec supabase start"
+[tasks."02_check:50_typecheck"]
+alias = "typecheck"
+description = "TypeScript の型チェックを実行"
+run = "pnpm run typecheck"
 
-[tasks."31:supabase:stop"]
-alias = "supabase:stop"
-description = "Supabaseローカル環境を停止"
-run = "pnpm exec supabase stop"
+# ------------------------------------------------------------------------------
+# 03. Build
+# ------------------------------------------------------------------------------
 
-[tasks."32:supabase:status"]
-alias = "supabase:status"
-description = "Supabaseローカル接続情報を確認"
+[tasks."03_build:10_app"]
+alias = "build"
+description = "Next.js の production build を実行"
+run = "pnpm run build"
+
+# ------------------------------------------------------------------------------
+# 04. Local Supabase
+# ------------------------------------------------------------------------------
+
+[tasks."04_local_supabase:10_start"]
+alias = ["supabase:start", "local:supabase:start"]
+description = "local Supabase stack を起動"
+run = "bash scripts/dev.sh supabase-up"
+
+[tasks."04_local_supabase:20_status"]
+alias = ["supabase:status", "local:supabase:status"]
+description = "local Supabase stack の接続情報を表示"
 run = "pnpm exec supabase status"
 
-[tasks."33:supabase:reset"]
-alias = "supabase:reset"
-description = "ローカルへ Migration + Seed を再適用"
-run = "pnpm exec supabase db reset --local"
-
-[tasks."34:supabase:lint"]
-alias = "supabase:lint"
-description = "ローカルDBのスキーマLint"
-run = "pnpm exec supabase db lint --local --fail-on error"
-
-[tasks."35:supabase:typegen"]
-alias = "supabase:typegen"
-description = "ローカルDBから型を生成"
-run = "mkdir -p src/types && pnpm exec supabase gen types typescript --local > src/types/schema.gen.ts"
-
-[tasks."36:supabase:migration:new"]
-alias = "supabase:migration:new"
-description = "新規 migration ファイルを作成"
+[tasks."04_local_supabase:30_migration_new"]
+alias = ["supabase:migration:new", "local:supabase:migration:new"]
+description = "local Supabase の新規 migration を作成"
 run = "pnpm exec supabase migration new"
 
-# --- Supabase Production ---
+[tasks."04_local_supabase:40_typegen"]
+alias = ["supabase:typegen", "local:supabase:typegen"]
+description = "local DB から TypeScript 型を生成"
+run = "mkdir -p src/types && pnpm exec supabase gen types typescript --local > src/types/schema.gen.ts && pnpm exec oxfmt src/types/schema.gen.ts"
 
-[tasks."40:prod:supabase:up"]
-alias = "prod:supabase:up"
-description = "self-hosted Supabase stack を起動"
-run = "bash scripts/infra.sh supabase up"
+[tasks."04_local_supabase:50_lint"]
+alias = ["supabase:lint", "local:supabase:lint"]
+description = "local DB schema を lint"
+run = "pnpm exec supabase db lint --local --fail-on error"
 
-[tasks."41:prod:supabase:down"]
-alias = "prod:supabase:down"
-description = "self-hosted Supabase stack を停止"
-run = "bash scripts/infra.sh supabase down"
+[tasks."04_local_supabase:60_reset"]
+alias = ["supabase:reset", "local:supabase:reset"]
+description = "local DB に migration と seed を再適用"
+run = "pnpm exec supabase db reset --local"
 
-[tasks."42:prod:supabase:logs"]
-alias = "prod:supabase:logs"
-description = "self-hosted Supabase stack のログを表示"
-run = "bash scripts/infra.sh supabase logs"
+[tasks."04_local_supabase:70_stop"]
+alias = ["supabase:stop", "local:supabase:stop"]
+description = "local Supabase stack を停止"
+run = "pnpm exec supabase stop --project-id goods-go"
 
-[tasks."43:prod:supabase:status"]
-alias = "prod:supabase:status"
-description = "self-hosted Supabase stack の状態を確認"
-run = "bash scripts/infra.sh supabase status"
+# ------------------------------------------------------------------------------
+# 05. Production Deploy
+# ------------------------------------------------------------------------------
 
-[tasks."44:prod:supabase:plan"]
-alias = "prod:supabase:plan"
-description = "self-hosted DBへの migration 差分を dry-run で確認"
-run = "bash scripts/infra.sh supabase plan"
-
-[tasks."45:prod:supabase:lint"]
-alias = "prod:supabase:lint"
-description = "self-hosted DBのスキーマLint"
-run = "bash scripts/infra.sh supabase lint"
-
-[tasks."46:prod:supabase:migrate"]
-alias = "prod:supabase:migrate"
-description = "migration を self-hosted DB に適用"
-run = "bash scripts/infra.sh supabase migrate"
-
-[tasks."47:prod:supabase:reset"]
-alias = "prod:supabase:reset"
-description = "self-hosted Supabase stack をフルリセット"
-run = "bash scripts/infra.sh supabase reset"
-
-[tasks."48:prod:supabase:update-stack"]
-alias = "supabase:update-stack"
-description = "公式から self-hosted Supabase stack を最新化"
-run = "bash scripts/infra.sh supabase update-stack"
-
-[tasks."49:prod:setup"]
+[tasks."05_prod_deploy:10_setup"]
 alias = "prod:setup"
-description = "本番環境のセットアップ (Secretsの生成と適用)"
+description = "固定版 self-host stack と production secrets を初期化"
 run = "bash scripts/setup-prod-env.sh"
 
-# --- App Production ---
-
-[tasks."50:prod:up"]
-alias = "prod:up"
-description = "本番アプリ環境を起動"
-run = "bash scripts/infra.sh prod up"
-
-[tasks."51:prod:down"]
-alias = "prod:down"
-description = "本番アプリ環境を停止"
-run = "bash scripts/infra.sh prod down"
-
-[tasks."52:prod:logs"]
-alias = "prod:logs"
-description = "本番アプリ環境ログを表示"
-run = "bash scripts/infra.sh prod logs"
-
-[tasks."53:prod:deploy"]
+[tasks."05_prod_deploy:20_deploy"]
 alias = "prod:deploy"
-description = "DB反映込みで本番環境を一括デプロイ"
-run = "bash scripts/infra.sh prod deploy"
+description = "stack sync、backup/migration、app build/start を実行"
+run = "bash scripts/deploy.sh"
 
-[tasks."54:prod:status"]
+# ------------------------------------------------------------------------------
+# 06. Production App
+# ------------------------------------------------------------------------------
+
+[tasks."06_prod_app:10_config"]
+alias = "prod:config"
+description = "production app Compose を検証"
+run = "bash scripts/prod-app.sh config"
+
+[tasks."06_prod_app:20_up"]
+alias = "prod:up"
+description = "production app と Cloudflare Tunnel を build/start"
+run = "bash scripts/prod-app.sh up"
+
+[tasks."06_prod_app:30_status"]
 alias = "prod:status"
-description = "本番アプリ環境の状態を確認"
-run = "bash scripts/infra.sh prod status"
+description = "production app の状態を表示"
+run = "bash scripts/prod-app.sh status"
 
-[tasks."55:prod:hard-reset"]
-alias = "prod:hard-reset"
-description = "物理ファイルも削除する本番環境の完全リセット (sudo使用)"
-run = "bash scripts/prod-hard-reset.sh"
+[tasks."06_prod_app:40_logs"]
+alias = "prod:logs"
+description = "production app のログを表示"
+run = "bash scripts/prod-app.sh logs"
+
+[tasks."06_prod_app:50_down"]
+alias = "prod:down"
+description = "production app と Cloudflare Tunnel を停止"
+run = "bash scripts/prod-app.sh down"
+
+# ------------------------------------------------------------------------------
+# 07. Production Supabase
+# ------------------------------------------------------------------------------
+
+[tasks."07_prod_supabase:10_config"]
+alias = "prod:supabase:config"
+description = "production Supabase Compose を検証"
+run = "bash scripts/prod-stack.sh config"
+
+[tasks."07_prod_supabase:20_sync"]
+alias = "prod:supabase:sync"
+description = "固定 commit の公式 self-host stack を同期"
+run = "bash scripts/prod-stack.sh sync"
+
+[tasks."07_prod_supabase:30_pull"]
+alias = "prod:supabase:pull"
+description = "固定 stack の core images を取得"
+run = "bash scripts/prod-stack.sh pull"
+
+[tasks."07_prod_supabase:40_up"]
+alias = "prod:supabase:up"
+description = "production Supabase core services を起動"
+run = "bash scripts/prod-stack.sh up"
+
+[tasks."07_prod_supabase:50_status"]
+alias = "prod:supabase:status"
+description = "production Supabase の状態を表示"
+run = "bash scripts/prod-stack.sh status"
+
+[tasks."07_prod_supabase:60_logs"]
+alias = "prod:supabase:logs"
+description = "production Supabase のログを表示"
+run = "bash scripts/prod-stack.sh logs"
+
+[tasks."07_prod_supabase:70_down"]
+alias = "prod:supabase:down"
+description = "production Supabase stack を停止"
+run = "bash scripts/prod-stack.sh down"
+
+# ------------------------------------------------------------------------------
+# 08. Production DB
+# ------------------------------------------------------------------------------
+
+[tasks."08_prod_db:10_lint"]
+alias = "prod:db:lint"
+description = "production DB schema を lint"
+run = "bash scripts/prod-db.sh lint"
+
+[tasks."08_prod_db:20_plan"]
+alias = "prod:db:plan"
+description = "production migration の dry-run を実行"
+run = "bash scripts/prod-db.sh plan"
+
+[tasks."08_prod_db:30_backup"]
+alias = "prod:db:backup"
+description = "production DB と pgsodium key の停止 snapshot を作成"
+run = "bash scripts/prod-db.sh backup"
+
+[tasks."08_prod_db:40_migrate"]
+alias = "prod:db:migrate"
+description = "dry-run と backup 後に production migration を適用"
+run = "bash scripts/prod-db.sh migrate"
+
+[tasks."08_prod_db:50_rollback"]
+alias = "prod:db:rollback"
+description = "指定 snapshot へ production DB を復元"
+run = "bash scripts/prod-db.sh rollback"
+
+# ------------------------------------------------------------------------------
+# 09. Production Admin
+# ------------------------------------------------------------------------------
+
+[tasks."09_prod_admin:10_check"]
+alias = "prod:admin:check"
+description = "production に有効な Admin が存在することを確認"
+run = "bash scripts/prod-admin.sh require"
+
+[tasks."09_prod_admin:20_bootstrap"]
+alias = "prod:admin:bootstrap"
+description = "production の初期 Admin を Auth Admin API で作成"
+run = "bash scripts/prod-admin.sh bootstrap"
+
+# ------------------------------------------------------------------------------
+# 99. Danger Zone
+# ------------------------------------------------------------------------------
+
+[tasks."99_danger:10_prod_reset"]
+alias = "danger:prod:reset"
+# alias = ["danger:prod:reset", "prod:reset"]
+description = "DANGER: production の DB/Auth/Storage/backup データを完全削除"
+run = "bash scripts/prod-db.sh reset"

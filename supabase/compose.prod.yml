@@ -1,0 +1,17 @@
+services:
+  kong:
+    depends_on: !reset {}
+    ports: !override
+      - "127.0.0.1:${KONG_HTTP_PORT}:8000"
+
+  auth:
+    environment:
+      GOTRUE_JWT_KEYS: ${JWT_KEYS:-[]}
+
+  supavisor:
+    ports: !override
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+
+networks:
+  default:
+    name: goods-go-prod

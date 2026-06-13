@@ -1,187 +1,126 @@
 # goods-go
 
-Next.js + Supabase の開発環境
+Next.js 16 + Supabase の物品管理アプリケーションです。
 
-## 技術スタック
+開発と本番の Supabase は分離しています。
 
-- Next.js 16 (App Router)
-- React 19
-- Supabase (Local + Self-hosted)
-- Docker Compose
-- mise (タスクランナー/バージョン管理)
-- pnpm
-- Biome (Linter/Formatter)
-- Tailwind CSS v4
+- 開発: Supabase CLI local development stack
+- 本番: 公式 self-hosted Docker stack
 
-## 前提条件
+## 必要環境
 
-- Docker / Docker Compose
-- mise
+- Docker Engine / Docker Compose
+- [mise](https://mise.jdx.dev/)
+- Git
 
-### mise のインストール
-
-miseを導入していない場合は、以下のコマンドでインストールしてください。
-
-```bash
-curl https://mise.run | sh
-```
-
-詳細は公式ドキュメントを参照: <https://mise.jdx.dev/installing-mise.html>
-
-## ローカル開発環境の構築
-
-### 1. 依存関係のインストール
-
-miseが自動的にNode.jsとpnpmのバージョンを管理します。
+Node.js、pnpm、Supabase CLI はリポジトリでバージョンを固定しています。
 
 ```bash
 mise trust
 mise install
-pnpm install
+pnpm install --frozen-lockfile
 ```
 
-### 2. 環境変数（アプリ側 `.env`）の準備
-
-[NUTFes/settings](https://github.com/NUTFes/settings/tree/main/goods-go/) の値をベースに作成してください。local Supabase を使う場合の最小値は以下です。
-
-```dotenv
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-```
-
-### 3. アプリとローカルDBの起動
+## 開発
 
 ```bash
-mise run up
+mise run dev
 ```
 
----
+この 1 コマンドで次を行います。
 
-## 本番環境 (Self-hosted) の構築手順
+1. Supabase CLI local stack を起動
+2. app container を CLI 管理 network `supabase_network_goods-go` に参加
+3. local の URL と publishable key を `.env.dev.generated` に生成
+4. Next.js app container を build/start
+5. `/api/health` が healthy になるまで待機
 
-本番運用では `supabase/self-host-stack/` 以下の Docker Compose 構成を利用します。
+アクセス先は `http://127.0.0.1:3000` です。ブラウザは `http://127.0.0.1:54321`、app container は Docker DNS の `http://kong:8000` を使用します。Supabase Studio は `http://127.0.0.1:54323` です。
 
-### 1. 秘密情報の生成と適用
+local seed にはログイン可能な次の確認用ユーザーが含まれます。
 
-初回セットアップ時に、本番用のパスワードやJWTシークレットを自動生成して適用します。
-（スタック一式が存在しない場合は、自動的に公式からダウンロードされます）
+| role   | email                   | password   |
+| ------ | ----------------------- | ---------- |
+| Admin  | `admin@goods-go.local`  | `gidaifes` |
+| Leader | `leader@goods-go.local` | `gidaifes` |
+| User   | `user@goods-go.local`   | `gidaifes` |
 
-```bash
-# 本番環境のセットアップと秘密情報の生成・適用 (対象のドメインを指定)
-mise run prod:setup --domain goods-go.nutfes.net --apply
-```
+コードベースで使用している Supabase runtime 機能は Auth と PostgREST です。Studio は local migration/schema 確認用に起動しますが、Realtime、Storage、Edge Functions、Inbucket は既定で無効です。
 
-> **Warning**
-> 後から `.env` 内の `POSTGRES_PASSWORD` を変更した場合、DBコンテナを立ち上げ直すだけでは反映されません（古いパスワードで初期化されたデータが残るため）。その場合は下記の「フルリセット（`mise run prod:hard-reset`）」手順を実行してください。
-
-### 2. 本番環境へのデプロイ
-
-```bash
-# 一括デプロイ（DB起動・Migration適用・アプリ起動をすべて実行）
-mise run prod:deploy
-```
-
-## 認証運用ポリシー（現行）
-
-- メールサーバー（SMTP）は運用しません。
-- パスワードリセット機能は提供しません（`forgot-password` / `update-password` ルートは未使用）。
-- アカウント復旧が必要な場合は、管理者によるアカウント削除後に再登録で対応します。
-- Supabase Auth はメール確認不要（`[auth.email].enable_confirmations = false`）で運用します。
-
-## コマンド一覧
-
-### 開発（App + Local Supabase）
-
-| 操作             | コマンド         | 説明                           |
-| :--------------- | :--------------- | :----------------------------- |
-| **起動**         | `mise run up`    | アプリと Supabase Local を起動 |
-| **停止**         | `mise run down`  | 開発環境の停止                 |
-| **ログ**         | `mise run logs`  | 開発環境のログを表示           |
-| **再ビルド起動** | `mise run build` | 開発環境をビルドして起動       |
-
-### Supabase Local (CLI)
-
-| 操作              | コマンド                                    | 説明                                |
-| :---------------- | :------------------------------------------ | :---------------------------------- |
-| **起動**          | `mise run supabase:start`                   | Local Supabase の起動               |
-| **停止**          | `mise run supabase:stop`                    | Local Supabase の停止               |
-| **接続情報**      | `mise run supabase:status`                  | Local Supabase の接続情報を確認     |
-| **リセット**      | `mise run supabase:reset`                   | Migration + Seed を再適用して初期化 |
-| **Lint**          | `mise run supabase:lint`                    | スキーマのLintチェック              |
-| **型生成**        | `mise run supabase:typegen`                 | DBからTypeScriptの型を生成          |
-| **Migration作成** | `mise run supabase:migration:new -- <name>` | 新規 Migration ファイルの作成       |
-
-### Supabase Production (Self-hosted)
-
-| 操作             | コマンド                         | 説明                                   |
-| :--------------- | :------------------------------- | :------------------------------------- |
-| **更新**         | `mise run supabase:update-stack` | 公式からスタックを最新化               |
-| **起動**         | `mise run prod:supabase:up`      | Self-hosted Supabase を起動            |
-| **停止**         | `mise run prod:supabase:down`    | Self-hosted Supabase を停止            |
-| **ログ**         | `mise run prod:supabase:logs`    | Self-hosted Supabase のログを表示      |
-| **状態**         | `mise run prod:supabase:status`  | Self-hosted Supabase の状態を確認      |
-| **Dry-run**      | `mise run prod:supabase:plan`    | 本番DBへの Migration 差分を確認        |
-| **Lint**         | `mise run prod:supabase:lint`    | 本番DBのスキーマLintチェック           |
-| **適用**         | `mise run prod:supabase:migrate` | 本番DBへ Migration を適用              |
-| **フルリセット** | `mise run prod:supabase:reset`   | コンテナと \`.env\` などを通常リセット |
-
-### App Production
-
-| 操作             | コマンド                                | 説明                                         |
-| :--------------- | :-------------------------------------- | :------------------------------------------- |
-| **セットアップ** | `mise run prod:setup --domain <DOMAIN>` | 本番環境の初回構築と秘密情報生成             |
-| **一括デプロイ** | `mise run prod:deploy`                  | DB反映込みで本番環境を一気にデプロイ（推奨） |
-| **起動**         | `mise run prod:up`                      | 本番アプリのみを起動                         |
-| **停止**         | `mise run prod:down`                    | 本番アプリのみを停止                         |
-| **ログ**         | `mise run prod:logs`                    | 本番アプリ環境のログを表示                   |
-| **状態**         | `mise run prod:status`                  | 本番アプリ環境の状態を確認                   |
-| **物理リセット** | `mise run prod:hard-reset`              | 実データも完全に削除する強力なリセット       |
-
-## 実行可否テスト手順
-
-### A. dev（Local CLI）
+Supabase CLI は local port が `0.0.0.0` に bind される security notice を表示します。Studio を含め認証なしの開発用 service があるため、この構成は firewall が有効な開発端末だけで使用し、共有 server や internet へ直接公開しないでください。local key は本番で使用できません。
 
 ```bash
-mise run up
-mise run supabase:status
+mise run status
+mise run logs
 mise run supabase:reset
 mise run supabase:lint
 mise run supabase:typegen
 mise run down
 ```
 
-### B. prod（Self-host）
+## 品質確認
 
 ```bash
-mise run prod:supabase:up
-mise run prod:supabase:status
-mise run prod:supabase:plan
-mise run prod:supabase:lint
-mise run prod:supabase:migrate
-mise run prod:up
-mise run prod:status
-mise run prod:down
-mise run prod:supabase:down
+mise run fmt:check
+mise run lint
+mise run typecheck
+mise run build
 ```
 
-## フルリセット
+## 本番
 
-`mise run prod:supabase:reset` はコンテナ・ボリューム・`.env` を含む通常の初期化を行いますが、データベース（PostgreSQL）の物理ファイルが `root` 権限で作成されているため、完全に削除しきれずデータが残る場合があります。
-
-**⚠️ パスワード設定などを失敗し、DBが立ち上がらなくなった場合**
-強力な「完全リセット」用のコマンド（コンテナ停止 + 内部で `sudo rm -rf` を実行）を用意しています。
+本番手順は [docs/deployment.md](docs/deployment.md) を参照してください。概要は次の通りです。
 
 ```bash
-# 本番環境のコンテナと実データを根本から削除します
-mise run prod:hard-reset
-
-# その後、一括デプロイで再起動します
+mise run prod:setup -- --domain goods-go.example.com
+mise run prod:supabase:up
+mise run prod:db:migrate
+mise run prod:admin:bootstrap -- --email admin@example.com --password-file ./secrets/admin-password
 mise run prod:deploy
 ```
 
-## 補足
+本番 app は active Admin が 1 人もいない場合、起動を拒否します。public signup の先着ユーザーを Admin にはしません。
 
-- `mise run prod:*` 実行時、`NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` は self-host 側 `.env` から自動注入されます
-- `SUPABASE_DB_URL` を root `.env`（または環境変数）に設定すると、prod migration の接続先を上書きできます
-- `SUPABASE_DB_PUSH_INCLUDE_SEED=true` で prod migration 時に `supabase/seed.sql` を同時適用できます
-- `INFRA_PROD_SKIP_APP_BUILD=true` を指定すると、`mise run prod:up` / `mise run prod:deploy` の app build を省略して高速化できます（既存イメージを再利用）
+本番 self-host stack は [supabase/self-hosted.version](supabase/self-hosted.version) の完全な commit SHA に固定しています。`master` や latest commit を起動時に追従しません。
+
+既定で起動する Supabase service は以下だけです。
+
+- PostgreSQL
+- Auth
+- PostgREST
+- Kong
+- Supavisor
+
+Studio、Realtime、Storage、Edge Functions、Analytics、Vector は起動しません。Studio の public hostname も作成しません。
+
+## mise task
+
+```bash
+mise tasks
+```
+
+主要 task:
+
+| 用途                           | task                                                  |
+| ------------------------------ | ----------------------------------------------------- |
+| dev 起動 / 停止                | `dev`, `down`                                         |
+| dev 状態 / ログ                | `status`, `logs`                                      |
+| local DB reset / lint / 型生成 | `supabase:reset`, `supabase:lint`, `supabase:typegen` |
+| 本番初期化                     | `prod:setup`                                          |
+| 固定 self-host stack 同期      | `prod:supabase:sync`                                  |
+| 本番 Supabase 起動 / 停止      | `prod:supabase:up`, `prod:supabase:down`              |
+| 本番 migration dry-run         | `prod:db:plan`                                        |
+| 本番 backup / migrate          | `prod:db:backup`, `prod:db:migrate`                   |
+| 本番 rollback                  | `prod:db:rollback`                                    |
+| 本番初期 Admin                 | `prod:admin:bootstrap`, `prod:admin:check`            |
+| 本番全データ削除               | `prod:reset`                                          |
+| 本番 deploy                    | `prod:deploy`                                         |
+
+## 公式資料
+
+- [Supabase CLI local development](https://supabase.com/docs/guides/local-development/cli/getting-started)
+- [Supabase self-hosting with Docker](https://supabase.com/docs/guides/self-hosting/docker)
+- [Supabase Auth Admin createUser](https://supabase.com/docs/reference/javascript/auth-admin-createuser)
+- [Supabase backup and restore](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)
+- [Docker Compose networking](https://docs.docker.com/compose/how-tos/networking/)
+- [Docker Compose secrets](https://docs.docker.com/compose/how-tos/use-secrets/)
