@@ -36,3 +36,6 @@ yarn-error.log*
 
 # Supabase (managed separately)
 supabase
+backups
+secrets
+execplan

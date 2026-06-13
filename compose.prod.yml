@@ -1,6 +1,7 @@
+name: goods-go-app-prod
+
 services:
   app:
-    container_name: goods-go-prod
     image: goods-go-prod
     build:
       context: .
@@ -10,32 +11,47 @@ services:
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
-      SUPABASE_INTERNAL_URL: ${SUPABASE_INTERNAL_URL:-http://supabase-kong:8000}
-    restart: always
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?required}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:?required}
+      SUPABASE_INTERNAL_URL: http://kong:8000
+      SUPABASE_HEALTH_URL: http://auth:9999/health
+    init: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
     networks:
-      - default
-      - supabase
+      - prod
 
   cloudflared:
-    container_name: goods-go-tunnel
-    image: cloudflare/cloudflared:latest
-    command: tunnel run
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
-    restart: always
+    image: cloudflare/cloudflared:2026.6.0
+    command: tunnel --no-autoupdate run --token-file /run/secrets/cloudflare_tunnel_token
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    secrets:
+      - cloudflare_tunnel_token
     logging:
       driver: "json-file"
       options:
@@ -45,26 +61,13 @@ services:
       app:
         condition: service_healthy
     networks:
-      - default
-      - supabase
-
-  dozzle-agent:
-    container_name: goods-go-dozzle-agent
-    image: amir20/dozzle:latest
-    command: agent
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - "7007:7007"
-    environment:
-      - DOZZLE_HOSTNAME=goods-go-prod
-    restart: always
-    healthcheck:
-      test: ["CMD", "/dozzle", "healthcheck"]
-      interval: 5s
-      retries: 5
+      - prod
 
 networks:
-  supabase:
+  prod:
     external: true
-    name: goods-go-supabase-prod_default
+    name: goods-go-prod
+
+secrets:
+  cloudflare_tunnel_token:
+    file: ${TUNNEL_TOKEN_FILE:-./secrets/cloudflare-tunnel-token}

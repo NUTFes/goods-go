@@ -1,13 +1,13 @@
 # syntax=docker.io/docker/dockerfile:1
 
-FROM node:24-alpine AS base
+FROM node:24.13.0-alpine AS base
 
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-RUN npm install -g pnpm && pnpm i --frozen-lockfile
+RUN npm install -g pnpm@10.28.1 && pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
@@ -20,7 +20,7 @@ ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
-RUN npm install -g pnpm && pnpm build
+RUN npm install -g pnpm@10.28.1 && pnpm build
 
 FROM base AS runner
 WORKDIR /app
