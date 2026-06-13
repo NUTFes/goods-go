@@ -6,6 +6,7 @@ export const APP_ROLES = {
   USER: 2,
 } as const;
 
+// react-doctor-disable-next-line deslop/unused-export
 export const APP_ROLE_VALUES = [APP_ROLES.ADMIN, APP_ROLES.LEADER, APP_ROLES.USER] as const;
 
 export type AppRole = Tables<"users">["role"] & (typeof APP_ROLE_VALUES)[number];

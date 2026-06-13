@@ -55,7 +55,7 @@ export function TaskDeleteDialog({ open, task, onOpenChange }: TaskDeleteDialogP
               </div>
             </div>
             <div className="mb-3 text-zinc-400">
-              <Triangle className="h-4 w-4 rotate-90 fill-current" />
+              <Triangle className="size-4 rotate-90 fill-current" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-zinc-500 font-normal">To (搬入先)</Label>
@@ -76,7 +76,7 @@ export function TaskDeleteDialog({ open, task, onOpenChange }: TaskDeleteDialogP
 
           {errorMessage ? (
             <p className="flex items-center justify-center gap-1 text-sm text-red-600">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="size-4" />
               {errorMessage}
             </p>
           ) : null}

@@ -33,7 +33,7 @@ function FieldError({ message }: { message?: string }) {
 
   return (
     <p role="alert" aria-live="polite" className="flex items-center gap-1 text-xs text-[#c91111]">
-      <AlertCircle className="h-3.5 w-3.5" />
+      <AlertCircle className="size-3.5" />
       {message}
     </p>
   );
@@ -182,7 +182,7 @@ export function LocationFormDialog({
               aria-live="polite"
               className="flex items-center justify-center gap-1 px-9 pb-5 text-sm text-[#c91111]"
             >
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="size-4" />
               {submitError}
             </p>
           ) : null}

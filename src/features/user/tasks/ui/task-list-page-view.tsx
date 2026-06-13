@@ -140,7 +140,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
         </div>
 
         {tasks.length > 0 ? (
-          <ul role="list" className="space-y-2">
+          <ul className="space-y-2">
             {tasks.map((task) => (
               <li key={task.taskId}>
                 <TaskCard task={task} onClick={() => setSelectedTaskId(task.taskId)} />
@@ -150,13 +150,12 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
         ) : null}
 
         {!isPending && tasks.length === 0 ? (
-          <div
-            className="rounded-lg border border-[#e5e5e5] bg-white px-4 py-8 shadow-sm"
-            role="status"
+          <output
+            className="block rounded-lg border border-[#e5e5e5] bg-white px-4 py-8 text-center text-sm text-[#737373] shadow-sm"
             aria-live="polite"
           >
-            <p className="text-center text-sm text-[#737373]">該当するタスクはありません</p>
-          </div>
+            該当するタスクはありません
+          </output>
         ) : null}
       </section>
 

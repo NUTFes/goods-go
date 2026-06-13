@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -17,19 +18,14 @@ type LocationTreeProps = {
 
 type LocationTreeNodeProps = Omit<LocationTreeProps, "locations"> & {
   location: AdminLocation;
-  isNested?: boolean;
+};
+
+type LocationTreeLineStyle = CSSProperties & {
+  "--location-tree-line-left": string;
 };
 
 function canCreateChild(location: AdminLocation) {
   return location.depth < 2;
-}
-
-function rowBackgroundClass(hasChildren: boolean, isExpanded: boolean) {
-  if (hasChildren && isExpanded) {
-    return "bg-[#f3f4f6]";
-  }
-
-  return "bg-transparent";
 }
 
 function LocationTreeNode({
@@ -39,49 +35,40 @@ function LocationTreeNode({
   onCreateChild,
   onEdit,
   onDelete,
-  isNested = false,
 }: LocationTreeNodeProps) {
   const hasChildren = location.children.length > 0;
   const isExpanded = hasChildren ? expandedIds.has(location.locationId) : false;
+  const indent = location.depth * 56;
 
   return (
-    <div className={cn("relative", isNested && "pl-8")}>
+    <div className="relative">
       <Collapsible
         open={isExpanded}
         onOpenChange={(open) => onExpandedChange(location.locationId, open)}
       >
         <div
-          className={cn(
-            "flex min-h-14 items-center justify-between border-b px-4 py-1 transition-colors duration-200 ease-out motion-reduce:transition-none",
-            location.depth === 0 ? "border-black" : "border-zinc-300",
-            rowBackgroundClass(hasChildren, isExpanded),
-          )}
+          className="flex min-h-14 items-center justify-between rounded-lg border-b border-[#e5e5e5] bg-white px-4 py-1 transition-colors duration-200 ease-out motion-reduce:transition-none"
+          style={{ marginLeft: indent }}
         >
           <div className="min-w-0 flex-1">
             {hasChildren ? (
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
-                  className="group flex min-h-11 items-center gap-3 text-left text-[18px] font-normal text-[#0a0a0a] outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+                  className="group flex min-h-11 items-center gap-2 text-left text-[20px] leading-5 font-normal text-[#0a0a0a] outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
                 >
-                  <span
-                    className={cn(
-                      "flex size-7 shrink-0 items-center justify-center rounded-full transition-colors duration-200 ease-out motion-reduce:transition-none",
-                      isExpanded ? "bg-black/5" : "bg-transparent group-hover:bg-black/5",
+                  <span className="flex size-4 shrink-0 items-center justify-center">
+                    {isExpanded ? (
+                      <ChevronDown className="size-4 shrink-0" />
+                    ) : (
+                      <ChevronRight className="size-4 shrink-0" />
                     )}
-                  >
-                    <ChevronRight
-                      className={cn(
-                        "h-4 w-4 shrink-0 transition-transform duration-300 ease-out motion-reduce:transition-none",
-                        isExpanded && "rotate-90",
-                      )}
-                    />
                   </span>
                   <span className="truncate">{location.name}</span>
                 </button>
               </CollapsibleTrigger>
             ) : (
-              <div className="flex min-h-11 items-center gap-3 pl-7 text-[18px] font-normal text-[#0a0a0a]">
+              <div className="flex min-h-11 items-center text-[20px] leading-5 font-normal text-[#0a0a0a]">
                 <span className="truncate">{location.name}</span>
               </div>
             )}
@@ -93,34 +80,34 @@ function LocationTreeNode({
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="h-11 w-11 rounded-md text-black transition-colors duration-200 hover:bg-black/5"
+                className="size-12 rounded-md text-black transition-colors duration-200 hover:bg-black/5"
                 aria-label={`${location.name}の配下に場所を追加`}
                 onClick={() => onCreateChild(location)}
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="size-5" />
               </Button>
             ) : (
-              <div className="w-11" aria-hidden="true" />
+              <div className="w-12" aria-hidden="true" />
             )}
             <Button
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="h-11 w-11 rounded-md transition-colors duration-200 hover:bg-black/5"
+              className="size-12 rounded-md transition-colors duration-200 hover:bg-black/5"
               aria-label={`${location.name}を編集`}
               onClick={() => onEdit(location)}
             >
-              <Pencil className="h-5 w-5 text-[#70b64d]" />
+              <Pencil className="size-5 text-[#70b64d]" />
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="h-11 w-11 rounded-md transition-colors duration-200 hover:bg-black/5"
+              className="size-12 rounded-md transition-colors duration-200 hover:bg-black/5"
               aria-label={`${location.name}を削除`}
               onClick={() => onDelete(location)}
             >
-              <Trash2 className="h-5 w-5 text-[#ff1f1f]" />
+              <Trash2 className="size-5 text-[#ff1f1f]" />
             </Button>
           </div>
         </div>
@@ -134,7 +121,14 @@ function LocationTreeNode({
               "data-[state=open]:slide-in-from-top-1 data-[state=closed]:slide-out-to-top-1",
             )}
           >
-            <div className="ml-6 border-l border-zinc-300">
+            <div
+              className={cn(
+                "relative",
+                isExpanded &&
+                  "before:absolute before:top-3 before:bottom-3 before:left-[var(--location-tree-line-left)] before:w-px before:bg-[#d1d5db]",
+              )}
+              style={{ "--location-tree-line-left": `${indent + 24}px` } as LocationTreeLineStyle}
+            >
               {location.children.map((child) => (
                 <LocationTreeNode
                   key={child.locationId}
@@ -144,7 +138,6 @@ function LocationTreeNode({
                   onCreateChild={onCreateChild}
                   onEdit={onEdit}
                   onDelete={onDelete}
-                  isNested
                 />
               ))}
             </div>
@@ -164,7 +157,7 @@ export function LocationTree({
   onDelete,
 }: LocationTreeProps) {
   return (
-    <div className="space-y-0">
+    <div>
       {locations.map((location) => (
         <LocationTreeNode
           key={location.locationId}

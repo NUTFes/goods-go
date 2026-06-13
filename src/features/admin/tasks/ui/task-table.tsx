@@ -30,10 +30,10 @@ type TaskTableProps = {
 
 function sortIconClass(sort: TaskSortState, key: TaskSortKey): string {
   if (sort.key !== key) {
-    return "h-3.5 w-3.5 opacity-70";
+    return "size-3.5 opacity-70";
   }
 
-  return sort.direction === "asc" ? "h-3.5 w-3.5" : "h-3.5 w-3.5 rotate-180";
+  return sort.direction === "asc" ? "size-3.5" : "size-3.5 rotate-180";
 }
 
 function TruncatedCellText({
@@ -169,7 +169,7 @@ export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete 
                   onClick={() => onEdit(task)}
                   aria-label="編集"
                 >
-                  <Pencil className="h-4 w-4 text-green-600" aria-hidden="true" />
+                  <Pencil className="size-4 text-green-600" aria-hidden="true" />
                 </Button>
               </TableCell>
               <TableCell className="text-center bg-white sticky right-0 z-10">
@@ -180,7 +180,7 @@ export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete 
                   onClick={() => onDelete(task)}
                   aria-label="削除"
                 >
-                  <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
+                  <Trash2 className="size-4 text-red-600" aria-hidden="true" />
                 </Button>
               </TableCell>
             </TableRow>

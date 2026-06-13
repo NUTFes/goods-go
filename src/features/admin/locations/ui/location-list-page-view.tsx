@@ -67,17 +67,17 @@ export function LocationListPageView({ locations }: LocationListPageViewProps) {
   const [dialogState, dispatchDialog] = useReducer(dialogReducer, initialDialogState);
 
   return (
-    <main className="px-6 py-6 md:px-16 md:py-8">
-      <div className="mx-auto max-w-[876px] space-y-4">
+    <main className="min-h-[calc(100vh-60px)] bg-[#f3f4f6] px-6 py-8 md:px-16">
+      <div className="mx-auto flex max-w-[876px] flex-col gap-4">
         <h1 className="sr-only">場所一覧</h1>
 
         <div className="flex justify-end">
           <Button
             type="button"
-            className="h-[52px] rounded-[10px] bg-zinc-950 px-4 text-sm font-normal text-white hover:bg-zinc-800"
+            className="bg-zinc-950 text-white hover:bg-zinc-800"
             onClick={() => dispatchDialog({ type: "open-create-root" })}
           >
-            <CirclePlus className="h-4 w-4" />
+            <CirclePlus className="size-4" />
             エリアを追加
           </Button>
         </div>
@@ -87,20 +87,20 @@ export function LocationListPageView({ locations }: LocationListPageViewProps) {
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 rounded-[10px] border-zinc-300 bg-white px-3 text-xs font-normal text-zinc-700"
+            className="h-8 rounded-[10px] border-[#e5e7eb] bg-white px-3 text-xs font-normal text-black shadow-[0_1px_1px_rgba(0,0,0,0.25)] hover:bg-white/90"
             onClick={() => setExpandedIds(new Set(expandableIds))}
           >
-            <UnfoldVertical className="h-3.5 w-3.5" />
+            <UnfoldVertical className="size-3" />
             全て展開
           </Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 rounded-[10px] border-zinc-300 bg-white px-3 text-xs font-normal text-zinc-700"
+            className="h-8 rounded-[10px] border-[#e5e7eb] bg-white px-3 text-xs font-normal text-black shadow-[0_1px_1px_rgba(0,0,0,0.25)] hover:bg-white/90"
             onClick={() => setExpandedIds(new Set())}
           >
-            <FoldVertical className="h-3.5 w-3.5" />
+            <FoldVertical className="size-3" />
             折りたたむ
           </Button>
         </div>

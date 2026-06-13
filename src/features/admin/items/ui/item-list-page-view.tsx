@@ -30,7 +30,7 @@ export function ItemListPageView({ items }: ItemListPageViewProps) {
             className="bg-zinc-950 text-white hover:bg-zinc-800"
             onClick={() => setCreateOpen(true)}
           >
-            <CirclePlus className="h-4 w-4" />
+            <CirclePlus className="size-4" />
             物品を追加
           </Button>
         </div>
