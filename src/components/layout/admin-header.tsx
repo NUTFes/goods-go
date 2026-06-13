@@ -72,7 +72,7 @@ export function AdminHeader({ currentUserName, currentUserRole }: AdminHeaderPro
       <div className="mx-auto flex h-full w-full items-center justify-between px-8">
         <div className="flex h-full items-center gap-8">
           <Link href="/admin/tasks" className="flex h-full items-center" aria-label="Goods Go">
-            <GoodsGoLogo className="h-[42px]" />
+            <GoodsGoLogo className="h-[46px]" />
           </Link>
           <nav className="flex h-full items-center">
             {navItems.map((item) => {
