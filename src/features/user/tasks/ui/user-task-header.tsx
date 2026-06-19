@@ -74,7 +74,6 @@ export function UserTaskHeader({
   onDayChange,
 }: UserTaskHeaderProps) {
   const [open, setOpen] = useState(false);
-  const disableUserSwitch = currentRole === APP_ROLES.USER;
   const disableAdminSwitch = currentRole !== APP_ROLES.ADMIN;
 
   return (
@@ -138,7 +137,7 @@ export function UserTaskHeader({
                   <SwitchRow
                     href="/tasks"
                     label="ユーザー画面に切り替え"
-                    disabled={disableUserSwitch}
+                    disabled
                     onNavigate={() => setOpen(false)}
                   />
                   <SwitchRow
