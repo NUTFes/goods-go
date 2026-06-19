@@ -105,21 +105,19 @@ export function UserTaskHeader({
               sideOffset={12}
               className="w-[min(92vw,243px)] rounded-[10px] p-5"
             >
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpen(false)}
+                className="absolute top-3 right-4 size-9 rounded-full hover:bg-[#f5f5f5]"
+                aria-label="プロフィールを閉じる"
+              >
+                <X className="size-5" />
+              </Button>
               <div className="space-y-3.25">
                 <div className="space-y-2">
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setOpen(false)}
-                      className="size-8 rounded-full hover:bg-[#f5f5f5]"
-                      aria-label="プロフィールを閉じる"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </div>
-                  <div className="px-2">
+                  <div className="px-2 pr-10">
                     <p className="flex items-baseline gap-1 text-xl leading-5 font-medium">
                       <span>{currentUserName}</span>
                       <span className="text-xs leading-none">さん</span>

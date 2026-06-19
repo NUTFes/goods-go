@@ -128,21 +128,19 @@ export function AdminHeader({ currentUserName, currentUserRole }: AdminHeaderPro
               sideOffset={12}
               className="w-[min(92vw,243px)] rounded-[10px] border border-[#e5e5e5] p-5 text-[#0a0a0a] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] motion-reduce:animate-none"
             >
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpen(false)}
+                className="absolute top-3 right-4 size-9 rounded-full text-[#171717] hover:bg-[#f5f5f5] focus-visible:ring-3 focus-visible:ring-[#121212]/20 focus-visible:ring-offset-2 focus-visible:outline-hidden motion-reduce:transition-none"
+                aria-label="プロフィールを閉じる"
+              >
+                <X className="size-5" aria-hidden="true" />
+              </Button>
               <div className="space-y-3.25">
                 <div className="space-y-2">
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setOpen(false)}
-                      className="size-8 rounded-full text-[#171717] hover:bg-[#f5f5f5] focus-visible:ring-3 focus-visible:ring-[#121212]/20 focus-visible:ring-offset-2 focus-visible:outline-hidden motion-reduce:transition-none"
-                      aria-label="プロフィールを閉じる"
-                    >
-                      <X className="size-4" aria-hidden="true" />
-                    </Button>
-                  </div>
-                  <div className="px-2">
+                  <div className="px-2 pr-10">
                     <p className="flex items-baseline gap-1 text-[20px] leading-5 font-medium text-[#0a0a0a]">
                       <span className="text-xl">{currentUserName}</span>
                       <span className="text-xs leading-none">さん</span>
