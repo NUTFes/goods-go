@@ -115,12 +115,12 @@ export function UserTaskHeader({
               >
                 <X className="size-5" />
               </Button>
-              <div className="space-y-3.25">
+              <div className="space-y-3.25 pt-6">
                 <div className="space-y-2">
                   <div className="px-2 pr-10">
-                    <p className="flex items-baseline gap-1 text-xl leading-5 font-medium">
-                      <span>{currentUserName}</span>
-                      <span className="text-xs leading-none">さん</span>
+                    <p className="flex min-w-0 items-baseline gap-1 text-xl leading-5 font-medium">
+                      <span className="min-w-0 truncate">{currentUserName}</span>
+                      <span className="shrink-0 text-xs leading-none">さん</span>
                     </p>
                   </div>
                   <div className="rounded-lg px-2 py-1">
