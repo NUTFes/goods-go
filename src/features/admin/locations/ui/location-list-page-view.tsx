@@ -74,10 +74,10 @@ export function LocationListPageView({ locations }: LocationListPageViewProps) {
         <div className="flex justify-end">
           <Button
             type="button"
-            className="bg-zinc-950 text-white hover:bg-zinc-800"
+            className="h-[52px] rounded-md bg-[#171717] px-3 py-4 text-sm font-normal text-[#fafafa] shadow-[0_1px_1px_rgba(0,0,0,0.1)] hover:bg-[#171717]/90"
             onClick={() => dispatchDialog({ type: "open-create-root" })}
           >
-            <CirclePlus className="size-4" />
+            <CirclePlus className="size-5" />
             エリアを追加
           </Button>
         </div>
