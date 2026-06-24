@@ -24,10 +24,7 @@ export function ItemListPageView({ items }: ItemListPageViewProps) {
             <h1 className="text-2xl font-semibold text-zinc-900">物品一覧</h1>
             <p className="mt-1 text-sm text-zinc-500">タスクで使用する物品を管理します。</p>
           </div>
-          <AdminAddButton
-            type="button"
-            onClick={() => setCreateOpen(true)}
-          >
+          <AdminAddButton type="button" onClick={() => setCreateOpen(true)}>
             物品を追加
           </AdminAddButton>
         </div>

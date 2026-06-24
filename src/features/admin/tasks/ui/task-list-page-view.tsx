@@ -64,11 +64,7 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
     <main className="px-16 py-8">
       <div className="space-y-4">
         <div className="flex justify-end">
-          <AdminAddButton
-            type="button"
-            disabled={isPending}
-            onClick={() => setCreateOpen(true)}
-          >
+          <AdminAddButton type="button" disabled={isPending} onClick={() => setCreateOpen(true)}>
             タスクを追加
           </AdminAddButton>
         </div>
