@@ -1,8 +1,7 @@
 "use client";
 
-import { CirclePlus } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { AdminAddButton } from "../../ui/admin-add-button";
 import type { AdminItem } from "../model/types";
 import { ItemDeleteDialog } from "./item-delete-dialog";
 import { ItemFormDialog } from "./item-form-dialog";
@@ -25,14 +24,12 @@ export function ItemListPageView({ items }: ItemListPageViewProps) {
             <h1 className="text-2xl font-semibold text-zinc-900">物品一覧</h1>
             <p className="mt-1 text-sm text-zinc-500">タスクで使用する物品を管理します。</p>
           </div>
-          <Button
+          <AdminAddButton
             type="button"
-            className="h-[52px] rounded-md bg-[#171717] px-3 py-4 text-sm font-normal text-[#fafafa] shadow-[0_1px_1px_rgba(0,0,0,0.1)] hover:bg-[#171717]/90"
             onClick={() => setCreateOpen(true)}
           >
-            <CirclePlus className="size-5" />
             物品を追加
-          </Button>
+          </AdminAddButton>
         </div>
 
         <ItemTable
