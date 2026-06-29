@@ -74,7 +74,6 @@ export function UserTaskHeader({
   onDayChange,
 }: UserTaskHeaderProps) {
   const [open, setOpen] = useState(false);
-  const disableUserSwitch = currentRole === APP_ROLES.USER;
   const disableAdminSwitch = currentRole !== APP_ROLES.ADMIN;
 
   return (
@@ -105,24 +104,22 @@ export function UserTaskHeader({
               sideOffset={12}
               className="w-[min(92vw,243px)] rounded-[10px] p-5"
             >
-              <div className="space-y-3.25">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpen(false)}
+                className="absolute top-3 right-4 size-9 rounded-full hover:bg-[#f5f5f5]"
+                aria-label="プロフィールを閉じる"
+              >
+                <X className="size-5" />
+              </Button>
+              <div className="space-y-3.25 pt-6">
                 <div className="space-y-2">
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setOpen(false)}
-                      className="size-8 rounded-full hover:bg-[#f5f5f5]"
-                      aria-label="プロフィールを閉じる"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </div>
-                  <div className="px-2">
-                    <p className="flex items-baseline gap-1 text-xl leading-5 font-medium">
-                      <span>{currentUserName}</span>
-                      <span className="text-xs leading-none">さん</span>
+                  <div className="px-2 pr-10">
+                    <p className="flex min-w-0 items-baseline gap-1 text-xl leading-5 font-medium">
+                      <span className="min-w-0 truncate">{currentUserName}</span>
+                      <span className="shrink-0 text-xs leading-none">さん</span>
                     </p>
                   </div>
                   <div className="rounded-lg px-2 py-1">
@@ -140,7 +137,7 @@ export function UserTaskHeader({
                   <SwitchRow
                     href="/tasks"
                     label="ユーザー画面に切り替え"
-                    disabled={disableUserSwitch}
+                    disabled
                     onNavigate={() => setOpen(false)}
                   />
                   <SwitchRow
