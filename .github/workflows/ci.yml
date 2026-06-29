@@ -139,7 +139,7 @@ jobs:
 
       - name: React Doctor
         id: react_doctor
-        uses: millionco/react-doctor@10bd788323bfb493cb3ee1d30d914c4684fa22e6
+        uses: millionco/react-doctor@e2393c4a6b842efc72d5c225273c0de918a13450
         with:
           directory: .
           project: goods-go
