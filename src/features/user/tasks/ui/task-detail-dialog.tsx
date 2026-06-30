@@ -161,7 +161,7 @@ export function TaskDetailDialog({
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectContent position="popper" side="bottom" align="start" className="rounded-xl">
                   {statusOptions().map((status) => (
                     <SelectItem key={status} value={String(status)}>
                       <span className="flex items-center gap-1.5">

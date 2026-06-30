@@ -70,7 +70,7 @@ function SelectFilter({
         )}
         <SelectValue placeholder={placeholder}>{value ? selectedLabel : placeholder}</SelectValue>
       </SelectTrigger>
-      <SelectContent className="max-w-[280px]">
+      <SelectContent position="popper" side="bottom" align="start" className="max-w-[280px]">
         <SelectItem value="all">すべて</SelectItem>
         {showGroups
           ? Array.from(optionGroups.entries()).map(([groupName, groupItems]) =>
