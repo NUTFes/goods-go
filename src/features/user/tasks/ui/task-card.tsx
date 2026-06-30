@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, ChevronRight, Clock3 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { TaskStatusBadge } from "@/features/tasks/ui/task-status-badge";
 import { cn } from "@/lib/utils";
 import { getStatusBadgeClass } from "../model/mappers";
 import type { UserTask } from "../model/types";
@@ -24,14 +24,14 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
     >
       <div className="flex items-center justify-between gap-3 sm:gap-6">
         <div className="flex-1">
-          <Badge
+          <TaskStatusBadge
             className={cn(
               "h-6 rounded-full px-3 text-xs text-white",
               getStatusBadgeClass(task.currentStatus),
             )}
           >
             {task.currentStatus === 0 ? "未着手" : task.currentStatus === 1 ? "進行中" : "完了"}
-          </Badge>
+          </TaskStatusBadge>
 
           <div className="mt-3 space-y-2">
             <p className="flex items-center gap-1.5 font-bold">
