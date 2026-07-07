@@ -1,9 +1,8 @@
 "use client";
 
-import { CirclePlus } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { AdminAddButton } from "../../ui/admin-add-button";
 import { taskListQueryStatesParsers } from "../model/query-state";
 import type {
   AdminTask,
@@ -65,15 +64,9 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
     <main className="px-16 py-8">
       <div className="space-y-4">
         <div className="flex justify-end">
-          <Button
-            type="button"
-            className="bg-zinc-950 text-white hover:bg-zinc-800"
-            disabled={isPending}
-            onClick={() => setCreateOpen(true)}
-          >
-            <CirclePlus className="size-4" />
+          <AdminAddButton type="button" disabled={isPending} onClick={() => setCreateOpen(true)}>
             タスクを追加
-          </Button>
+          </AdminAddButton>
         </div>
 
         <TaskFilterBar

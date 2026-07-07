@@ -1,8 +1,9 @@
 "use client";
 
-import { CirclePlus, FoldVertical, UnfoldVertical } from "lucide-react";
+import { FoldVertical, UnfoldVertical } from "lucide-react";
 import { useMemo, useReducer, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AdminAddButton } from "../../ui/admin-add-button";
 import type { AdminLocation } from "../model/types";
 import { LocationDeleteDialog } from "./location-delete-dialog";
 import { LocationFormDialog } from "./location-form-dialog";
@@ -72,14 +73,12 @@ export function LocationListPageView({ locations }: LocationListPageViewProps) {
         <h1 className="sr-only">場所一覧</h1>
 
         <div className="flex justify-end">
-          <Button
+          <AdminAddButton
             type="button"
-            className="bg-zinc-950 text-white hover:bg-zinc-800"
             onClick={() => dispatchDialog({ type: "open-create-root" })}
           >
-            <CirclePlus className="size-4" />
             エリアを追加
-          </Button>
+          </AdminAddButton>
         </div>
 
         <div className="flex justify-end gap-2">
