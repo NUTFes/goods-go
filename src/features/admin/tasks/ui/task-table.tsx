@@ -11,12 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  getEventDayBadgeClass,
-  getEventDayLabel,
-  getStatusBadgeClass,
-  getStatusLabel,
-} from "../model/mappers";
+import { TaskStatusBadge } from "@/features/tasks/ui/task-status-badge";
+import { getEventDayBadgeClass, getEventDayLabel } from "../model/mappers";
 import type { AdminTask, TaskSortKey, TaskSortState } from "../model/types";
 
 type TaskTableProps = {
@@ -135,9 +131,7 @@ export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete 
                 </Badge>
               </TableCell>
               <TableCell className="text-center">
-                <Badge className={getStatusBadgeClass(task.currentStatus)}>
-                  {getStatusLabel(task.currentStatus)}
-                </Badge>
+                <TaskStatusBadge status={task.currentStatus} colorScheme="admin" />
               </TableCell>
               <TableCell className="text-center">
                 <TruncatedCellText value={task.fromLocationName} />
