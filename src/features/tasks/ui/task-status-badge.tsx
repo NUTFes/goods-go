@@ -1,20 +1,13 @@
 import type { ComponentProps } from "react";
 import { Badge } from "@/components/ui/badge";
-import type { Tables } from "@/types/schema.gen";
 import { cn } from "@/lib/utils";
+import { getTaskStatusLabel, type TaskStatus } from "../model/task-status";
 
-type TaskStatus = Tables<"tasks">["current_status"] & (0 | 1 | 2);
 type TaskStatusBadgeColorScheme = "admin" | "user";
 
 type TaskStatusBadgeProps = Omit<ComponentProps<typeof Badge>, "children"> & {
   status: TaskStatus;
   colorScheme?: TaskStatusBadgeColorScheme;
-};
-
-const taskStatusLabelMap: Record<TaskStatus, string> = {
-  0: "未着手",
-  1: "進行中",
-  2: "完了",
 };
 
 const taskStatusBadgeClassMap: Record<TaskStatusBadgeColorScheme, Record<TaskStatus, string>> = {
@@ -29,10 +22,6 @@ const taskStatusBadgeClassMap: Record<TaskStatusBadgeColorScheme, Record<TaskSta
     2: "bg-[#007B48] text-white",
   },
 };
-
-export function getTaskStatusLabel(status: TaskStatus): string {
-  return taskStatusLabelMap[status];
-}
 
 export function TaskStatusBadge({
   status,

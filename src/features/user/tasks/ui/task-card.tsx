@@ -1,7 +1,8 @@
 "use client";
 
 import { Box, ChevronRight, Clock3 } from "lucide-react";
-import { getTaskStatusLabel, TaskStatusBadge } from "@/features/tasks/ui/task-status-badge";
+import { getTaskStatusLabel } from "@/features/tasks/model/task-status";
+import { TaskStatusBadge } from "@/features/tasks/ui/task-status-badge";
 import type { UserTask } from "../model/types";
 
 type TaskCardProps = {
