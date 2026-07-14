@@ -129,7 +129,7 @@ function TaskBasicSection({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" side="bottom">
               {EVENT_DAY_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={String(option.value)}>
                   {option.label}
@@ -153,7 +153,7 @@ function TaskBasicSection({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" side="bottom">
               {STATUS_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={String(option.value)}>
                   {option.label}
@@ -177,7 +177,7 @@ function TaskBasicSection({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" side="bottom">
               {filterOptions.leaders.map((leader) => (
                 <SelectItem key={leader.value} value={leader.value}>
                   {leader.label}
@@ -228,7 +228,7 @@ function TaskLocationSection({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" side="bottom">
               {Object.entries(locationGroups).map(([groupName, options]) =>
                 groupName ? (
                   <SelectGroup key={groupName}>
@@ -271,7 +271,7 @@ function TaskLocationSection({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" side="bottom">
               {Object.entries(locationGroups).map(([groupName, options]) =>
                 groupName ? (
                   <SelectGroup key={groupName}>
@@ -330,7 +330,7 @@ function TaskItemSection({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="物品名" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" side="bottom">
                 {filterOptions.items.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
@@ -394,7 +394,7 @@ function TaskScheduleSection({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
-            <SelectContent className="max-h-64">
+            <SelectContent position="popper" side="bottom" className="max-h-64">
               {filterOptions.timeOptions.map((time) => (
                 <SelectItem key={time} value={time}>
                   {time}
@@ -422,7 +422,7 @@ function TaskScheduleSection({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
-            <SelectContent className="max-h-64">
+            <SelectContent position="popper" side="bottom" className="max-h-64">
               {filterOptions.timeOptions.map((time) => (
                 <SelectItem key={time} value={time}>
                   {time}
