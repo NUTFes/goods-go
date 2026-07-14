@@ -194,7 +194,11 @@ export function TaskFilterSheet({
                   >
                     <SelectValue placeholder="From（搬入元）" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-lg p-1 shadow-[0px_4px_6px_rgba(0,0,0,0.1),0px_2px_4px_rgba(0,0,0,0.1)]">
+                  <SelectContent
+                    position="popper"
+                    side="bottom"
+                    className="rounded-lg p-1 shadow-[0px_4px_6px_rgba(0,0,0,0.1),0px_2px_4px_rgba(0,0,0,0.1)]"
+                  >
                     <SelectItem value="__none__">未選択</SelectItem>
                     <LocationSelectOptions options={locationGroups} />
                   </SelectContent>
@@ -227,7 +231,11 @@ export function TaskFilterSheet({
                   >
                     <SelectValue placeholder="To（搬入先）" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-lg p-1 shadow-[0px_4px_6px_rgba(0,0,0,0.1),0px_2px_4px_rgba(0,0,0,0.1)]">
+                  <SelectContent
+                    position="popper"
+                    side="bottom"
+                    className="rounded-lg p-1 shadow-[0px_4px_6px_rgba(0,0,0,0.1),0px_2px_4px_rgba(0,0,0,0.1)]"
+                  >
                     <SelectItem value="__none__">未選択</SelectItem>
                     <LocationSelectOptions options={locationGroups} />
                   </SelectContent>
