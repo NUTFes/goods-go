@@ -20,7 +20,7 @@ function toMinutes(timeValue: string): number {
 export const taskFormSchema = z
   .object({
     eventDayType: z.number({ error: REQUIRED_SELECT_ERROR }).min(0).max(2),
-    currentStatus: z.number({ error: REQUIRED_SELECT_ERROR }).min(0).max(2),
+    currentStatus: z.number({ error: REQUIRED_SELECT_ERROR }).min(0).max(3),
     leaderUserId: requiredSelect,
     fromLocationId: requiredSelect,
     toLocationId: requiredSelect,

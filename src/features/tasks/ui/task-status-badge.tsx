@@ -12,14 +12,16 @@ type TaskStatusBadgeProps = Omit<ComponentProps<typeof Badge>, "children"> & {
 
 const taskStatusBadgeClassMap: Record<TaskStatusBadgeColorScheme, Record<TaskStatus, string>> = {
   admin: {
-    0: "bg-zinc-700 text-white",
-    1: "bg-blue-700 text-white",
-    2: "bg-green-700 text-white",
+    0: "bg-[#595959] text-white",
+    1: "bg-[#005BAB] text-white",
+    2: "bg-[#B55700] text-white",
+    3: "bg-[#007B48] text-white",
   },
   user: {
     0: "bg-[#595959] text-white",
     1: "bg-[#005BAB] text-white",
-    2: "bg-[#007B48] text-white",
+    2: "bg-[#B55700] text-white",
+    3: "bg-[#007B48] text-white",
   },
 };
 

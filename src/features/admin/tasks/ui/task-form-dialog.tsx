@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Clock3, MapPin, NotebookPen, Package, Triangle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useState, useTransition } from "react";
 import { type UseFormReturn, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -461,6 +462,7 @@ export function TaskFormDialog({
   filterOptions,
   onOpenChange,
 }: TaskFormDialogProps) {
+  const { refresh } = useRouter();
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState<string>("");
 
@@ -493,7 +495,7 @@ export function TaskFormDialog({
       const result =
         mode === "create"
           ? await createTaskAction(values)
-          : await updateTaskAction(task?.taskId ?? "", values);
+          : await updateTaskAction(task?.taskId ?? "", values, task?.lockVersion ?? -1);
 
       if (!result.ok) {
         if (result.fieldErrors) {
@@ -509,6 +511,9 @@ export function TaskFormDialog({
 
         if (result.message) {
           setSubmitError(result.message);
+        }
+        if (result.code === "task_version_conflict") {
+          refresh();
         }
         return;
       }

@@ -98,6 +98,11 @@ alias = ["supabase:reset", "local:supabase:reset"]
 description = "local DB に migration と seed を再適用"
 run = "pnpm exec supabase db reset --local"
 
+[tasks."04_local_supabase:65_test"]
+alias = ["supabase:test", "local:supabase:test"]
+description = "local DB の pgTAP テストを実行"
+run = "pnpm exec supabase test db --local"
+
 [tasks."04_local_supabase:70_stop"]
 alias = ["supabase:stop", "local:supabase:stop"]
 description = "local Supabase stack を停止"

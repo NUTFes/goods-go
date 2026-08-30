@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, Triangle, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,38 +13,36 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { getStatusDotClass, getStatusLabel } from "../model/mappers";
+import {
+  canChangeTaskStatus,
+  TASK_STATUSES,
+  TASK_STATUS_VALUES,
+} from "@/features/tasks/model/task-status";
+import {
+  TaskStatusSegmentedControl,
+  TaskStatusStepper,
+} from "@/features/tasks/ui/task-status-control";
+import { APP_ROLES, type AppRole } from "@/lib/auth/roles";
 import { TASK_NOTE_MAX_LENGTH, type TaskStatus, type UserTask } from "../model/types";
 import { updateTaskStatusAction } from "../server/actions";
 
 type TaskDetailDialogProps = {
   open: boolean;
   task: UserTask | null;
-  canEditStatus: boolean;
+  currentRole: AppRole;
   canEditNote: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-function statusOptions(): TaskStatus[] {
-  return [0, 1, 2];
-}
-
 export function TaskDetailDialog({
   open,
   task,
-  canEditStatus,
+  currentRole,
   canEditNote,
   onOpenChange,
 }: TaskDetailDialogProps) {
+  const { refresh } = useRouter();
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus>(task?.currentStatus ?? 0);
   const [noteDraft, setNoteDraft] = useState(task?.note ?? "");
   const [errorMessage, setErrorMessage] = useState("");
@@ -68,6 +67,15 @@ export function TaskDetailDialog({
     return null;
   }
 
+  const canEditStatus = TASK_STATUS_VALUES.some(
+    (status) =>
+      status !== task.currentStatus && canChangeTaskStatus(currentRole, task.currentStatus, status),
+  );
+  const editableStatuses =
+    currentRole === APP_ROLES.ADMIN
+      ? TASK_STATUS_VALUES
+      : TASK_STATUS_VALUES.filter((status) => status !== TASK_STATUSES.DONE);
+
   const handleReset = () => {
     setSelectedStatus(task.currentStatus);
     setNoteDraft(task.note ?? "");
@@ -90,11 +98,15 @@ export function TaskDetailDialog({
       const result = await updateTaskStatusAction(
         task.taskId,
         selectedStatus,
+        task.lockVersion,
         canEditNote ? noteDraft : undefined,
       );
       if (!result.ok) {
         setErrorMessage(result.message);
         toast.error(result.message);
+        if (result.code === "task_version_conflict") {
+          refresh();
+        }
         return;
       }
       toast.success(
@@ -145,38 +157,23 @@ export function TaskDetailDialog({
             <p className="sm:text-lg font-bold ">{task.toLocationName}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
             <div className="rounded-xl border border-[#e5e5e5] bg-[#e6e6e6] p-3">
               <p className="text-sm font-semibold text-[#595959]">
                 {canEditStatus ? "ステータス変更" : "ステータス"}
               </p>
-              <Select
-                value={String(selectedStatus)}
-                onValueChange={(value) => setSelectedStatus(Number(value) as TaskStatus)}
-                disabled={!canEditStatus}
-              >
-                <SelectTrigger
-                  className="mt-2 h-9 w-full rounded-xl bg-white disabled:cursor-not-allowed disabled:opacity-70"
-                  aria-label="タスクステータス"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {statusOptions().map((status) => (
-                    <SelectItem key={status} value={String(status)}>
-                      <span className="flex items-center gap-1.5">
-                        <span
-                          className={cn(
-                            "inline-block size-2.5 rounded-full",
-                            getStatusDotClass(status),
-                          )}
-                        />
-                        <span>{getStatusLabel(status)}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-2">
+                {canEditStatus ? (
+                  <TaskStatusSegmentedControl
+                    value={selectedStatus}
+                    statuses={editableStatuses}
+                    disabled={isPending}
+                    onChange={setSelectedStatus}
+                  />
+                ) : (
+                  <TaskStatusStepper status={task.currentStatus} />
+                )}
+              </div>
             </div>
 
             <div className="rounded-xl border border-[#e5e5e5] bg-[#e6e6e6] p-3">
@@ -233,7 +230,7 @@ export function TaskDetailDialog({
             </p>
           ) : null}
 
-          {canEditStatus ? (
+          {canEditStatus || canEditNote ? (
             <div className="flex justify-end gap-2">
               <Button
                 type="button"

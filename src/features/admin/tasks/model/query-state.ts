@@ -3,7 +3,7 @@ import type { TaskListQueryState } from "./types";
 
 export const taskListQueryStatesParsers = {
   day: parseAsStringLiteral(["all", "0", "1", "2"] as const).withDefault("all"),
-  status: parseAsStringLiteral(["all", "0", "1", "2"] as const).withDefault("all"),
+  status: parseAsStringLiteral(["all", "0", "1", "2", "3"] as const).withDefault("all"),
   itemId: parseAsString.withDefault(""),
   leaderUserId: parseAsString.withDefault(""),
   fromLocationId: parseAsString.withDefault(""),
