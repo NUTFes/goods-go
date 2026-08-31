@@ -6,6 +6,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  if (process.env.NODE_ENV === "development" && request.nextUrl.pathname.startsWith("/dev/")) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
