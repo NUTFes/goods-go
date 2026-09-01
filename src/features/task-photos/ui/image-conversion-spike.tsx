@@ -427,8 +427,14 @@ export function ImageConversionSpike() {
 
               <div className="grid gap-4 md:grid-cols-3">
                 <Preview label="元画像" url={item.originalUrl} />
-                <Preview label="メインWebP" url={item.mainUrl} />
-                <Preview label="サムネイルWebP" url={item.thumbnailUrl} />
+                <Preview
+                  label={`メイン（${item.result?.main.type ?? "MIME不明"}）`}
+                  url={item.mainUrl}
+                />
+                <Preview
+                  label={`サムネイル（${item.result?.thumbnail.type ?? "MIME不明"}）`}
+                  url={item.thumbnailUrl}
+                />
               </div>
 
               {item.result && (
