@@ -161,13 +161,44 @@ iPhoneがない環境でもWASM fallbackのメモリ特性を確認できるよ�
 
 合成画像は単純なgradientであり、変換後容量は実写真より大幅に小さい。この結果は連続処理時間、処理継続、寸法上限の確認だけに使用し、容量や文字・傷の視認性評価には使用しない。
 
+### iPhone Safariの実機検証
+
+iPhone OS 18.7／Safari 26.6.1で、写真ライブラリにある4032×3024の実写真1枚を検証した。
+
+- 選択時点でファイル名`image.jpg`、MIME`image/jpeg`となり、iOSがHEICからJPEGへ変換してBrowserへ渡した
+- Canvasへ`image/webp`を指定すると`image/png`が返り、WebP固定の変換は`webp_not_supported`となった
+- Canvas標準APIによるJPEG出力は成功した
+- 入力: 3,164,532bytes、4032×3024
+- メイン: 837,701bytes、1920×1440、品質82%
+- サムネイル: 70,460bytes、480×360、品質75%
+- 合計処理時間: 175ms（デコード80ms、メイン変換58ms、サムネイル変換3ms、検証とHash 24ms）
+- 実機のプレビューで向き、画質、視認性に問題がないことを確認した
+
+この実測から、MVPの正規出力形式はJPEGを第一候補とする。Safari用WebPエンコーダーは追加せず、標準Canvas APIを優先する。これは出力形式の判断であり、AndroidなどがHEICをそのままBrowserへ渡す場合に備えた入力HEICデコーダーの要否は別途実機確認する。
+
+### Android Chromeの実機検証
+
+Samsung SC-51B／Chrome 151で、カメラ由来のHEICをJPEGへ変換した。
+
+- Androidはファイル名とMIMEを`.heic`／`image/heic`のままBrowserへ渡した
+- `libheif-js-primary`でprimary itemを取得し、2268×4032から1080×1920へ向きを維持して変換した
+- 入力: 942,632bytes
+- メイン: 180,688bytes、品質82%
+- サムネイル: 16,361bytes、品質75%
+- 合計処理時間: 約1.75〜1.93秒。初回のdecoder読み込みは約349ms
+- 同じ実写真を再変換した出力SHA-256は一致した
+
+別のHEIC 1枚は、単独で選び直しても先頭4KBの読み取り時点でBrowserの`NotReadableError`となった。HEICデコーダーへ渡る前の端末／ファイル参照固有の失敗であるため、同じ`File`参照の自動再試行は行わず、`file_not_readable`として写真の選び直しを案内する。
+
+この実測から、Android向けにはHEICデコーダーが必要と判断する。MVPはJPEGを正規出力とし、標準APIで入力HEICを読めない場合だけ`libheif-js`を遅延読み込みする。
+
 ## 現時点の制約
 
 - `heic-to`と`libheif-js`は比較を再現するためのSpike用devDependencyであり、本実装にはまだ含めない
 - package licenseはLGPL-3.0のため、本番採用前に配布時のライセンス表示・ソース提供方法を確認する
 - HEIC／HEIFでもBrowser標準APIでデコードできる環境ではライブラリを読み込まない
 - HTTPなどSecure Contextではない環境では、画像選択前に検証を停止する
-- 公開fixtureでは成功率・primary item・透過・所要時間を確認済み。実際のiPhone／Androidカメラ由来HEICでは未確認
+- 公開fixtureに加え、iPhoneのOSによるJPEG変換とAndroidカメラ由来HEICのWASM変換を実機確認済み
 - WASM fallback時は16MPを超えるHEIC／HEIFを安全上の理由で拒否する。Browser標準APIで処理できる場合は全形式共通の50MP上限を適用する
 - 実機画像で向き・文字や傷の視認性・処理時間を確認してからproduction dependencyへの移動を相談する
 - このページはdevelopmentでだけ表示され、productionでは404になる

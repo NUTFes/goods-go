@@ -16,6 +16,7 @@ export const IMAGE_CONVERSION_SPIKE_ACCEPT = "image/*,.heic,.heif";
 
 export type InputImageKind = "jpeg" | "png" | "webp" | "heic" | "heif";
 export type HeicDecoderCandidate = "heic-to" | "libheif-js-primary";
+export type OutputFormatCandidate = "webp" | "jpeg";
 
 export type ConversionStage =
   | "queued"
@@ -29,6 +30,7 @@ export type ConversionStage =
 
 export type TaskPhotoConversionErrorCode =
   | "unsupported_format"
+  | "file_not_readable"
   | "file_too_large"
   | "dimensions_too_large"
   | "decode_failed"
@@ -97,6 +99,7 @@ type DecodedInputImage = DecodedImage & {
 
 type ConvertOptions = {
   heicDecoder?: HeicDecoderCandidate;
+  outputFormat?: OutputFormatCandidate;
   signal?: AbortSignal;
   onStageChange?: (stage: ConversionStage) => void;
 };
@@ -146,7 +149,16 @@ function readAscii(bytes: Uint8Array, offset: number, length: number): string {
 }
 
 async function detectInputKind(file: File): Promise<InputImageKind> {
-  const bytes = new Uint8Array(await file.slice(0, HEADER_READ_BYTES).arrayBuffer());
+  let bytes: Uint8Array;
+  try {
+    bytes = new Uint8Array(await file.slice(0, HEADER_READ_BYTES).arrayBuffer());
+  } catch (error) {
+    throw new TaskPhotoConversionError(
+      "file_not_readable",
+      "写真ファイルを読み取れませんでした。端末に保存済みの写真を選び直してください",
+      { cause: error },
+    );
+  }
 
   if (bytes.length >= 3 && matchesBytes(bytes, [0xff, 0xd8, 0xff])) {
     return "jpeg";
@@ -419,12 +431,13 @@ function calculateTargetSize(width: number, height: number, maxLongEdge: number)
   };
 }
 
-async function canvasToWebp(
+async function canvasToOutput(
   source: CanvasImageSource,
   sourceWidth: number,
   sourceHeight: number,
   maxLongEdge: number,
   quality: number,
+  outputFormat: OutputFormatCandidate,
 ): Promise<{ blob: Blob; width: number; height: number }> {
   const target = calculateTargetSize(sourceWidth, sourceHeight, maxLongEdge);
   const canvas = document.createElement("canvas");
@@ -441,11 +454,16 @@ async function canvasToWebp(
 
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
+  if (outputFormat === "jpeg") {
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, target.width, target.height);
+  }
   context.drawImage(source, 0, 0, target.width, target.height);
 
   try {
+    const expectedMime = outputFormat === "webp" ? "image/webp" : "image/jpeg";
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, "image/webp", quality);
+      canvas.toBlob(resolve, expectedMime, quality);
     });
 
     if (!blob) {
@@ -455,10 +473,10 @@ async function canvasToWebp(
       );
     }
 
-    if (blob.type !== "image/webp") {
+    if (blob.type !== expectedMime) {
       throw new TaskPhotoConversionError(
-        "webp_not_supported",
-        `BrowserがWebPを生成できませんでした: ${blob.type || "MIME不明"}`,
+        outputFormat === "webp" ? "webp_not_supported" : "conversion_failed",
+        `Browserが${outputFormat.toUpperCase()}を生成できませんでした: ${blob.type || "MIME不明"}`,
       );
     }
 
@@ -469,9 +487,14 @@ async function canvasToWebp(
   }
 }
 
-async function verifyOutput(blob: Blob, width: number, height: number): Promise<void> {
-  if (blob.size === 0 || blob.type !== "image/webp") {
-    throw new TaskPhotoConversionError("invalid_output", "変換後のWebPが不正です");
+async function verifyOutput(
+  blob: Blob,
+  width: number,
+  height: number,
+  expectedMime: "image/webp" | "image/jpeg",
+): Promise<void> {
+  if (blob.size === 0 || blob.type !== expectedMime) {
+    throw new TaskPhotoConversionError("invalid_output", "変換後の画像が不正です");
   }
 
   let decoded: DecodedImage;
@@ -480,7 +503,7 @@ async function verifyOutput(blob: Blob, width: number, height: number): Promise<
   } catch (error) {
     throw new TaskPhotoConversionError(
       "invalid_output",
-      "変換後のWebPを再デコードできませんでした",
+      "変換後の画像を再デコードできませんでした",
       { cause: error },
     );
   }
@@ -525,6 +548,8 @@ export async function convertTaskPhoto(
   options: ConvertOptions = {},
 ): Promise<ConvertedTaskPhoto> {
   const startedAt = performance.now();
+  const outputFormat = options.outputFormat ?? "jpeg";
+  const outputMime = outputFormat === "webp" ? "image/webp" : "image/jpeg";
 
   if (draft.file.size > TASK_PHOTO_LIMITS.inputMaxBytes) {
     throw new TaskPhotoConversionError(
@@ -576,24 +601,26 @@ export async function convertTaskPhoto(
 
     options.onStageChange?.("converting-main");
     const mainStartedAt = performance.now();
-    const main = await canvasToWebp(
+    const main = await canvasToOutput(
       decoded.source,
       decoded.width,
       decoded.height,
       TASK_PHOTO_LIMITS.mainLongEdge,
       TASK_PHOTO_LIMITS.mainQuality,
+      outputFormat,
     );
     const mainConversionMs = performance.now() - mainStartedAt;
 
     throwIfAborted(options.signal);
     options.onStageChange?.("converting-thumbnail");
     const thumbnailStartedAt = performance.now();
-    const thumbnail = await canvasToWebp(
+    const thumbnail = await canvasToOutput(
       decoded.source,
       decoded.width,
       decoded.height,
       TASK_PHOTO_LIMITS.thumbnailLongEdge,
       TASK_PHOTO_LIMITS.thumbnailQuality,
+      outputFormat,
     );
     const thumbnailConversionMs = performance.now() - thumbnailStartedAt;
 
@@ -601,8 +628,8 @@ export async function convertTaskPhoto(
     const verificationStartedAt = performance.now();
     options.onStageChange?.("verifying");
     await Promise.all([
-      verifyOutput(main.blob, main.width, main.height),
-      verifyOutput(thumbnail.blob, thumbnail.width, thumbnail.height),
+      verifyOutput(main.blob, main.width, main.height, outputMime),
+      verifyOutput(thumbnail.blob, thumbnail.width, thumbnail.height, outputMime),
     ]);
 
     options.onStageChange?.("hashing");

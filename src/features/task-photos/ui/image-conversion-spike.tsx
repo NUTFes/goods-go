@@ -14,6 +14,7 @@ import {
   type ConversionStage,
   type ConvertedTaskPhoto,
   type HeicDecoderCandidate,
+  type OutputFormatCandidate,
   type PhotoDraft,
 } from "@/features/task-photos/model/image-conversion";
 
@@ -70,6 +71,7 @@ export function ImageConversionSpike() {
   const [notice, setNotice] = useState<string | null>(null);
   const [hasSecureContext, setHasSecureContext] = useState<boolean | null>(null);
   const [heicDecoder, setHeicDecoder] = useState<HeicDecoderCandidate>("libheif-js-primary");
+  const [outputFormat, setOutputFormat] = useState<OutputFormatCandidate>("jpeg");
   const objectUrls = useRef(new Set<string>());
 
   const registerObjectUrl = (blob: Blob) => {
@@ -96,7 +98,7 @@ export function ImageConversionSpike() {
     () => ({
       measuredAt: new Date().toISOString(),
       userAgent: typeof navigator === "undefined" ? "" : navigator.userAgent,
-      settings: { ...TASK_PHOTO_LIMITS, heicDecoder },
+      settings: { ...TASK_PHOTO_LIMITS, heicDecoder, outputFormat },
       summary: {
         selected: items.length,
         succeeded: items.filter((item) => item.status === "success").length,
@@ -115,18 +117,23 @@ export function ImageConversionSpike() {
         photoId: item.photoId,
         fileName: item.file.name,
         declaredMime: item.file.type,
+        declaredBytes: item.file.size,
+        lastModified: item.file.lastModified,
         status: item.status,
+        stage: item.stage,
         error: item.error,
         ...(item.result
           ? {
               input: item.result.diagnostics,
               main: {
+                mime: item.result.main.type,
                 bytes: item.result.main.size,
                 width: item.result.width,
                 height: item.result.height,
                 sha256: item.result.mainSha256,
               },
               thumbnail: {
+                mime: item.result.thumbnail.type,
                 bytes: item.result.thumbnail.size,
                 width: item.result.thumbnailWidth,
                 height: item.result.thumbnailHeight,
@@ -136,11 +143,17 @@ export function ImageConversionSpike() {
           : {}),
       })),
     }),
-    [heicDecoder, items],
+    [heicDecoder, items, outputFormat],
   );
 
   const reportJson = JSON.stringify(report, null, 2);
   const successfulItems = items.filter((item) => item.result !== undefined);
+  const retryableItems = items.filter(
+    (item) => item.status === "error" && item.error?.code !== "file_not_readable",
+  );
+  const hasUnreadableFile = items.some(
+    (item) => item.status === "error" && item.error?.code === "file_not_readable",
+  );
   const totalMainBytes = successfulItems.reduce(
     (total, item) => total + (item.result?.main.size ?? 0),
     0,
@@ -185,7 +198,11 @@ export function ImageConversionSpike() {
   };
 
   const runConversions = async () => {
-    const targets = items.filter((item) => item.status === "queued" || item.status === "error");
+    const targets = items.filter(
+      (item) =>
+        item.status === "queued" ||
+        (item.status === "error" && item.error?.code !== "file_not_readable"),
+    );
     if (targets.length === 0) return;
 
     setIsRunning(true);
@@ -203,6 +220,7 @@ export function ImageConversionSpike() {
           { photoId: item.photoId, file: item.file },
           {
             heicDecoder,
+            outputFormat,
             onStageChange: (stage) => updateItem(item.photoId, { stage }),
           },
         );
@@ -256,9 +274,9 @@ export function ImageConversionSpike() {
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 p-4 md:p-8">
       <div className="space-y-2">
         <p className="text-muted-foreground text-sm">Issue #102 / Development only</p>
-        <h1 className="text-2xl font-bold md:text-3xl">画像WebP変換の実機検証</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">画像変換の実機検証</h1>
         <p className="text-muted-foreground">
-          Browser標準APIを優先し、HEIC非対応時だけ選択したデコーダを遅延読み込みします。写真や変換結果はサーバーへ送信しません。
+          Browser標準APIを優先し、入力HEICを標準APIで読めない場合だけ選択したデコーダを遅延読み込みします。写真や変換結果はサーバーへ送信しません。
         </p>
       </div>
 
@@ -281,27 +299,44 @@ export function ImageConversionSpike() {
 
       <Card>
         <CardHeader>
-          <CardTitle>1. HEICデコーダを選択</CardTitle>
+          <CardTitle>1. 変換方式を選択</CardTitle>
           <CardDescription>
             primary item選択の有無と処理時間を同じfixtureで比較します。
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <label className="grid max-w-md gap-2 text-sm font-medium">
-            HEICデコーダ候補
-            <select
-              className="border-input bg-background h-10 rounded-md border px-3"
-              value={heicDecoder}
-              disabled={isRunning}
-              onChange={(event) => {
-                reset();
-                setHeicDecoder(event.target.value as HeicDecoderCandidate);
-              }}
-            >
-              <option value="libheif-js-primary">libheif-js / primary選択</option>
-              <option value="heic-to">heic-to / 先頭画像</option>
-            </select>
-          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid max-w-md gap-2 text-sm font-medium">
+              出力形式
+              <select
+                className="border-input bg-background h-10 rounded-md border px-3"
+                value={outputFormat}
+                disabled={isRunning}
+                onChange={(event) => {
+                  reset();
+                  setOutputFormat(event.target.value as OutputFormatCandidate);
+                }}
+              >
+                <option value="webp">WebP / Canvas標準API</option>
+                <option value="jpeg">JPEG / Canvas標準API</option>
+              </select>
+            </label>
+            <label className="grid max-w-md gap-2 text-sm font-medium">
+              HEICデコーダ候補
+              <select
+                className="border-input bg-background h-10 rounded-md border px-3"
+                value={heicDecoder}
+                disabled={isRunning}
+                onChange={(event) => {
+                  reset();
+                  setHeicDecoder(event.target.value as HeicDecoderCandidate);
+                }}
+              >
+                <option value="libheif-js-primary">libheif-js / primary選択</option>
+                <option value="heic-to">heic-to / 先頭画像</option>
+              </select>
+            </label>
+          </div>
         </CardContent>
       </Card>
 
@@ -333,11 +368,18 @@ export function ImageConversionSpike() {
           <Button
             type="button"
             variant="secondary"
-            disabled={isRunning || items.length === 0}
+            disabled={
+              isRunning ||
+              (items.every((item) => item.status !== "queued") && retryableItems.length === 0)
+            }
             onClick={runConversions}
           >
             <Play />
-            {items.some((item) => item.status === "error") ? "失敗分を再試行" : "変換を開始"}
+            {hasUnreadableFile && retryableItems.length === 0
+              ? "写真を選び直してください"
+              : retryableItems.length > 0
+                ? "失敗分を再試行"
+                : "変換を開始"}
           </Button>
           <Button
             type="button"
