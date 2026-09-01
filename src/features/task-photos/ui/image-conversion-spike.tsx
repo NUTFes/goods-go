@@ -13,6 +13,7 @@ import {
   normalizeConversionError,
   type ConversionStage,
   type ConvertedTaskPhoto,
+  type HeicDecoderCandidate,
   type PhotoDraft,
 } from "@/features/task-photos/model/image-conversion";
 
@@ -68,6 +69,7 @@ export function ImageConversionSpike() {
   const [isRunning, setIsRunning] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [hasSecureContext, setHasSecureContext] = useState<boolean | null>(null);
+  const [heicDecoder, setHeicDecoder] = useState<HeicDecoderCandidate>("libheif-js-primary");
   const objectUrls = useRef(new Set<string>());
 
   const registerObjectUrl = (blob: Blob) => {
@@ -94,7 +96,7 @@ export function ImageConversionSpike() {
     () => ({
       measuredAt: new Date().toISOString(),
       userAgent: typeof navigator === "undefined" ? "" : navigator.userAgent,
-      settings: TASK_PHOTO_LIMITS,
+      settings: { ...TASK_PHOTO_LIMITS, heicDecoder },
       summary: {
         selected: items.length,
         succeeded: items.filter((item) => item.status === "success").length,
@@ -134,7 +136,7 @@ export function ImageConversionSpike() {
           : {}),
       })),
     }),
-    [items],
+    [heicDecoder, items],
   );
 
   const reportJson = JSON.stringify(report, null, 2);
@@ -200,6 +202,7 @@ export function ImageConversionSpike() {
         const result = await convertTaskPhoto(
           { photoId: item.photoId, file: item.file },
           {
+            heicDecoder,
             onStageChange: (stage) => updateItem(item.photoId, { stage }),
           },
         );
@@ -255,7 +258,7 @@ export function ImageConversionSpike() {
         <p className="text-muted-foreground text-sm">Issue #102 / Development only</p>
         <h1 className="text-2xl font-bold md:text-3xl">画像WebP変換の実機検証</h1>
         <p className="text-muted-foreground">
-          Browser標準APIだけで1枚ずつ変換します。写真や変換結果はサーバーへ送信しません。
+          Browser標準APIを優先し、HEIC非対応時だけ選択したデコーダを遅延読み込みします。写真や変換結果はサーバーへ送信しません。
         </p>
       </div>
 
@@ -278,7 +281,33 @@ export function ImageConversionSpike() {
 
       <Card>
         <CardHeader>
-          <CardTitle>1. 画像を選択</CardTitle>
+          <CardTitle>1. HEICデコーダを選択</CardTitle>
+          <CardDescription>
+            primary item選択の有無と処理時間を同じfixtureで比較します。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <label className="grid max-w-md gap-2 text-sm font-medium">
+            HEICデコーダ候補
+            <select
+              className="border-input bg-background h-10 rounded-md border px-3"
+              value={heicDecoder}
+              disabled={isRunning}
+              onChange={(event) => {
+                reset();
+                setHeicDecoder(event.target.value as HeicDecoderCandidate);
+              }}
+            >
+              <option value="libheif-js-primary">libheif-js / primary選択</option>
+              <option value="heic-to">heic-to / 先頭画像</option>
+            </select>
+          </label>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>2. 画像を選択</CardTitle>
           <CardDescription>
             JPEG、PNG、WebP、HEIC／HEIFを選べます。AVIF、GIF、SVG、動画は対象外です。
           </CardDescription>
@@ -366,6 +395,19 @@ export function ImageConversionSpike() {
                     label="判定形式"
                     value={item.result.diagnostics.inputKind.toUpperCase()}
                   />
+                  <Metric label="デコーダ" value={item.result.diagnostics.decodeBackend} />
+                  <Metric
+                    label="デコーダ読込"
+                    value={formatMilliseconds(item.result.diagnostics.decoderLoadMs)}
+                  />
+                  <Metric
+                    label="primary選択"
+                    value={item.result.diagnostics.primaryItemSelection}
+                  />
+                  <Metric
+                    label="格納画像数"
+                    value={item.result.diagnostics.decodedImageCount?.toString() ?? "不明"}
+                  />
                   <Metric
                     label="入力寸法"
                     value={`${item.result.diagnostics.inputWidth} × ${item.result.diagnostics.inputHeight}`}
@@ -408,7 +450,7 @@ export function ImageConversionSpike() {
       {items.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>2. 検証結果</CardTitle>
+            <CardTitle>3. 検証結果</CardTitle>
             <CardDescription>端末情報と計測値をIssue #102へ貼り付けられます。</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

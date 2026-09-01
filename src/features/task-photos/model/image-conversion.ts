@@ -14,6 +14,7 @@ export const TASK_PHOTO_LIMITS = {
 export const IMAGE_CONVERSION_SPIKE_ACCEPT = "image/*,.heic,.heif";
 
 export type InputImageKind = "jpeg" | "png" | "webp" | "heic" | "heif";
+export type HeicDecoderCandidate = "heic-to" | "libheif-js-primary";
 
 export type ConversionStage =
   | "queued"
@@ -52,6 +53,10 @@ export type PhotoDraft = {
 
 export type ConversionDiagnostics = {
   inputKind: InputImageKind;
+  decodeBackend: "browser-standard" | HeicDecoderCandidate;
+  decoderLoadMs: number;
+  decodedImageCount: number | null;
+  primaryItemSelection: "browser-managed" | "not-inspectable" | "primary" | "fallback-first";
   inputBytes: number;
   inputWidth: number;
   inputHeight: number;
@@ -82,44 +87,106 @@ type DecodedImage = {
   release: () => void;
 };
 
+type DecodedInputImage = DecodedImage & {
+  backend: ConversionDiagnostics["decodeBackend"];
+  decoderLoadMs: number;
+  decodedImageCount: number | null;
+  primaryItemSelection: ConversionDiagnostics["primaryItemSelection"];
+};
+
 type ConvertOptions = {
+  heicDecoder?: HeicDecoderCandidate;
   signal?: AbortSignal;
   onStageChange?: (stage: ConversionStage) => void;
 };
 
-const MIME_TO_KIND: Readonly<Record<string, InputImageKind>> = {
-  "image/jpeg": "jpeg",
-  "image/jpg": "jpeg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/heic": "heic",
-  "image/heif": "heif",
+const HEIC_BRANDS = new Set(["heic", "heix", "hevc", "hevx"]);
+const AVIF_BRANDS = new Set(["avif", "avis"]);
+const HEADER_READ_BYTES = 4 * 1024;
+
+type LibheifWorkerSuccess = {
+  type: "success";
+  id: string;
+  width: number;
+  height: number;
+  rgbaBuffer: ArrayBuffer;
+  imageCount: number;
+  selectedPrimary: boolean;
 };
 
-const EXTENSION_TO_KIND: Readonly<Record<string, InputImageKind>> = {
-  jpg: "jpeg",
-  jpeg: "jpeg",
-  png: "png",
-  webp: "webp",
-  heic: "heic",
-  heif: "heif",
+type LibheifWorkerFailure = {
+  type: "error";
+  id: string;
+  message: string;
 };
 
-function detectInputKind(file: File): InputImageKind {
-  const mimeKind = MIME_TO_KIND[file.type.toLowerCase()];
-  if (mimeKind) {
-    return mimeKind;
+type LibheifWorkerMessage =
+  | { type: "ready" }
+  | { type: "startup-error"; message: string }
+  | LibheifWorkerSuccess
+  | LibheifWorkerFailure;
+
+type PendingLibheifDecode = {
+  resolve: (result: LibheifWorkerSuccess) => void;
+  reject: (error: Error) => void;
+};
+
+let libheifWorker: Worker | undefined;
+let libheifWorkerReady: Promise<number> | undefined;
+const pendingLibheifDecodes = new Map<string, PendingLibheifDecode>();
+
+function matchesBytes(bytes: Uint8Array, expected: readonly number[], offset = 0): boolean {
+  return expected.every((value, index) => bytes[offset + index] === value);
+}
+
+function readAscii(bytes: Uint8Array, offset: number, length: number): string {
+  return new TextDecoder("ascii").decode(bytes.subarray(offset, offset + length));
+}
+
+async function detectInputKind(file: File): Promise<InputImageKind> {
+  const bytes = new Uint8Array(await file.slice(0, HEADER_READ_BYTES).arrayBuffer());
+
+  if (bytes.length >= 3 && matchesBytes(bytes, [0xff, 0xd8, 0xff])) {
+    return "jpeg";
   }
 
-  const extension = file.name.split(".").pop()?.toLowerCase();
-  const extensionKind = extension ? EXTENSION_TO_KIND[extension] : undefined;
-  if (extensionKind) {
-    return extensionKind;
+  if (bytes.length >= 8 && matchesBytes(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return "png";
+  }
+
+  if (
+    bytes.length >= 12 &&
+    readAscii(bytes, 0, 4) === "RIFF" &&
+    readAscii(bytes, 8, 4) === "WEBP"
+  ) {
+    return "webp";
+  }
+
+  if (bytes.length >= 16 && readAscii(bytes, 4, 4) === "ftyp") {
+    const declaredBoxSize = new DataView(
+      bytes.buffer,
+      bytes.byteOffset,
+      bytes.byteLength,
+    ).getUint32(0, false);
+    const boxEnd = Math.min(bytes.length, declaredBoxSize >= 16 ? declaredBoxSize : bytes.length);
+    const brands = [readAscii(bytes, 8, 4)];
+
+    for (let offset = 16; offset + 4 <= boxEnd; offset += 4) {
+      brands.push(readAscii(bytes, offset, 4));
+    }
+
+    if (brands.some((brand) => AVIF_BRANDS.has(brand))) {
+      throw new TaskPhotoConversionError("unsupported_format", "AVIFはMVPの対象外です");
+    }
+
+    if (brands.some((brand) => HEIC_BRANDS.has(brand))) {
+      return brands[0] === "mif1" || brands[0] === "msf1" ? "heif" : "heic";
+    }
   }
 
   throw new TaskPhotoConversionError(
     "unsupported_format",
-    `対応していない画像形式です: ${file.type || "MIME不明"}`,
+    `画像の実データが対応形式ではありません: ${file.type || "MIME不明"}`,
   );
 }
 
@@ -168,6 +235,158 @@ async function decodeImage(file: Blob): Promise<DecodedImage> {
   }
 
   return decodeWithImageElement(file);
+}
+
+function rejectPendingLibheifDecodes(error: Error): void {
+  for (const pending of pendingLibheifDecodes.values()) {
+    pending.reject(error);
+  }
+  pendingLibheifDecodes.clear();
+}
+
+async function ensureLibheifWorker(): Promise<{ worker: Worker; loadMs: number }> {
+  if (libheifWorker && !libheifWorkerReady) {
+    return { worker: libheifWorker, loadMs: 0 };
+  }
+
+  if (!libheifWorker) {
+    const loadStartedAt = performance.now();
+    const worker = new Worker(new URL("./libheif-primary.worker.ts", import.meta.url), {
+      type: "module",
+    });
+    libheifWorker = worker;
+
+    libheifWorkerReady = new Promise<number>((resolve, reject) => {
+      worker.addEventListener("message", (event: MessageEvent<LibheifWorkerMessage>) => {
+        const message = event.data;
+
+        if (message.type === "ready") {
+          resolve(performance.now() - loadStartedAt);
+          return;
+        }
+
+        if (message.type === "startup-error") {
+          reject(new Error(message.message));
+          return;
+        }
+
+        const pending = pendingLibheifDecodes.get(message.id);
+        if (!pending) return;
+
+        pendingLibheifDecodes.delete(message.id);
+        if (message.type === "success") {
+          pending.resolve(message);
+        } else {
+          pending.reject(new Error(message.message));
+        }
+      });
+
+      worker.addEventListener("error", (event) => {
+        const error = new Error(event.message || "libheif-js worker error");
+        reject(error);
+        rejectPendingLibheifDecodes(error);
+      });
+    });
+  }
+
+  const worker = libheifWorker;
+  const ready = libheifWorkerReady;
+  if (!worker || !ready) {
+    throw new Error("libheif-js workerを初期化できませんでした");
+  }
+
+  try {
+    const loadMs = await ready;
+    return { worker, loadMs };
+  } catch (error) {
+    worker.terminate();
+    libheifWorker = undefined;
+    throw error;
+  } finally {
+    libheifWorkerReady = undefined;
+  }
+}
+
+async function decodeWithLibheifPrimary(file: File): Promise<DecodedInputImage> {
+  const { worker, loadMs } = await ensureLibheifWorker();
+  const id = crypto.randomUUID();
+  const buffer = await file.arrayBuffer();
+  const result = await new Promise<LibheifWorkerSuccess>((resolve, reject) => {
+    pendingLibheifDecodes.set(id, { resolve, reject });
+    worker.postMessage({ type: "decode", id, buffer }, [buffer]);
+  });
+  const imageData = new ImageData(
+    new Uint8ClampedArray(result.rgbaBuffer),
+    result.width,
+    result.height,
+  );
+  const bitmap = await createImageBitmap(imageData);
+
+  return {
+    source: bitmap,
+    width: bitmap.width,
+    height: bitmap.height,
+    release: () => bitmap.close(),
+    backend: "libheif-js-primary",
+    decoderLoadMs: loadMs,
+    decodedImageCount: result.imageCount,
+    primaryItemSelection: result.selectedPrimary ? "primary" : "fallback-first",
+  };
+}
+
+async function decodeWithHeicTo(file: File): Promise<DecodedInputImage> {
+  const decoderLoadStartedAt = performance.now();
+  const { heicTo } = await import("heic-to");
+  const decoderLoadMs = performance.now() - decoderLoadStartedAt;
+
+  const bitmap = await heicTo({
+    blob: file,
+    type: "bitmap",
+    options: { imageOrientation: "from-image" },
+  });
+
+  return {
+    source: bitmap,
+    width: bitmap.width,
+    height: bitmap.height,
+    release: () => bitmap.close(),
+    backend: "heic-to",
+    decoderLoadMs,
+    decodedImageCount: null,
+    primaryItemSelection: "not-inspectable",
+  };
+}
+
+async function decodeInputImage(
+  file: File,
+  inputKind: InputImageKind,
+  heicDecoder: HeicDecoderCandidate,
+): Promise<DecodedInputImage> {
+  try {
+    return {
+      ...(await decodeImage(file)),
+      backend: "browser-standard",
+      decoderLoadMs: 0,
+      decodedImageCount: null,
+      primaryItemSelection: "browser-managed",
+    };
+  } catch (standardDecodeError) {
+    if (inputKind !== "heic" && inputKind !== "heif") {
+      throw standardDecodeError;
+    }
+  }
+
+  try {
+    return heicDecoder === "libheif-js-primary"
+      ? await decodeWithLibheifPrimary(file)
+      : await decodeWithHeicTo(file);
+  } catch (error) {
+    throw new TaskPhotoConversionError(
+      "decode_failed",
+      `${heicDecoder}でHEIC／HEIFをデコードできませんでした`,
+      { cause: error },
+    );
+  }
 }
 
 function calculateTargetSize(width: number, height: number, maxLongEdge: number) {
@@ -289,7 +508,6 @@ export async function convertTaskPhoto(
   options: ConvertOptions = {},
 ): Promise<ConvertedTaskPhoto> {
   const startedAt = performance.now();
-  const inputKind = detectInputKind(draft.file);
 
   if (draft.file.size > TASK_PHOTO_LIMITS.inputMaxBytes) {
     throw new TaskPhotoConversionError(
@@ -298,20 +516,33 @@ export async function convertTaskPhoto(
     );
   }
 
+  const inputKind = await detectInputKind(draft.file);
+
   throwIfAborted(options.signal);
   options.onStageChange?.("decoding");
   const decodeStartedAt = performance.now();
 
-  let decoded: DecodedImage;
+  let decoded: DecodedInputImage;
   try {
-    decoded = await decodeImage(draft.file);
+    decoded = await decodeInputImage(
+      draft.file,
+      inputKind,
+      options.heicDecoder ?? "libheif-js-primary",
+    );
   } catch (error) {
-    if (inputKind === "heic" || inputKind === "heif") {
+    if (
+      (inputKind === "heic" || inputKind === "heif") &&
+      !(error instanceof TaskPhotoConversionError)
+    ) {
       throw new TaskPhotoConversionError(
         "heic_decoder_required",
-        "このBrowserではHEIC／HEIFを標準APIでデコードできません",
+        "HEIC／HEIFデコーダを読み込めませんでした",
         { cause: error },
       );
+    }
+
+    if (error instanceof TaskPhotoConversionError) {
+      throw error;
     }
 
     throw new TaskPhotoConversionError("decode_failed", "入力画像をデコードできませんでした", {
@@ -377,6 +608,10 @@ export async function convertTaskPhoto(
       thumbnailHeight: thumbnail.height,
       diagnostics: {
         inputKind,
+        decodeBackend: decoded.backend,
+        decoderLoadMs: decoded.decoderLoadMs,
+        decodedImageCount: decoded.decodedImageCount,
+        primaryItemSelection: decoded.primaryItemSelection,
         inputBytes: draft.file.size,
         inputWidth: decoded.width,
         inputHeight: decoded.height,
