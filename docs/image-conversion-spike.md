@@ -137,6 +137,30 @@ Windows上のElectron 42／Chromium 148で、同じfixture 5件をprimary直接�
 
 `heic-to`と比較して、`libheif-js`は遅延chunkが小さく、primary itemを直接取得できる。fixtureに対する成功率も5/5であるため、Issue #102では`libheif-js`を本実装の第一候補とする。比較用の2ライブラリはSpike用devDependencyのまま残し、本実装ではライセンス確認後に採用するライブラリだけをproduction dependencyへ追加する。
 
+### 高画素HEICのメモリ検証
+
+iPhoneがない環境でもWASM fallbackのメモリ特性を確認できるよう、`libheif 1.23.0`で合成HEICをrepository外に生成した。Node.js上でBrowser Workerと同じlibheif decode処理を実行し、RGBA確保前後のRSSを計測した。
+
+- 12MP相当（4032×3024）を8回逐次処理: RGBA約47MB／枚、初回RSS約203MB、2回目以降のdecode後RSS約205MBで推移
+- 48MP相当（8000×6000）: RGBA約183MB、decode後RSS約608MB
+- 50MP超（8400×6000）: 寸法取得後、RGBAを確保せず拒否
+
+48MPをWASMで全面展開する方式はMobile向けMVPとして安全とは判断できない。このため、全形式共通の入力上限50MPとは別に、Browser標準APIでHEICを処理できず`libheif-js`へfallbackした場合だけ16MPを上限とする。一般的な12MP画像は許可し、48MP画像は`dimensions_too_large`として写真単位で失敗させる。
+
+上限判定はprimary itemのhandleから寸法を取得した直後、`ImageData`確保より前に行う。また、WorkerからRGBAを転送するときは`Uint8ClampedArray#slice()`による全画素コピーを行わず、元の`ArrayBuffer`をtransferする。
+
+### 12MP×8枚のBrowser検証
+
+同じ12MP合成HEICを8ファイル用意し、同時変換数1で連続処理した。
+
+- Windows Chrome 152: 8/8成功、合計約6467.5ms
+- Chrome初回: decoder読み込み505.1ms、処理全体1484.1ms
+- Chrome 2枚目以降: 1枚あたり約652.9〜794.6ms
+- VS Code Electron 42／Chromium 148: 8/8成功、合計約6954.8ms
+- Electronの混在8枚試験: 通常5枚と12MP 1枚は成功し、48MPと50MP超の2枚だけ`dimensions_too_large`。失敗後も後続写真の処理を継続した
+
+合成画像は単純なgradientであり、変換後容量は実写真より大幅に小さい。この結果は連続処理時間、処理継続、寸法上限の確認だけに使用し、容量や文字・傷の視認性評価には使用しない。
+
 ## 現時点の制約
 
 - `heic-to`と`libheif-js`は比較を再現するためのSpike用devDependencyであり、本実装にはまだ含めない
@@ -144,5 +168,6 @@ Windows上のElectron 42／Chromium 148で、同じfixture 5件をprimary直接�
 - HEIC／HEIFでもBrowser標準APIでデコードできる環境ではライブラリを読み込まない
 - HTTPなどSecure Contextではない環境では、画像選択前に検証を停止する
 - 公開fixtureでは成功率・primary item・透過・所要時間を確認済み。実際のiPhone／Androidカメラ由来HEICでは未確認
+- WASM fallback時は16MPを超えるHEIC／HEIFを安全上の理由で拒否する。Browser標準APIで処理できる場合は全形式共通の50MP上限を適用する
 - 実機画像で向き・文字や傷の視認性・処理時間を確認してからproduction dependencyへの移動を相談する
 - このページはdevelopmentでだけ表示され、productionでは404になる

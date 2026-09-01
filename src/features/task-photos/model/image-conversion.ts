@@ -4,6 +4,7 @@ export const TASK_PHOTO_LIMITS = {
   inputMaxBytes: 20 * 1024 * 1024,
   inputMaxPixels: 50_000_000,
   inputMaxLongEdge: 12_000,
+  heicFallbackMaxPixels: 16_000_000,
   mainLongEdge: 1_920,
   mainQuality: 0.82,
   thumbnailLongEdge: 480,
@@ -117,6 +118,7 @@ type LibheifWorkerSuccess = {
 type LibheifWorkerFailure = {
   type: "error";
   id: string;
+  code: "decode_failed" | "dimensions_too_large";
   message: string;
 };
 
@@ -276,6 +278,8 @@ async function ensureLibheifWorker(): Promise<{ worker: Worker; loadMs: number }
         pendingLibheifDecodes.delete(message.id);
         if (message.type === "success") {
           pending.resolve(message);
+        } else if (message.code === "dimensions_too_large") {
+          pending.reject(new TaskPhotoConversionError(message.code, message.message));
         } else {
           pending.reject(new Error(message.message));
         }
@@ -313,7 +317,16 @@ async function decodeWithLibheifPrimary(file: File): Promise<DecodedInputImage> 
   const buffer = await file.arrayBuffer();
   const result = await new Promise<LibheifWorkerSuccess>((resolve, reject) => {
     pendingLibheifDecodes.set(id, { resolve, reject });
-    worker.postMessage({ type: "decode", id, buffer }, [buffer]);
+    worker.postMessage(
+      {
+        type: "decode",
+        id,
+        buffer,
+        maxPixels: TASK_PHOTO_LIMITS.heicFallbackMaxPixels,
+        maxLongEdge: TASK_PHOTO_LIMITS.inputMaxLongEdge,
+      },
+      [buffer],
+    );
   });
   const imageData = new ImageData(
     new Uint8ClampedArray(result.rgbaBuffer),
@@ -381,6 +394,10 @@ async function decodeInputImage(
       ? await decodeWithLibheifPrimary(file)
       : await decodeWithHeicTo(file);
   } catch (error) {
+    if (error instanceof TaskPhotoConversionError) {
+      throw error;
+    }
+
     throw new TaskPhotoConversionError(
       "decode_failed",
       `${heicDecoder}でHEIC／HEIFをデコードできませんでした`,

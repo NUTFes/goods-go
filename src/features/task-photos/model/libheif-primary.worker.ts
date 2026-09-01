@@ -6,7 +6,21 @@ type DecodeRequest = {
   type: "decode";
   id: string;
   buffer: ArrayBuffer;
+  maxPixels: number;
+  maxLongEdge: number;
 };
+
+type WorkerErrorCode = "decode_failed" | "dimensions_too_large";
+
+class WorkerDecodeError extends Error {
+  readonly code: WorkerErrorCode;
+
+  constructor(code: WorkerErrorCode, message: string) {
+    super(message);
+    this.name = "WorkerDecodeError";
+    this.code = code;
+  }
+}
 
 type HeifImage = ReturnType<InstanceType<typeof libheif.HeifDecoder>["decode"]>[number];
 
@@ -14,6 +28,31 @@ const workerScope: DedicatedWorkerGlobalScope = self as DedicatedWorkerGlobalSco
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function errorCode(error: unknown): WorkerErrorCode {
+  return error instanceof WorkerDecodeError ? error.code : "decode_failed";
+}
+
+function validateDimensions(
+  width: number,
+  height: number,
+  maxPixels: number,
+  maxLongEdge: number,
+): void {
+  const pixels = width * height;
+  if (
+    width <= 0 ||
+    height <= 0 ||
+    !Number.isSafeInteger(pixels) ||
+    pixels > maxPixels ||
+    Math.max(width, height) > maxLongEdge
+  ) {
+    throw new WorkerDecodeError(
+      "dimensions_too_large",
+      `HEICをこの端末で安全に変換できる上限を超えています: ${width}x${height}`,
+    );
+  }
 }
 
 async function renderImage(image: HeifImage): Promise<ImageData> {
@@ -36,7 +75,7 @@ async function renderImage(image: HeifImage): Promise<ImageData> {
   });
 }
 
-async function decodePrimary(buffer: ArrayBuffer) {
+async function decodePrimary(buffer: ArrayBuffer, maxPixels: number, maxLongEdge: number) {
   const decoder = new libheif.HeifDecoder();
   const images = decoder.decode(buffer);
   let primaryImage: HeifImage | undefined;
@@ -56,8 +95,18 @@ async function decodePrimary(buffer: ArrayBuffer) {
     }
 
     const selectedImage = primaryImage ?? images[0];
+    validateDimensions(
+      selectedImage.get_width(),
+      selectedImage.get_height(),
+      maxPixels,
+      maxLongEdge,
+    );
     const imageData = await renderImage(selectedImage);
-    const rgbaBuffer = imageData.data.slice().buffer;
+    const rgbaBuffer = imageData.data.buffer;
+
+    if (!(rgbaBuffer instanceof ArrayBuffer)) {
+      throw new Error("HEIF decoder returned a non-transferable pixel buffer");
+    }
 
     return {
       width: imageData.width,
@@ -82,12 +131,17 @@ workerScope.addEventListener("message", async (event: MessageEvent<DecodeRequest
   if (event.data.type !== "decode") return;
 
   try {
-    const result = await decodePrimary(event.data.buffer);
+    const result = await decodePrimary(
+      event.data.buffer,
+      event.data.maxPixels,
+      event.data.maxLongEdge,
+    );
     workerScope.postMessage({ type: "success", id: event.data.id, ...result }, [result.rgbaBuffer]);
   } catch (error) {
     workerScope.postMessage({
       type: "error",
       id: event.data.id,
+      code: errorCode(error),
       message: errorMessage(error),
     });
   }
