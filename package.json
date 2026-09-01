@@ -70,8 +70,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
-    "heic-to": "1.5.2",
-    "libheif-js": "1.19.8",
     "oxfmt": "^0.35.0",
     "oxlint": "^1.50.0",
     "supabase": "2.105.0",

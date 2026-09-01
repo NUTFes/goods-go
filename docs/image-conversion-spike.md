@@ -1,16 +1,22 @@
-# 画像変換Spikeの実機確認
+# 画像変換Spikeの実機確認結果
 
-Issue #102の開発専用ページで、Browser標準APIとHEICデコーダ候補によるWebP変換を確認する。
+Issue #102でBrowser標準APIとHEICデコーダ候補を比較した記録である。
 
-JPEG／PNG／WebPはBrowser標準APIを使用する。HEIC／HEIFは標準APIを先に試し、失敗した場合だけ比較対象のHEIC decoderを遅延読み込みする。
+検証ページと比較用依存はLGPL確認前のProduction buildへ含めず、最終PRではこの記録だけをmainへ入れる。検証時点のコードはcommit `731fc78`に残す。
+
+JPEG／PNG／WebPはBrowser標準APIを使用した。HEIC／HEIFは標準APIを先に試し、失敗した場合だけ比較対象のHEIC decoderを遅延読み込みした。
 
 ## PCで確認する
 
+再現する場合はmainの作業ツリーを変更せず、検証commitから一時worktreeを作る。
+
 ```bash
+git worktree add ../goods-go-image-spike 731fc78
+cd ../goods-go-image-spike
 mise run dev
 ```
 
-次を開く。
+起動後、次を開く。
 
 ```text
 http://localhost:3000/dev/image-conversion
@@ -18,38 +24,25 @@ http://localhost:3000/dev/image-conversion
 
 ## iPhone／Androidで確認する
 
-`crypto.subtle.digest`などのWeb APIはSecure Contextを必要とする。LAN内の`http://<PCのIP>:3000`では正しい検証にならないため、HTTPSを提供するTailscale Serveを使用する。
-
-PCと端末を同じTailnetへ接続し、開発環境を通常どおり起動する。
-
-```bash
-mise run dev
-```
-
-Windows PowerShellでTailscale Serveを開始する。
+AndroidではUSBデバッグを有効にし、ADB reverseでPCのlocalhostへ接続した。
 
 ```powershell
-tailscale serve --bg 3000
-tailscale serve status
+adb reverse tcp:3000 tcp:3000
 ```
 
-表示されたHTTPS URLの末尾へ`/dev/image-conversion`を付け、端末で開く。
+Android Chromeで次を開く。
 
 ```text
-https://<端末名>.<tailnet名>.ts.net/dev/image-conversion
+http://localhost:3000/dev/image-conversion
 ```
 
-検証後はServe設定と開発環境を停止する。
+検証後は転送を解除する。
 
 ```powershell
-tailscale serve reset
+adb reverse --remove tcp:3000
 ```
 
-```bash
-mise run down
-```
-
-Dockerは従来どおり`127.0.0.1`だけへ公開し、LANやInternetへ直接公開しない。Tailscaleへ接続していない端末からはアクセスできない。
+iPhone検証時だけ、利用者の承認後にCloudflare Quick Tunnelで一時HTTPS URLを発行した。Quick TunnelはURLを知る人から到達可能になるため、URLを共有せず検証直後に停止した。大学LAN内のP2P接続やDockerのLAN直接公開は使用していない。
 
 ## 確認画像
 
@@ -205,11 +198,11 @@ Spikeでは容量比較のためメイン、サムネイル、両方のSHA-256�
 
 ## 現時点の制約
 
-- `heic-to`と`libheif-js`は比較を再現するためのSpike用devDependencyであり、本実装にはまだ含めない
+- `heic-to`と`libheif-js`はcommit `731fc78`で比較したが、最終PRの依存には含めない
 - package licenseはLGPL-3.0のため、本番採用前に配布時のライセンス表示・ソース提供方法を確認する
 - HEIC／HEIFでもBrowser標準APIでデコードできる環境ではライブラリを読み込まない
 - HTTPなどSecure Contextではない環境では、画像選択前に検証を停止する
 - 公開fixtureに加え、iPhoneのOSによるJPEG変換とAndroidカメラ由来HEICのWASM変換を実機確認済み
 - WASM fallback時は16MPを超えるHEIC／HEIFを安全上の理由で拒否する。Browser標準APIで処理できる場合は全形式共通の50MP上限を適用する
-- 実機画像で向き・文字や傷の視認性・処理時間を確認してからproduction dependencyへの移動を相談する
-- このページはdevelopmentでだけ表示され、productionでは404になる
+- 24MP以上のiPhone写真は未確認であり、#104着手前の実機確認事項とする
+- 検証ページは最終PRへ含めず、Production buildへ到達させない
