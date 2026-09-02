@@ -321,6 +321,15 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      apply_task_photo_changes: {
+        Args: {
+          p_actor_user_id: string;
+          p_additions: Json;
+          p_delete_photo_ids: string[];
+          p_task_id: string;
+        };
+        Returns: undefined;
+      };
       is_admin: { Args: never; Returns: boolean };
       is_leader: { Args: never; Returns: boolean };
       user_role: { Args: never; Returns: number };
