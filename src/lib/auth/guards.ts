@@ -10,7 +10,7 @@ export type CurrentUserProfile = {
   role: AppRole;
 };
 
-const getCurrentUserProfile = cache(async (): Promise<CurrentUserProfile | null> => {
+export const getCurrentUserProfile = cache(async (): Promise<CurrentUserProfile | null> => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
 
