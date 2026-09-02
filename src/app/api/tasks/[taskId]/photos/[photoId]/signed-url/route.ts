@@ -34,7 +34,12 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
   const normalizedTaskId = taskId.toLowerCase();
   const normalizedPhotoId = photoId.toLowerCase();
-  const serviceClient = getServiceClient();
+  let serviceClient: ReturnType<typeof getServiceClient>;
+  try {
+    serviceClient = getServiceClient();
+  } catch {
+    return errorResponse("database_error", "写真APIの初期化に失敗しました", 500);
+  }
   const { data: task, error: taskError } = await serviceClient
     .from("tasks")
     .select("task_id")
