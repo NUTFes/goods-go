@@ -13,7 +13,7 @@ STACK_COMPOSE_PROJECT="goods-go-supabase-prod"
 PROD_NETWORK="goods-go-prod"
 APP_ENV_FILE="${ROOT_DIR}/.env"
 APP_COMPOSE_FILE="${ROOT_DIR}/compose.prod.yml"
-CORE_STACK_SERVICES=(db auth rest kong supavisor)
+CORE_STACK_SERVICES=(db auth rest kong storage imgproxy supavisor)
 
 require_commands() {
   local command_name
@@ -136,6 +136,16 @@ resolve_stack_publishable_key() {
   printf '%s\n' "${value}"
 }
 
+resolve_stack_service_role_key() {
+  local value
+  value="$(read_env_value "${STACK_ENV_FILE}" "SERVICE_ROLE_KEY")"
+  if [[ -z "${value}" ]]; then
+    echo "SERVICE_ROLE_KEY is missing in ${STACK_ENV_FILE}" >&2
+    exit 1
+  fi
+  printf '%s\n' "${value}"
+}
+
 resolve_stack_db_url() {
   local override_url
   override_url="${SUPABASE_DB_URL:-$(read_env_value "${APP_ENV_FILE}" "SUPABASE_DB_URL")}"
@@ -169,6 +179,6 @@ app_compose() {
 
   NEXT_PUBLIC_SUPABASE_URL="$(resolve_stack_public_url)" \
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$(resolve_stack_publishable_key)" \
+    SUPABASE_SERVICE_ROLE_KEY="$(resolve_stack_service_role_key)" \
     docker compose "${compose_args[@]}" "$@"
 }
-
