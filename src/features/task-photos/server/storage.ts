@@ -1,12 +1,14 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  TASK_PHOTO_MAX_BYTES,
+  TASK_PHOTO_MIME_TYPE,
+} from "@/features/task-photos/model/constraints";
 import { getServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/schema.gen";
 
 export const TASK_PHOTO_BUCKET = "task-photos";
-export const TASK_PHOTO_MIME_TYPE = "image/jpeg";
-export const TASK_PHOTO_MAX_BYTES = 3 * 1024 * 1024;
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
