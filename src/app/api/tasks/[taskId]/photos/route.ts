@@ -278,24 +278,25 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
   }
 
-  let bucket: Awaited<ReturnType<typeof getTaskPhotoBucket>>;
-  try {
-    bucket = await getTaskPhotoBucket();
-  } catch {
-    return errorResponse("storage_error", "写真保存先の初期化に失敗しました", 500);
-  }
-
   const uploadedObjectKeys: string[] = [];
-  for (const upload of validatedUploads) {
-    const { error } = await bucket.upload(upload.objectKey, upload.bytes, {
-      contentType: TASK_PHOTO_MIME_TYPE,
-      upsert: true,
-    });
-    if (error) {
+  if (validatedUploads.length > 0) {
+    try {
+      const bucket = await getTaskPhotoBucket();
+      for (const upload of validatedUploads) {
+        const { error } = await bucket.upload(upload.objectKey, upload.bytes, {
+          contentType: TASK_PHOTO_MIME_TYPE,
+          upsert: true,
+        });
+        if (error) {
+          await cleanupUploadedObjects(uploadedObjectKeys);
+          return errorResponse("storage_error", "写真ファイルの保存に失敗しました", 500);
+        }
+        uploadedObjectKeys.push(upload.objectKey);
+      }
+    } catch {
       await cleanupUploadedObjects(uploadedObjectKeys);
-      return errorResponse("storage_error", "写真ファイルの保存に失敗しました", 500);
+      return errorResponse("storage_error", "写真保存先への接続に失敗しました", 500);
     }
-    uploadedObjectKeys.push(upload.objectKey);
   }
 
   const dimensionsByPhotoId = new Map(
