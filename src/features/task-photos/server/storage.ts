@@ -108,3 +108,43 @@ export async function getTaskPhotoBucket() {
   await ensureTaskPhotoBucket();
   return getServiceClient().storage.from(TASK_PHOTO_BUCKET);
 }
+
+function toPublicStorageUrl(signedUrl: string): string {
+  const internalBaseValue =
+    process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publicBaseValue = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!internalBaseValue || !publicBaseValue) {
+    throw new Error("Missing Supabase URL environment variables");
+  }
+
+  const internalBase = new URL(internalBaseValue);
+  const publicBase = new URL(publicBaseValue);
+  const resolvedSignedUrl = new URL(signedUrl, internalBase);
+
+  if (
+    resolvedSignedUrl.origin !== internalBase.origin &&
+    resolvedSignedUrl.origin !== publicBase.origin
+  ) {
+    throw new Error("Storage returned an unexpected signed URL origin");
+  }
+
+  return new URL(`${resolvedSignedUrl.pathname}${resolvedSignedUrl.search}`, publicBase).toString();
+}
+
+export async function createTaskPhotoSignedUrl(
+  taskId: string,
+  photoId: string,
+  expiresInSeconds: number,
+): Promise<string> {
+  const bucket = await getTaskPhotoBucket();
+  const { data, error } = await bucket.createSignedUrl(
+    taskPhotoObjectKey(taskId, photoId),
+    expiresInSeconds,
+  );
+
+  if (error || !data?.signedUrl) {
+    throw new Error("Failed to create a task photo signed URL", { cause: error });
+  }
+
+  return toPublicStorageUrl(data.signedUrl);
+}

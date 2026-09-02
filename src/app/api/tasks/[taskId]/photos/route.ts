@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   taskPhotoChangesSchema,
-  type PhotoMetadata,
   type TaskPhotoChanges,
   type TaskPhotoErrorCode,
 } from "@/features/task-photos/model/api";
@@ -11,6 +10,7 @@ import {
 } from "@/features/task-photos/model/constraints";
 import { InvalidTaskPhotoError, validateTaskPhotoJpeg } from "@/features/task-photos/model/jpeg";
 import { getTaskPhotoBucket, taskPhotoObjectKey } from "@/features/task-photos/server/storage";
+import { listActiveTaskPhotos } from "@/features/task-photos/server/queries";
 import { getCurrentUserProfile } from "@/lib/auth/guards";
 import { getServiceClient } from "@/lib/supabase/service";
 import type { Tables } from "@/types/schema.gen";
@@ -86,33 +86,6 @@ function validateMultipartFields(
   }
 
   return files.size === expectedFileFields.size ? files : null;
-}
-
-function mapPhoto(row: TaskPhotoRow): PhotoMetadata {
-  return {
-    photoId: row.photo_id,
-    sortOrder: row.sort_order,
-    width: row.width,
-    height: row.height,
-    createdAt: row.created_at,
-  };
-}
-
-async function listActivePhotos(taskId: string): Promise<PhotoMetadata[]> {
-  const { data, error } = await getServiceClient()
-    .from("task_photos")
-    .select(
-      "photo_id,task_id,sort_order,width,height,created_by_user_id,created_at,deleted_by_user_id,deleted_at",
-    )
-    .eq("task_id", taskId)
-    .is("deleted_at", null)
-    .order("sort_order", { ascending: true });
-
-  if (error) {
-    throw new Error("Failed to load task photos", { cause: error });
-  }
-
-  return (data ?? []).map((row) => mapPhoto(row as TaskPhotoRow));
 }
 
 async function cleanupUploadedObjects(objectKeys: string[]): Promise<void> {
@@ -346,8 +319,43 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    return NextResponse.json({ photos: await listActivePhotos(normalizedTaskId) });
+    return NextResponse.json({ photos: await listActiveTaskPhotos(normalizedTaskId) });
   } catch {
     return errorResponse("database_error", "保存後の写真情報を取得できませんでした", 500);
+  }
+}
+
+export async function GET(_request: NextRequest, context: RouteContext) {
+  const currentUser = await getCurrentUserProfile();
+  if (!currentUser) {
+    return errorResponse("unauthorized", "認証が必要です", 401);
+  }
+
+  const { taskId } = await context.params;
+  if (!UUID_PATTERN.test(taskId)) {
+    return errorResponse("task_not_found", "対象タスクが見つかりません", 404);
+  }
+  const normalizedTaskId = taskId.toLowerCase();
+  const { data: task, error } = await getServiceClient()
+    .from("tasks")
+    .select("task_id")
+    .eq("task_id", normalizedTaskId)
+    .is("deleted", null)
+    .maybeSingle();
+
+  if (error) {
+    return errorResponse("database_error", "タスクの確認に失敗しました", 500);
+  }
+  if (!task) {
+    return errorResponse("task_not_found", "対象タスクが見つかりません", 404);
+  }
+
+  try {
+    return NextResponse.json(
+      { photos: await listActiveTaskPhotos(normalizedTaskId) },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
+  } catch {
+    return errorResponse("database_error", "写真情報の取得に失敗しました", 500);
   }
 }
