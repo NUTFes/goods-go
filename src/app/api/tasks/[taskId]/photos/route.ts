@@ -249,7 +249,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
   }
 
-  const validatedUploads: ValidatedUpload[] = [];
+  const pendingUploads: { photoId: string; file: File }[] = [];
   for (const { photoId } of changes.additions) {
     if (existingRows.has(photoId)) {
       continue;
@@ -260,22 +260,29 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return errorResponse("invalid_image", "JPEG画像が不正です", 422);
     }
 
-    try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      const { width, height } = validateTaskPhotoJpeg(bytes);
-      validatedUploads.push({
-        photoId,
-        objectKey: taskPhotoObjectKey(normalizedTaskId, photoId),
-        bytes,
-        width,
-        height,
-      });
-    } catch (error) {
-      if (error instanceof InvalidTaskPhotoError) {
-        return errorResponse("invalid_image", "JPEG画像が不正です", 422);
-      }
-      return errorResponse("invalid_request", "写真ファイルを読み取れません", 400);
+    pendingUploads.push({ photoId, file });
+  }
+
+  let validatedUploads: ValidatedUpload[];
+  try {
+    validatedUploads = await Promise.all(
+      pendingUploads.map(async ({ photoId, file }) => {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const { width, height } = validateTaskPhotoJpeg(bytes);
+        return {
+          photoId,
+          objectKey: taskPhotoObjectKey(normalizedTaskId, photoId),
+          bytes,
+          width,
+          height,
+        };
+      }),
+    );
+  } catch (error) {
+    if (error instanceof InvalidTaskPhotoError) {
+      return errorResponse("invalid_image", "JPEG画像が不正です", 422);
     }
+    return errorResponse("invalid_request", "写真ファイルを読み取れません", 400);
   }
 
   const uploadedObjectKeys: string[] = [];

@@ -116,6 +116,9 @@ function toPublicStorageUrl(signedUrl: string): string {
   if (!internalBaseValue || !publicBaseValue) {
     throw new Error("Missing Supabase URL environment variables");
   }
+  if (!URL.canParse(internalBaseValue) || !URL.canParse(publicBaseValue)) {
+    throw new Error("Invalid Supabase URL environment variables");
+  }
 
   const internalBase = new URL(internalBaseValue);
   const publicBase = new URL(publicBaseValue);

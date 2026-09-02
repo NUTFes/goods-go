@@ -3,11 +3,10 @@ import { z } from "zod";
 const uuidSchema = z.uuid();
 
 export const taskPhotoChangesSchema = z
-  .object({
-    additions: z.array(z.object({ photoId: uuidSchema }).strict()).max(8),
+  .strictObject({
+    additions: z.array(z.strictObject({ photoId: uuidSchema })).max(8),
     deletedPhotoIds: z.array(uuidSchema).max(8),
   })
-  .strict()
   .superRefine((changes, context) => {
     const additionIds = changes.additions.map(({ photoId }) => photoId);
     if (new Set(additionIds).size !== additionIds.length) {
