@@ -129,6 +129,64 @@ export type Database = {
           },
         ];
       };
+      task_photos: {
+        Row: {
+          created_at: string;
+          created_by_user_id: string;
+          deleted_at: string | null;
+          deleted_by_user_id: string | null;
+          height: number;
+          photo_id: string;
+          sort_order: number;
+          task_id: string;
+          width: number;
+        };
+        Insert: {
+          created_at?: string;
+          created_by_user_id: string;
+          deleted_at?: string | null;
+          deleted_by_user_id?: string | null;
+          height: number;
+          photo_id: string;
+          sort_order: number;
+          task_id: string;
+          width: number;
+        };
+        Update: {
+          created_at?: string;
+          created_by_user_id?: string;
+          deleted_at?: string | null;
+          deleted_by_user_id?: string | null;
+          height?: number;
+          photo_id?: string;
+          sort_order?: number;
+          task_id?: string;
+          width?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "task_photos_created_by_user_id_fkey";
+            columns: ["created_by_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["user_id"];
+          },
+          {
+            foreignKeyName: "task_photos_deleted_by_user_id_fkey";
+            columns: ["deleted_by_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["user_id"];
+          },
+          {
+            foreignKeyName: "task_photos_task_id_fkey";
+            columns: ["task_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["task_id"];
+          },
+        ];
+      };
       tasks: {
         Row: {
           actual_end_time: string | null;
