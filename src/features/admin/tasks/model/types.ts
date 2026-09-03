@@ -56,7 +56,6 @@ export type AdminTask = {
   leaderUserId: string | null;
   leaderName: string | null;
   note: string | null;
-  lockVersion: number;
 };
 
 export type AdminTaskListPageData = {
@@ -71,6 +70,5 @@ export type ActionResult =
   | {
       ok: false;
       message?: string;
-      code?: "task_version_conflict";
       fieldErrors?: Record<string, string[]>;
     };

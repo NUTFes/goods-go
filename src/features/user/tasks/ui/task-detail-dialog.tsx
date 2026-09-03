@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertCircle, Triangle, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -42,7 +41,6 @@ export function TaskDetailDialog({
   canEditNote,
   onOpenChange,
 }: TaskDetailDialogProps) {
-  const { refresh } = useRouter();
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus>(task?.currentStatus ?? 0);
   const [noteDraft, setNoteDraft] = useState(task?.note ?? "");
   const [errorMessage, setErrorMessage] = useState("");
@@ -98,15 +96,11 @@ export function TaskDetailDialog({
       const result = await updateTaskStatusAction(
         task.taskId,
         selectedStatus,
-        task.lockVersion,
         canEditNote ? noteDraft : undefined,
       );
       if (!result.ok) {
         setErrorMessage(result.message);
         toast.error(result.message);
-        if (result.code === "task_version_conflict") {
-          refresh();
-        }
         return;
       }
       toast.success(

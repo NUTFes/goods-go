@@ -32,7 +32,7 @@ export function TaskDeleteDialog({ open, task, onOpenChange }: TaskDeleteDialogP
     setErrorMessage("");
 
     startTransition(async () => {
-      const result = await deleteTaskAction(task.taskId, task.lockVersion);
+      const result = await deleteTaskAction(task.taskId);
       if (!result.ok) {
         setErrorMessage(result.message ?? "削除に失敗しました");
         return;

@@ -161,7 +161,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
       ) : null}
 
       <TaskDetailDialog
-        key={`${selectedTaskId ?? "none"}:${selectedTask?.lockVersion ?? "-1"}`}
+        key={`${selectedTaskId ?? "none"}:${selectedTask?.currentStatus ?? "-1"}:${selectedTask?.note ?? ""}`}
         open={selectedTaskId !== null}
         task={selectedTask}
         currentRole={currentUser.role}

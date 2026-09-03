@@ -11,13 +11,9 @@ import { APP_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { TASK_NOTE_MAX_LENGTH, type ActionResult } from "../model/types";
 
-const TASK_VERSION_CONFLICT_MESSAGE =
-  "ほかの利用者がこのタスクを更新しました。最新の状態を確認して、もう一度操作してください";
-
 export async function updateTaskStatusAction(
   taskId: string,
   status: number,
-  expectedLockVersion: number,
   note?: string,
 ): Promise<ActionResult> {
   const currentUser = await requireAuthenticatedUser();
@@ -34,10 +30,6 @@ export async function updateTaskStatusAction(
     return { ok: false, message: "不正なステータスです" };
   }
 
-  if (!Number.isSafeInteger(expectedLockVersion) || expectedLockVersion < 0) {
-    return { ok: false, message: "タスクの更新情報が不正です" };
-  }
-
   const isAdmin = currentUser.role === APP_ROLES.ADMIN;
   if (note !== undefined && !isAdmin) {
     return { ok: false, message: "備考を変更する権限がありません" };
@@ -51,21 +43,13 @@ export async function updateTaskStatusAction(
   const supabase = await createClient();
   const { data: currentTask, error: currentTaskError } = await supabase
     .from("tasks")
-    .select("current_status,lock_version")
+    .select("current_status")
     .eq("task_id", taskId)
     .is("deleted", null)
     .maybeSingle();
 
   if (currentTaskError || !currentTask) {
     return { ok: false, message: "対象タスクが見つかりません" };
-  }
-
-  if (currentTask.lock_version !== expectedLockVersion) {
-    return {
-      ok: false,
-      code: "task_version_conflict",
-      message: TASK_VERSION_CONFLICT_MESSAGE,
-    };
   }
 
   if (!isTaskStatus(currentTask.current_status)) {
@@ -101,20 +85,15 @@ export async function updateTaskStatusAction(
     .from("tasks")
     .update(updatePayload)
     .eq("task_id", taskId)
-    .eq("lock_version", expectedLockVersion)
     .is("deleted", null)
-    .select("task_id,lock_version")
+    .select("task_id")
     .maybeSingle();
 
   if (error) {
     return { ok: false, message: "ステータスの更新に失敗しました" };
   }
   if (!data) {
-    return {
-      ok: false,
-      code: "task_version_conflict",
-      message: TASK_VERSION_CONFLICT_MESSAGE,
-    };
+    return { ok: false, message: "対象タスクが見つかりません" };
   }
 
   revalidatePath("/tasks");

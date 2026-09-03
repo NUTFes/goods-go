@@ -141,7 +141,6 @@ export type Database = {
           from_location_id: string;
           item_id: string;
           leader_user_id: string | null;
-          lock_version: number;
           modified: string;
           note: string | null;
           quantity: number;
@@ -161,7 +160,6 @@ export type Database = {
           from_location_id: string;
           item_id: string;
           leader_user_id?: string | null;
-          lock_version?: number;
           modified?: string;
           note?: string | null;
           quantity?: number;
@@ -181,7 +179,6 @@ export type Database = {
           from_location_id?: string;
           item_id?: string;
           leader_user_id?: string | null;
-          lock_version?: number;
           modified?: string;
           note?: string | null;
           quantity?: number;
