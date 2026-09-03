@@ -50,8 +50,6 @@ export async function updateSession(request: NextRequest) {
 
   const publicPaths = ["/login", "/register"];
   const isPublicPath = publicPaths.some((p) => request.nextUrl.pathname.startsWith(p));
-  const isApiPath =
-    request.nextUrl.pathname === "/api" || request.nextUrl.pathname.startsWith("/api/");
 
   if (user && isPublicPath) {
     const url = request.nextUrl.clone();
@@ -60,17 +58,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (!user && !isPublicPath) {
-    if (isApiPath) {
-      const unauthorizedResponse = NextResponse.json(
-        { code: "unauthorized", message: "Authentication required" },
-        { status: 401 },
-      );
-      supabaseResponse.cookies.getAll().forEach(({ name, value, ...options }) => {
-        unauthorizedResponse.cookies.set(name, value, options);
-      });
-      return unauthorizedResponse;
-    }
-
+    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

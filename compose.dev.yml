@@ -12,7 +12,6 @@ services:
       NODE_ENV: development
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?required}
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:?required}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?required}
       SUPABASE_INTERNAL_URL: http://supabase_kong_goods-go:8000
       SUPABASE_HEALTH_URL: http://supabase_auth_goods-go:9999/health
       WATCHPACK_POLLING: "true"

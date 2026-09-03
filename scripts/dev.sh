@@ -16,17 +16,16 @@ require_commands() {
 }
 
 write_app_env() {
-  local status_output api_url publishable_key service_role_key
+  local status_output api_url publishable_key
   status_output="$(pnpm exec supabase status -o env 2>/dev/null)"
   api_url="$(printf '%s\n' "${status_output}" | sed -n 's/^API_URL="\(.*\)"$/\1/p')"
   publishable_key="$(printf '%s\n' "${status_output}" | sed -n 's/^PUBLISHABLE_KEY="\(.*\)"$/\1/p')"
-  service_role_key="$(printf '%s\n' "${status_output}" | sed -n 's/^SERVICE_ROLE_KEY="\(.*\)"$/\1/p')"
 
   if [[ -z "${publishable_key}" ]]; then
     publishable_key="$(printf '%s\n' "${status_output}" | sed -n 's/^ANON_KEY="\(.*\)"$/\1/p')"
   fi
 
-  if [[ -z "${api_url}" || -z "${publishable_key}" || -z "${service_role_key}" ]]; then
+  if [[ -z "${api_url}" || -z "${publishable_key}" ]]; then
     echo "failed to read local Supabase connection details" >&2
     exit 1
   fi
@@ -35,7 +34,6 @@ write_app_env() {
   {
     printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n' "${api_url}"
     printf 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n' "${publishable_key}"
-    printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n' "${service_role_key}"
   } >"${DEV_ENV_FILE}"
 }
 

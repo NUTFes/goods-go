@@ -55,11 +55,6 @@ alias = "typecheck"
 description = "TypeScript の型チェックを実行"
 run = "pnpm run typecheck"
 
-[tasks."02_check:60_unit"]
-alias = "test:unit"
-description = "Node.js 標準test runnerでunit testを実行"
-run = "pnpm run test:unit"
-
 # ------------------------------------------------------------------------------
 # 03. Build
 # ------------------------------------------------------------------------------
