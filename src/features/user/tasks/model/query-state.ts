@@ -5,7 +5,8 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
-import type { TaskStatus, UserTaskQueryState } from "./types";
+import { isTaskStatus } from "@/features/tasks/model/task-status";
+import type { UserTaskQueryState } from "./types";
 
 export const userTaskQueryStatesParsers = {
   day: parseAsStringLiteral(["0", "1", "2"] as const).withDefault("0"),
@@ -16,10 +17,6 @@ export const userTaskQueryStatesParsers = {
 };
 
 const searchParamsCache = createSearchParamsCache(userTaskQueryStatesParsers);
-
-function isTaskStatus(value: number): value is TaskStatus {
-  return value === 0 || value === 1 || value === 2;
-}
 
 export function parseUserTaskQueryState(
   searchParams: Record<string, string | string[] | undefined>,

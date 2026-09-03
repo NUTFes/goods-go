@@ -1,8 +1,9 @@
 import type { AppRole } from "@/lib/auth/roles";
+import type { TaskStatus } from "@/features/tasks/model/task-status";
 import type { Tables } from "@/types/schema.gen";
 
 export type EventDayType = Tables<"tasks">["event_day_type"] & (0 | 1 | 2);
-export type TaskStatus = Tables<"tasks">["current_status"] & (0 | 1 | 2);
+export type { TaskStatus } from "@/features/tasks/model/task-status";
 export const TASK_NOTE_MAX_LENGTH = 1000;
 
 export type UserTaskFilterState = {

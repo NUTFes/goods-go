@@ -6,14 +6,10 @@ import { useQueryStates } from "nuqs";
 import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { isTaskStatus } from "@/features/tasks/model/task-status";
 import { APP_ROLES, type AppRole } from "@/lib/auth/roles";
 import { userTaskQueryStatesParsers } from "../model/query-state";
-import type {
-  TaskStatus,
-  UserTask,
-  UserTaskFilterOptions,
-  UserTaskFilterState,
-} from "../model/types";
+import type { UserTask, UserTaskFilterOptions, UserTaskFilterState } from "../model/types";
 import { TaskCard } from "./task-card";
 import { TaskDetailDialog } from "./task-detail-dialog";
 import { TaskFilterSheet } from "./task-filter-sheet";
@@ -28,10 +24,6 @@ type TaskListPageViewProps = {
   tasks: UserTask[];
   filterOptions: UserTaskFilterOptions;
 };
-
-function isTaskStatus(value: number): value is TaskStatus {
-  return value === 0 || value === 1 || value === 2;
-}
 
 export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskListPageViewProps) {
   const { refresh } = useRouter();
@@ -63,8 +55,6 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
     [selectedTaskId, tasks],
   );
 
-  const canEditStatus =
-    currentUser.role === APP_ROLES.ADMIN || currentUser.role === APP_ROLES.LEADER;
   const canEditNote = currentUser.role === APP_ROLES.ADMIN;
 
   const handleDayChange = (day: "0" | "1" | "2") => {
@@ -174,7 +164,7 @@ export function TaskListPageView({ currentUser, tasks, filterOptions }: TaskList
         key={`${selectedTaskId ?? "none"}:${selectedTask?.currentStatus ?? "-1"}:${selectedTask?.note ?? ""}`}
         open={selectedTaskId !== null}
         task={selectedTask}
-        canEditStatus={canEditStatus}
+        currentRole={currentUser.role}
         canEditNote={canEditNote}
         onOpenChange={(open) => {
           if (!open) {

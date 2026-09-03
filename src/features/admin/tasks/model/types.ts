@@ -1,11 +1,12 @@
+import type { TaskStatus } from "@/features/tasks/model/task-status";
 import type { Tables } from "@/types/schema.gen";
 
 export type EventDayType = Tables<"tasks">["event_day_type"] & (0 | 1 | 2);
-export type TaskStatus = Tables<"tasks">["current_status"] & (0 | 1 | 2);
+export type { TaskStatus } from "@/features/tasks/model/task-status";
 
 export type TaskFilterState = {
   day: "all" | "0" | "1" | "2";
-  status: "all" | "0" | "1" | "2";
+  status: "all" | "0" | "1" | "2" | "3";
   itemId: string;
   leaderUserId: string;
   fromLocationId: string;
