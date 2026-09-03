@@ -1,11 +1,6 @@
 begin;
 
-select plan(20);
-
-select has_column('public', 'tasks', 'lock_version', 'tasks.lock_versionが存在する');
-select col_type_is('public', 'tasks', 'lock_version', 'bigint', 'lock_versionはbigintである');
-select col_not_null('public', 'tasks', 'lock_version', 'lock_versionはNOT NULLである');
-select col_default_is('public', 'tasks', 'lock_version', '0', 'lock_versionの初期値は0である');
+select plan(12);
 
 select is(
   (select current_status from public.tasks where note = 'seed-task-03'),
@@ -25,11 +20,6 @@ set local role authenticated;
 select lives_ok(
   $$update public.tasks set current_status = 1 where note = 'seed-task-01'$$,
   'Leaderは未着手から進行中へ変更できる'
-);
-select is(
-  (select lock_version from public.tasks where note = 'seed-task-01'),
-  1::bigint,
-  'タスク更新時にlock_versionが加算される'
 );
 select lives_ok(
   $$update public.tasks set current_status = 2 where note = 'seed-task-01'$$,
@@ -95,43 +85,11 @@ select ok(
   ),
   'ステータス変更者と遷移内容を監査ログへ保存する'
 );
-select results_eq(
-  $$
-    with updated as (
-      update public.tasks
-      set current_status = 2
-      where note = 'seed-task-02' and lock_version = 0
-      returning task_id
-    )
-    select count(*)::bigint from updated
-  $$,
-  array[1::bigint],
-  '一致するlock_versionでは更新できる'
-);
-select results_eq(
-  $$
-    with updated as (
-      update public.tasks
-      set current_status = 0
-      where note = 'seed-task-02' and lock_version = 0
-      returning task_id
-    )
-    select count(*)::bigint from updated
-  $$,
-  array[0::bigint],
-  '古いlock_versionでは更新されない'
-);
 select throws_ok(
   $$update public.tasks set current_status = 4 where note = 'seed-task-04'$$,
   '23514',
   'new row for relation "tasks" violates check constraint "chk_tasks_status"',
   '4状態以外はDB制約で拒否する'
-);
-select throws_ok(
-  $$update public.tasks set lock_version = 99 where note = 'seed-task-04'$$,
-  'P0001',
-  'lock_version is managed by the database',
-  'lock_versionを直接変更できない'
 );
 
 select * from finish();

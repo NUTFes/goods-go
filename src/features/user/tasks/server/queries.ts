@@ -73,7 +73,6 @@ function mapTask(
     leaderUserId: row.leader_user_id,
     leaderName,
     note: row.note,
-    lockVersion: row.lock_version,
   };
 }
 
@@ -86,7 +85,7 @@ export async function getUserTaskListPageData(
   let tasksQuery = supabase
     .from("tasks")
     .select(
-      "task_id,event_day_type,item_id,quantity,from_location_id,to_location_id,scheduled_start_time,scheduled_end_time,leader_user_id,current_status,note,lock_version,created,deleted",
+      "task_id,event_day_type,item_id,quantity,from_location_id,to_location_id,scheduled_start_time,scheduled_end_time,leader_user_id,current_status,note,created,deleted",
     )
     .eq("event_day_type", Number(queryState.filters.day))
     .is("deleted", null);

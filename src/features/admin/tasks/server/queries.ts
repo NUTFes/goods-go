@@ -42,7 +42,7 @@ export async function getAdminTaskListPageData(
   let tasksQuery = supabase
     .from("tasks")
     .select(
-      "task_id,event_day_type,item_id,quantity,from_location_id,to_location_id,scheduled_start_time,scheduled_end_time,actual_start_time,actual_end_time,leader_user_id,current_status,note,lock_version,created",
+      "task_id,event_day_type,item_id,quantity,from_location_id,to_location_id,scheduled_start_time,scheduled_end_time,actual_start_time,actual_end_time,leader_user_id,current_status,note,created",
     )
     .is("deleted", null);
 
@@ -134,7 +134,6 @@ export async function getAdminTaskListPageData(
         leaderUserId: task.leader_user_id,
         leaderName: task.leader_user_id ? (leaderNameById.get(task.leader_user_id) ?? null) : null,
         note: task.note,
-        lockVersion: task.lock_version,
       };
     }),
     queryState.sort,

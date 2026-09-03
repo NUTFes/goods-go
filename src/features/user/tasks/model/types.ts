@@ -45,7 +45,6 @@ export type UserTask = {
   leaderUserId: string | null;
   leaderName: string | null;
   note: string | null;
-  lockVersion: number;
 };
 
 export type UserTaskCurrentUser = {
@@ -67,5 +66,4 @@ export type ActionResult =
   | {
       ok: false;
       message: string;
-      code?: "task_version_conflict";
     };
