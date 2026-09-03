@@ -1,30 +1,20 @@
--- タスク写真のメタデータと参照権限を追加する。
--- 画像本体はprivate Supabase Storageへ保存し、DBには導出可能なObject keyを持たせない。
+-- Supabase Storageへ保存するタスク写真の最小メタデータを追加する。
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('task-photos', 'task-photos', false, 3145728, array['image/jpeg']::text[])
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
 
 create table public.task_photos (
   photo_id uuid primary key,
   task_id uuid not null references public.tasks(task_id) on delete cascade,
   sort_order integer not null,
-  width integer not null,
-  height integer not null,
-  created_by_user_id uuid not null references public.users(user_id),
   created_at timestamptz not null default now(),
-  deleted_by_user_id uuid references public.users(user_id),
   deleted_at timestamptz,
-  constraint chk_task_photos_sort_order check (sort_order >= 0),
-  constraint chk_task_photos_dimensions check (
-    width between 1 and 1920
-    and height between 1 and 1920
-    and width::bigint * height::bigint <= 3686400
-  ),
-  constraint chk_task_photos_deleted_metadata check (
-    (deleted_at is null and deleted_by_user_id is null)
-    or (deleted_at is not null and deleted_by_user_id is not null)
-  )
+  constraint chk_task_photos_sort_order check (sort_order >= 0)
 );
-
-comment on table public.task_photos is 'タスク写真のメタデータ。画像本体はprivate Storageへ保存する。';
-comment on column public.task_photos.sort_order is 'タスク内の登録順。論理削除後も過去の値を再利用しない。';
 
 create unique index uq_task_photos_active_sort_order
 on public.task_photos (task_id, sort_order)
@@ -49,4 +39,40 @@ using (
 
 revoke all on table public.task_photos from anon, authenticated;
 grant select on table public.task_photos to authenticated;
-grant select on table public.task_photos to service_role;
+
+-- Browserからの標準uploadは、未完了タスクの所定パスだけを許可する。
+create policy task_photos_storage_insert
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'task-photos'
+  and name ~ '^tasks/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.jpg$'
+  and exists (
+    select 1
+    from public.tasks t
+    join public.users u on u.user_id = (select auth.uid())
+    where t.task_id::text = split_part(storage.objects.name, '/', 2)
+      and t.deleted is null
+      and t.current_status <> 3
+      and u.deleted is null
+      and u.role in (0, 1, 2)
+  )
+);
+
+-- 有効な写真だけ、authenticatedユーザーが取得・signed URL発行できる。
+create policy task_photos_storage_select
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'task-photos'
+  and exists (
+    select 1
+    from public.task_photos tp
+    join public.tasks t on t.task_id = tp.task_id
+    where storage.objects.name = 'tasks/' || tp.task_id::text || '/' || tp.photo_id::text || '.jpg'
+      and tp.deleted_at is null
+      and t.deleted is null
+  )
+);

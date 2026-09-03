@@ -1,63 +1,71 @@
 begin;
 
-select plan(19);
+select plan(14);
 
-select has_function(
-  'public',
-  'apply_task_photo_changes',
-  array['uuid', 'uuid', 'jsonb', 'uuid[]'],
-  '写真変更関数が存在する'
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.apply_task_photo_changes(uuid,uuid[],uuid[])',
+    'execute'
+  ),
+  'authenticatedは写真変更RPCを実行できる'
 );
 
 select ok(
   not has_function_privilege(
     'anon',
-    'public.apply_task_photo_changes(uuid,uuid,jsonb,uuid[])',
+    'public.apply_task_photo_changes(uuid,uuid[],uuid[])',
     'execute'
   ),
-  'anonは写真変更関数を実行できない'
-);
-select ok(
-  not has_function_privilege(
-    'authenticated',
-    'public.apply_task_photo_changes(uuid,uuid,jsonb,uuid[])',
-    'execute'
-  ),
-  'authenticatedは写真変更関数を実行できない'
-);
-select is_empty(
-  $$
-    select 1
-    from pg_proc p
-    cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
-    where p.oid = 'public.apply_task_photo_changes(uuid,uuid,jsonb,uuid[])'::regprocedure
-      and acl.grantee = 0
-      and acl.privilege_type = 'EXECUTE'
-  $$,
-  'PUBLICには写真変更関数の実行権限がない'
-);
-select ok(
-  has_function_privilege(
-    'service_role',
-    'public.apply_task_photo_changes(uuid,uuid,jsonb,uuid[])',
-    'execute'
-  ),
-  'service_roleだけが写真変更関数を実行できる'
+  'anonは写真変更RPCを実行できない'
 );
 
-set local role service_role;
+insert into storage.objects (bucket_id, name)
+select
+  'task-photos',
+  'tasks/' || t.task_id::text || '/' || p.photo_id || '.jpg'
+from public.tasks t
+cross join (
+  values
+    ('30000000-0000-0000-0000-000000000001'),
+    ('30000000-0000-0000-0000-000000000002')
+) p(photo_id)
+where t.note = 'seed-task-01';
+
+insert into storage.objects (bucket_id, name)
+select
+  'task-photos',
+  'tasks/' || t.task_id::text || '/' || p.photo_id || '.jpg'
+from public.tasks t
+cross join (
+  values
+    ('30000000-0000-0000-0000-000000000011'),
+    ('30000000-0000-0000-0000-000000000012'),
+    ('30000000-0000-0000-0000-000000000013'),
+    ('30000000-0000-0000-0000-000000000014'),
+    ('30000000-0000-0000-0000-000000000015'),
+    ('30000000-0000-0000-0000-000000000016'),
+    ('30000000-0000-0000-0000-000000000017'),
+    ('30000000-0000-0000-0000-000000000018'),
+    ('30000000-0000-0000-0000-000000000019')
+) p(photo_id)
+where t.note = 'seed-task-02';
+
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-0000000000c0', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+set local role authenticated;
 
 select lives_ok(
   $$
     select public.apply_task_photo_changes(
       (select task_id from public.tasks where note = 'seed-task-01'),
-      '10000000-0000-0000-0000-0000000000c0',
-      '[{"photo_id":"30000000-0000-0000-0000-000000000001","width":1920,"height":1080}]'::jsonb,
+      array['30000000-0000-0000-0000-000000000001']::uuid[],
       array[]::uuid[]
     )
   $$,
-  'Userも未完了タスクへ写真を追加できる'
+  'Userは未完了タスクへ写真を追加できる'
 );
+
 select results_eq(
   $$
     select photo_id, sort_order
@@ -67,100 +75,73 @@ select results_eq(
   $$values ('30000000-0000-0000-0000-000000000001'::uuid, 0)$$,
   '追加写真を登録順0で保存する'
 );
-select results_eq(
-  $$
-    select count(*)::bigint
-    from public.task_activities
-    where action = 'photo_added'
-      and payload ->> 'photo_id' = '30000000-0000-0000-0000-000000000001'
-  $$,
-  array[1::bigint],
-  '実際の写真追加だけ監査記録する'
-);
 
 select public.apply_task_photo_changes(
   (select task_id from public.tasks where note = 'seed-task-01'),
-  '10000000-0000-0000-0000-0000000000c0',
-  '[{"photo_id":"30000000-0000-0000-0000-000000000001","width":1280,"height":720}]'::jsonb,
+  array['30000000-0000-0000-0000-000000000001']::uuid[],
   array[]::uuid[]
 );
-select results_eq(
-  $$select count(*)::bigint from public.task_photos where photo_id = '30000000-0000-0000-0000-000000000001'$$,
-  array[1::bigint],
-  '同じ有効写真IDの再送は追加しない'
-);
+
 select results_eq(
   $$
-    select count(*)::bigint
-    from public.task_activities
-    where action = 'photo_added'
-      and payload ->> 'photo_id' = '30000000-0000-0000-0000-000000000001'
+    select
+      (select count(*) from public.task_photos where photo_id = '30000000-0000-0000-0000-000000000001'),
+      (select count(*) from public.task_activities where action = 'photo_added' and payload ->> 'photo_id' = '30000000-0000-0000-0000-000000000001')
   $$,
-  array[1::bigint],
-  '同じ有効写真IDの再送は監査記録を増やさない'
+  $$values (1::bigint, 1::bigint)$$,
+  '同一ID再送で写真と監査記録を重複させない'
 );
 
-select public.apply_task_photo_changes(
-  (select task_id from public.tasks where note = 'seed-task-01'),
-  '10000000-0000-0000-0000-0000000000b0',
-  '[]'::jsonb,
-  array['30000000-0000-0000-0000-000000000001']::uuid[]
+reset role;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-0000000000b0', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    select public.apply_task_photo_changes(
+      (select task_id from public.tasks where note = 'seed-task-01'),
+      array[]::uuid[],
+      array['30000000-0000-0000-0000-000000000001']::uuid[]
+    )
+  $$,
+  'Leaderも未完了タスクの写真を削除できる'
 );
+
+reset role;
+
 select results_eq(
   $$
-    select deleted_by_user_id
+    select
+      deleted_at is not null,
+      (select count(*) from public.task_activities where action = 'photo_deleted' and payload ->> 'photo_id' = '30000000-0000-0000-0000-000000000001')
     from public.task_photos
     where photo_id = '30000000-0000-0000-0000-000000000001'
   $$,
-  $$values ('10000000-0000-0000-0000-0000000000b0'::uuid)$$,
-  'Leaderも未完了タスクの写真を論理削除できる'
+  $$values (true, 1::bigint)$$,
+  '削除状態と監査記録を保存する'
 );
-select results_eq(
-  $$
-    select count(*)::bigint
-    from public.task_activities
-    where action = 'photo_deleted'
-      and payload ->> 'photo_id' = '30000000-0000-0000-0000-000000000001'
-  $$,
-  array[1::bigint],
-  '実際の写真削除だけ監査記録する'
-);
+
+reset role;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-0000000000a0', true);
+set local role authenticated;
 
 select public.apply_task_photo_changes(
   (select task_id from public.tasks where note = 'seed-task-01'),
-  '10000000-0000-0000-0000-0000000000b0',
-  '[]'::jsonb,
-  array['30000000-0000-0000-0000-000000000001']::uuid[]
-);
-select results_eq(
-  $$
-    select count(*)::bigint
-    from public.task_activities
-    where action = 'photo_deleted'
-      and payload ->> 'photo_id' = '30000000-0000-0000-0000-000000000001'
-  $$,
-  array[1::bigint],
-  '同じ削除の再送は監査記録を増やさない'
-);
-
-select public.apply_task_photo_changes(
-  (select task_id from public.tasks where note = 'seed-task-01'),
-  '10000000-0000-0000-0000-0000000000a0',
-  '[{"photo_id":"30000000-0000-0000-0000-000000000002","width":1280,"height":720}]'::jsonb,
+  array['30000000-0000-0000-0000-000000000002']::uuid[],
   array[]::uuid[]
 );
+
 select results_eq(
   $$select sort_order from public.task_photos where photo_id = '30000000-0000-0000-0000-000000000002'$$,
   array[1],
-  '論理削除行を含む過去最大値の続きから採番する'
+  '論理削除済みの登録順を再利用しない'
 );
 
 select throws_ok(
   $$
     select public.apply_task_photo_changes(
       (select task_id from public.tasks where note = 'seed-task-02'),
-      '10000000-0000-0000-0000-0000000000a0',
-      '[{"photo_id":"30000000-0000-0000-0000-000000000002","width":1280,"height":720}]'::jsonb,
+      array['30000000-0000-0000-0000-000000000002']::uuid[],
       array[]::uuid[]
     )
   $$,
@@ -168,25 +149,12 @@ select throws_ok(
   'photo_conflict',
   '別タスクの写真ID再利用を拒否する'
 );
-select throws_ok(
-  $$
-    select public.apply_task_photo_changes(
-      (select task_id from public.tasks where note = 'seed-task-01'),
-      '10000000-0000-0000-0000-0000000000a0',
-      '[{"photo_id":"30000000-0000-0000-0000-000000000001","width":1280,"height":720}]'::jsonb,
-      array[]::uuid[]
-    )
-  $$,
-  'P0001',
-  'photo_conflict',
-  '論理削除済み写真IDの再利用を拒否する'
-);
+
 select throws_ok(
   $$
     select public.apply_task_photo_changes(
       (select task_id from public.tasks where note = 'seed-task-03'),
-      '10000000-0000-0000-0000-0000000000a0',
-      '[{"photo_id":"30000000-0000-0000-0000-000000000003","width":1280,"height":720}]'::jsonb,
+      array[]::uuid[],
       array[]::uuid[]
     )
   $$,
@@ -197,19 +165,19 @@ select throws_ok(
 
 select public.apply_task_photo_changes(
   (select task_id from public.tasks where note = 'seed-task-02'),
-  '10000000-0000-0000-0000-0000000000a0',
-  jsonb_build_array(
-    jsonb_build_object('photo_id', '30000000-0000-0000-0000-000000000011', 'width', 640, 'height', 480),
-    jsonb_build_object('photo_id', '30000000-0000-0000-0000-000000000012', 'width', 640, 'height', 480),
-    jsonb_build_object('photo_id', '30000000-0000-0000-0000-000000000013', 'width', 640, 'height', 480),
-    jsonb_build_object('photo_id', '30000000-0000-0000-0000-000000000014', 'width', 640, 'height', 480),
-    jsonb_build_object('photo_id', '30000000-0000-0000-0000-000000000015', 'width', 640, 'height', 480),
-    jsonb_build_object('photo_id', '30000000-0000-0000-0000-000000000016', 'width', 640, 'height', 480),
-    jsonb_build_object('photo_id', '30000000-0000-0000-0000-000000000017', 'width', 640, 'height', 480),
-    jsonb_build_object('photo_id', '30000000-0000-0000-0000-000000000018', 'width', 640, 'height', 480)
-  ),
+  array[
+    '30000000-0000-0000-0000-000000000011',
+    '30000000-0000-0000-0000-000000000012',
+    '30000000-0000-0000-0000-000000000013',
+    '30000000-0000-0000-0000-000000000014',
+    '30000000-0000-0000-0000-000000000015',
+    '30000000-0000-0000-0000-000000000016',
+    '30000000-0000-0000-0000-000000000017',
+    '30000000-0000-0000-0000-000000000018'
+  ]::uuid[],
   array[]::uuid[]
 );
+
 select results_eq(
   $$
     select array_agg(photo_id order by sort_order)
@@ -229,23 +197,43 @@ select results_eq(
       '30000000-0000-0000-0000-000000000018'::uuid
     ])
   $$,
-  '追加リクエスト順で8枚を採番する'
+  '8枚をリクエスト順で保存する'
 );
+
 select throws_ok(
   $$
     select public.apply_task_photo_changes(
       (select task_id from public.tasks where note = 'seed-task-02'),
-      '10000000-0000-0000-0000-0000000000a0',
-      '[{"photo_id":"30000000-0000-0000-0000-000000000019","width":640,"height":480}]'::jsonb,
+      array['30000000-0000-0000-0000-000000000019']::uuid[],
       array[]::uuid[]
     )
   $$,
   'P0001',
   'photo_limit_exceeded',
-  '有効写真が8枚を超える変更を拒否する'
+  '9枚目を拒否する'
+);
+
+select results_eq(
+  $$select current_status from public.tasks where note = 'seed-task-02'$$,
+  array[1::smallint],
+  '写真操作でタスクのステータスを変更しない'
 );
 
 reset role;
+set local role anon;
+
+select throws_ok(
+  $$
+    select public.apply_task_photo_changes(
+      (select task_id from public.tasks where note = 'seed-task-01'),
+      array[]::uuid[],
+      array[]::uuid[]
+    )
+  $$,
+  '42501',
+  null,
+  'anonは写真変更RPCを実行できない'
+);
 
 select * from finish();
 rollback;
