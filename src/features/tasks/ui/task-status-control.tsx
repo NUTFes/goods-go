@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { getTaskStatusLabel, TASK_STATUS_OPTIONS, type TaskStatus } from "../model/task-status";
 import { cn } from "@/lib/utils";
 
@@ -74,24 +75,28 @@ export function TaskStatusSegmentedControl({
   onChange,
 }: TaskStatusSegmentedControlProps) {
   return (
-    <div
+    <ToggleGroup
+      type="single"
+      value={String(value)}
+      onValueChange={(nextValue) => {
+        if (nextValue) {
+          onChange(Number(nextValue) as TaskStatus);
+        }
+      }}
+      disabled={disabled}
       className="grid overflow-hidden rounded-lg border border-[#bfbfbf] bg-white"
       style={{ gridTemplateColumns: `repeat(${statuses.length}, minmax(0, 1fr))` }}
-      role="radiogroup"
       aria-label="タスクステータス"
     >
       {statuses.map((status, index) => {
         const selected = status === value;
         return (
-          <button
+          <ToggleGroupItem
             key={status}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            disabled={disabled}
-            onClick={() => onChange(status)}
+            value={String(status)}
+            aria-label={getTaskStatusLabel(status)}
             className={cn(
-              "h-9 min-w-0 px-1 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+              "h-9 w-full min-w-0 rounded-none px-1 text-xs transition-colors",
               index > 0 && "border-l border-[#bfbfbf]",
               selected
                 ? "bg-[#121212] font-semibold text-white"
@@ -99,9 +104,9 @@ export function TaskStatusSegmentedControl({
             )}
           >
             {getTaskStatusLabel(status)}
-          </button>
+          </ToggleGroupItem>
         );
       })}
-    </div>
+    </ToggleGroup>
   );
 }

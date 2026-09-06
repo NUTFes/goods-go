@@ -13,16 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  canChangeTaskStatus,
-  TASK_STATUSES,
-  TASK_STATUS_VALUES,
-} from "@/features/tasks/model/task-status";
+import { canChangeTaskStatus, TASK_STATUS_VALUES } from "@/features/tasks/model/task-status";
 import {
   TaskStatusSegmentedControl,
   TaskStatusStepper,
 } from "@/features/tasks/ui/task-status-control";
-import { APP_ROLES, type AppRole } from "@/lib/auth/roles";
+import type { AppRole } from "@/lib/auth/roles";
 import { TASK_NOTE_MAX_LENGTH, type TaskStatus, type UserTask } from "../model/types";
 import { updateTaskStatusAction } from "../server/actions";
 
@@ -65,14 +61,11 @@ export function TaskDetailDialog({
     return null;
   }
 
-  const canEditStatus = TASK_STATUS_VALUES.some(
+  const editableStatuses = TASK_STATUS_VALUES.filter(
     (status) =>
-      status !== task.currentStatus && canChangeTaskStatus(currentRole, task.currentStatus, status),
+      status === task.currentStatus || canChangeTaskStatus(currentRole, task.currentStatus, status),
   );
-  const editableStatuses =
-    currentRole === APP_ROLES.ADMIN
-      ? TASK_STATUS_VALUES
-      : TASK_STATUS_VALUES.filter((status) => status !== TASK_STATUSES.DONE);
+  const canEditStatus = editableStatuses.some((status) => status !== task.currentStatus);
 
   const handleReset = () => {
     setSelectedStatus(task.currentStatus);
