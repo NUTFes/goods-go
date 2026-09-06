@@ -110,6 +110,7 @@ jobs:
         run: |
           pnpm exec supabase start > /dev/null
           pnpm exec supabase db reset --local
+          pnpm exec supabase test db --local
           pnpm exec supabase db lint --local --fail-on error
           pnpm exec supabase gen types typescript --local > /tmp/schema.gen.ts
           pnpm exec oxfmt /tmp/schema.gen.ts

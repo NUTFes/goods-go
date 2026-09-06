@@ -131,7 +131,7 @@ export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete 
                 </Badge>
               </TableCell>
               <TableCell className="text-center">
-                <TaskStatusBadge status={task.currentStatus} colorScheme="admin" />
+                <TaskStatusBadge status={task.currentStatus} />
               </TableCell>
               <TableCell className="text-center">
                 <TruncatedCellText value={task.fromLocationName} />

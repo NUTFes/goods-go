@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { STATUS_OPTIONS } from "../model/mappers";
-import type { UserTaskFilterOptions, UserTaskFilterState } from "../model/types";
+import type { TaskStatus, UserTaskFilterOptions, UserTaskFilterState } from "../model/types";
 
 type TaskFilterSheetProps = {
   open: boolean;
@@ -111,12 +111,12 @@ export function TaskFilterSheet({
     return groupLocationOptions(filterOptions.locations);
   }, [filterOptions.locations]);
 
-  const toggleStatus = (status: 0 | 1 | 2) => {
+  const toggleStatus = (status: TaskStatus) => {
     onDraftChange((prev) => {
       if (prev.statuses.includes(status)) {
         return { ...prev, statuses: prev.statuses.filter((value) => value !== status) };
       }
-      return { ...prev, statuses: [...prev.statuses, status].toSorted() as (0 | 1 | 2)[] };
+      return { ...prev, statuses: [...prev.statuses, status].toSorted() };
     });
   };
 

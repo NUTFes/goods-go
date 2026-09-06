@@ -2,6 +2,7 @@ import { APP_ROLES } from "@/lib/auth/roles";
 import { requireAuthenticatedUser } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { getLeafLocationsWithRootGroup } from "@/features/tasks/model/location-options";
+import { isTaskStatus } from "@/features/tasks/model/task-status";
 import type { Tables } from "@/types/schema.gen";
 import { normalizeTimeValue } from "../model/mappers";
 import type {
@@ -47,6 +48,10 @@ function mapTask(
   currentUserId: string,
   currentUserName: string,
 ): UserTask {
+  if (!isTaskStatus(row.current_status)) {
+    throw new Error(`Unknown task status: ${row.current_status}`);
+  }
+
   const leaderName = !row.leader_user_id
     ? null
     : (userNameById.get(row.leader_user_id) ??
@@ -55,7 +60,7 @@ function mapTask(
   return {
     taskId: row.task_id,
     eventDayType: row.event_day_type as 0 | 1 | 2,
-    currentStatus: row.current_status as 0 | 1 | 2,
+    currentStatus: row.current_status,
     itemId: row.item_id,
     itemName: itemNameById.get(row.item_id) ?? "-",
     quantity: row.quantity,

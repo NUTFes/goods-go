@@ -1,4 +1,9 @@
-import type { AdminTask, EventDayType, TaskSortState, TaskStatus } from "./types";
+import {
+  getTaskStatusLabel,
+  TASK_STATUS_OPTIONS,
+  type TaskStatus,
+} from "@/features/tasks/model/task-status";
+import type { AdminTask, EventDayType, TaskSortState } from "./types";
 
 export const EVENT_DAY_OPTIONS = [
   { value: 0, label: "準々備日" },
@@ -6,20 +11,11 @@ export const EVENT_DAY_OPTIONS = [
   { value: 2, label: "片付け日" },
 ] as const;
 
-export const STATUS_OPTIONS = [
-  { value: 0, label: "未着手" },
-  { value: 1, label: "進行中" },
-  { value: 2, label: "完了" },
-] as const;
+export const STATUS_OPTIONS = TASK_STATUS_OPTIONS;
 
 const eventDayLabelMap = Object.fromEntries(
   EVENT_DAY_OPTIONS.map((o) => [o.value, o.label]),
 ) as Record<EventDayType, string>;
-
-const statusLabelMap = Object.fromEntries(STATUS_OPTIONS.map((o) => [o.value, o.label])) as Record<
-  TaskStatus,
-  string
->;
 
 const eventDayBadgeClassMap: Record<EventDayType, string> = {
   0: "bg-orange-100 text-orange-700",
@@ -30,7 +26,8 @@ const eventDayBadgeClassMap: Record<EventDayType, string> = {
 const statusBadgeClassMap: Record<TaskStatus, string> = {
   0: "bg-zinc-700 text-white",
   1: "bg-blue-700 text-white",
-  2: "bg-green-700 text-white",
+  2: "bg-orange-700 text-white",
+  3: "bg-green-700 text-white",
 };
 
 export function getEventDayLabel(value: EventDayType): string {
@@ -38,7 +35,7 @@ export function getEventDayLabel(value: EventDayType): string {
 }
 
 export function getStatusLabel(value: TaskStatus): string {
-  return statusLabelMap[value];
+  return getTaskStatusLabel(value);
 }
 
 export function getEventDayBadgeClass(value: EventDayType): string {
