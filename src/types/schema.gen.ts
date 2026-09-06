@@ -129,6 +129,38 @@ export type Database = {
           },
         ];
       };
+      task_photos: {
+        Row: {
+          created_at: string;
+          deleted_at: string | null;
+          photo_id: string;
+          sort_order: number;
+          task_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          deleted_at?: string | null;
+          photo_id: string;
+          sort_order: number;
+          task_id: string;
+        };
+        Update: {
+          created_at?: string;
+          deleted_at?: string | null;
+          photo_id?: string;
+          sort_order?: number;
+          task_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "task_photos_task_id_fkey";
+            columns: ["task_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["task_id"];
+          },
+        ];
+      };
       tasks: {
         Row: {
           actual_end_time: string | null;
@@ -260,6 +292,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      apply_task_photo_changes: {
+        Args: {
+          p_add_photo_ids: string[];
+          p_delete_photo_ids: string[];
+          p_task_id: string;
+        };
+        Returns: undefined;
+      };
       is_admin: { Args: never; Returns: boolean };
       is_leader: { Args: never; Returns: boolean };
       user_role: { Args: never; Returns: number };

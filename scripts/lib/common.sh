@@ -13,7 +13,7 @@ STACK_COMPOSE_PROJECT="goods-go-supabase-prod"
 PROD_NETWORK="goods-go-prod"
 APP_ENV_FILE="${ROOT_DIR}/.env"
 APP_COMPOSE_FILE="${ROOT_DIR}/compose.prod.yml"
-CORE_STACK_SERVICES=(db auth rest kong supavisor)
+CORE_STACK_SERVICES=(db auth rest kong storage imgproxy supavisor)
 
 require_commands() {
   local command_name
