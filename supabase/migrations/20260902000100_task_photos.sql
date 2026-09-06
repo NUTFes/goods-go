@@ -51,12 +51,10 @@ with check (
   and exists (
     select 1
     from public.tasks t
-    join public.users u on u.user_id = (select auth.uid())
     where t.task_id::text = split_part(storage.objects.name, '/', 2)
       and t.deleted is null
       and t.current_status <> 3
-      and u.deleted is null
-      and u.role in (0, 1, 2)
+      and (select public.user_role()) in (0, 1, 2)
   )
 );
 

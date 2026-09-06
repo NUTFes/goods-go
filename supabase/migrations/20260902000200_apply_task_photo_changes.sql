@@ -20,13 +20,8 @@ declare
   v_new_count integer := 0;
   v_next_sort_order integer;
 begin
-  if v_actor_user_id is null or not exists (
-    select 1
-    from public.users u
-    where u.user_id = v_actor_user_id
-      and u.deleted is null
-      and u.role in (0, 1, 2)
-  ) then
+  if v_actor_user_id is null
+    or not coalesce((select public.user_role()) in (0, 1, 2), false) then
     raise exception using errcode = 'P0001', message = 'permission_denied';
   end if;
 
