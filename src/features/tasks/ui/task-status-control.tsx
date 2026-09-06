@@ -88,25 +88,20 @@ export function TaskStatusSegmentedControl({
       style={{ gridTemplateColumns: `repeat(${statuses.length}, minmax(0, 1fr))` }}
       aria-label="タスクステータス"
     >
-      {statuses.map((status, index) => {
-        const selected = status === value;
-        return (
-          <ToggleGroupItem
-            key={status}
-            value={String(status)}
-            aria-label={getTaskStatusLabel(status)}
-            className={cn(
-              "h-9 w-full min-w-0 rounded-none px-1 text-xs transition-colors",
-              index > 0 && "border-l border-[#bfbfbf]",
-              selected
-                ? "bg-[#121212] font-semibold text-white"
-                : "bg-white text-[#595959] hover:bg-[#f5f5f5]",
-            )}
-          >
-            {getTaskStatusLabel(status)}
-          </ToggleGroupItem>
-        );
-      })}
+      {statuses.map((status, index) => (
+        <ToggleGroupItem
+          key={status}
+          value={String(status)}
+          aria-label={getTaskStatusLabel(status)}
+          className={cn(
+            "h-9 w-full min-w-0 rounded-none bg-white px-1 text-xs text-[#595959] transition-colors hover:bg-[#f5f5f5]",
+            "data-[state=on]:bg-[#121212] data-[state=on]:font-semibold data-[state=on]:text-white data-[state=on]:hover:bg-[#121212]",
+            index > 0 && "border-l border-[#bfbfbf]",
+          )}
+        >
+          {getTaskStatusLabel(status)}
+        </ToggleGroupItem>
+      ))}
     </ToggleGroup>
   );
 }
