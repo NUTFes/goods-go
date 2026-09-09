@@ -13,6 +13,17 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { canChangeTaskStatus, TASK_STATUS_VALUES } from "@/features/tasks/model/task-status";
 import {
   TaskStatusSegmentedControl,
@@ -21,6 +32,7 @@ import {
 import type { AppRole } from "@/lib/auth/roles";
 import { TASK_NOTE_MAX_LENGTH, type TaskStatus, type UserTask } from "../model/types";
 import { updateTaskStatusAction } from "../server/actions";
+import { TaskPhotoSection } from "./task-photo-section";
 
 type TaskDetailDialogProps = {
   open: boolean;
@@ -41,6 +53,11 @@ export function TaskDetailDialog({
   const [noteDraft, setNoteDraft] = useState(task?.note ?? "");
   const [errorMessage, setErrorMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const isMobile = useIsMobile();
+  const [photoEditing, setPhotoEditing] = useState(false);
+  const [photoSaving, setPhotoSaving] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const editingDisabled = isPending || photoEditing || photoSaving;
 
   const isDirty = useMemo(() => {
     if (!task) {
@@ -109,9 +126,17 @@ export function TaskDetailDialog({
 
   const descriptionId = `task-detail-description-${task.taskId}`;
   const errorId = errorMessage ? `task-detail-error-${task.taskId}` : undefined;
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (photoSaving) return;
+    if (!nextOpen && photoEditing) {
+      setConfirmClose(true);
+      return;
+    }
+    onOpenChange(nextOpen);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
         className="overflow-y-scroll max-h-screen"
@@ -125,7 +150,8 @@ export function TaskDetailDialog({
               type="button"
               variant="ghost"
               size="icon-sm"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleOpenChange(false)}
+              disabled={photoSaving}
               aria-label="閉じる"
             >
               <X className="size-4" />
@@ -154,7 +180,7 @@ export function TaskDetailDialog({
                   <TaskStatusSegmentedControl
                     value={selectedStatus}
                     statuses={editableStatuses}
-                    disabled={isPending}
+                    disabled={editingDisabled}
                     onChange={setSelectedStatus}
                   />
                 ) : (
@@ -195,7 +221,7 @@ export function TaskDetailDialog({
                     value={!canEditNote && !task.note?.trim() ? "なし" : noteDraft}
                     onChange={(event) => setNoteDraft(event.target.value)}
                     maxLength={TASK_NOTE_MAX_LENGTH}
-                    disabled={!canEditNote || isPending}
+                    disabled={!canEditNote || editingDisabled}
                     aria-label="タスク備考"
                     placeholder={canEditNote ? "補足があれば記入してください" : ""}
                     className="min-h-24 bg-white px-3 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-70"
@@ -204,6 +230,16 @@ export function TaskDetailDialog({
               </div>
             </div>
           </section>
+
+          {isMobile && open ? (
+            <TaskPhotoSection
+              taskId={task.taskId}
+              completed={task.currentStatus === 3}
+              disabled={isPending}
+              onEditingChange={setPhotoEditing}
+              onSavingChange={setPhotoSaving}
+            />
+          ) : null}
 
           {errorMessage ? (
             <p
@@ -218,29 +254,50 @@ export function TaskDetailDialog({
           ) : null}
 
           {canEditStatus || canEditNote ? (
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 border-[#121212]"
-                onClick={handleReset}
-                disabled={isPending}
-              >
-                リセット
-              </Button>
-              <Button
-                type="button"
-                className="h-10 bg-[#121212] hover:bg-[#121212]/90"
-                onClick={handleSave}
-                disabled={isPending || (canEditNote && isNoteTooLong)}
-                aria-describedby={errorId}
-              >
-                {isPending ? "保存中..." : "変更保存"}
-              </Button>
-            </div>
+            <>
+              {photoEditing ? (
+                <p className="text-xs text-muted-foreground">
+                  写真の変更を保存するか戻してから、ステータス・備考を保存してください。
+                </p>
+              ) : null}
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 border-[#121212]"
+                  onClick={handleReset}
+                  disabled={editingDisabled}
+                >
+                  リセット
+                </Button>
+                <Button
+                  type="button"
+                  className="h-10 bg-[#121212] hover:bg-[#121212]/90"
+                  onClick={handleSave}
+                  disabled={editingDisabled || (canEditNote && isNoteTooLong)}
+                  aria-describedby={errorId}
+                >
+                  {isPending ? "保存中..." : isMobile ? "ステータス・備考を保存" : "変更保存"}
+                </Button>
+              </div>
+            </>
           ) : null}
         </div>
       </DialogContent>
+      <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>写真の編集を終了しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              未保存の変更は失われます。保存結果が不明な場合は、先に写真欄で確認してください。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>編集を続ける</AlertDialogCancel>
+            <AlertDialogAction onClick={() => onOpenChange(false)}>編集を終了</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
