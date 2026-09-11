@@ -211,27 +211,31 @@ export function TaskPhotoSection({
           {photos.error}
         </p>
       ) : null}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          disabled={locked || photos.converting}
-          onClick={() => void photos.reload()}
-        >
-          写真を再読み込み
-        </Button>
-        {photos.uncertain ? (
-          <Button
-            type="button"
-            size="sm"
-            disabled={disabled || photos.saving}
-            onClick={() => void photos.save()}
-          >
-            保存結果を確認
-          </Button>
-        ) : null}
-      </div>
+      {photos.error || photos.uncertain ? (
+        <div className="flex flex-wrap gap-2">
+          {photos.error ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={locked || photos.converting}
+              onClick={() => void photos.reload()}
+            >
+              写真を再読み込み
+            </Button>
+          ) : null}
+          {photos.uncertain ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={disabled || photos.saving}
+              onClick={() => void photos.save()}
+            >
+              保存結果を確認
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       {!readOnly ? (
         <div className="flex gap-3">
           <Button
@@ -245,7 +249,7 @@ export function TaskPhotoSection({
           </Button>
           <Button
             type="button"
-            className="h-11 flex-1 bg-[#0017c1] hover:bg-[#0017c1]/90"
+            className="h-11 flex-1 bg-[#0017c1] hover:bg-[#0017c1]/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
             disabled={locked || !canSave}
             onClick={() => (photos.deletions.length ? setConfirmDelete(true) : void photos.save())}
           >
