@@ -1,7 +1,6 @@
 # Mobile写真登録の実装範囲
 
-Issue #104のうち、ブラウザ標準APIで読める写真の選択・変換・保存を実装する。
-**HEICデコーダーの採用は保留中であり、#102／#104全体の完了を示すものではない。**
+Issue #104の写真選択・変換・保存を実装する。
 
 ## 既存機能との接続
 
@@ -18,12 +17,13 @@ Issue #104のうち、ブラウザ標準APIで読める写真の選択・変換�
 
 ## 画像変換の制約
 
-- 入力候補はJPEG／PNG／WebP／HEIC／HEIF。MIME、MIME空文字の場合は拡張子を選択時の手掛かりにする。
-- `accept`・MIME・拡張子は画像内容の検証を保証しない。独自のマジックバイト・EXIF・BMFF解析は追加しない。
+- 入力候補はJPEG／PNG／WebP／HEIC／HEIF。MIMEや拡張子ではなく、ファイル先頭のシグネチャと`ftyp`ブランドで実データを判定する。
+- `mif1`／`msf1`だけではHEIFと断定せず、HEVC系の互換ブランドを必要とする。AVIFブランドは対象外として拒否する。
 - 20MB（20,000,000 bytes）、50MP、長辺12,000pxを上限にする。寸法判定は標準APIでのデコード後なので、事前のメモリ上限保証ではない。
-- 標準APIで読めないHEIC／HEIFはJPEGでの選び直しを案内する。独自デコーダー、代替の未承認依存、将来用の変換ラッパーは追加しない。
-- HEICのWASM fallback、16MP上限、primary選択の実装は、安全な配布版・LGPL対応・依存追加の承認後に行う。
-- 24MP以上のiPhone写真の実機確認とprimary取得失敗時の仕様判断は未完了。既存Spikeの確認条件をこの変更で撤回しない。
+- JPEG／PNG／WebPとブラウザが読めるHEIC／HEIFは標準APIを使う。標準APIで読めないHEIC／HEIFだけ、`libheif-js` 1.19.8をWeb Worker内へ遅延読み込みする。
+- HEIC fallbackではRGBA確保前に16MP上限を適用し、primary itemを取得する。取得できない画像だけtop-level画像の先頭へfallbackする。
+- 独自デコーダー、独自EXIF解析、`heic-to`、将来用の変換ラッパーは追加しない。
+- `libheif-js`はLGPL-3.0であり、版・ソース・ライセンスを`THIRD_PARTY_NOTICES.md`へ記録する。法的判断そのものはレビュー対象とする。
 
 ## 検査
 
@@ -48,4 +48,4 @@ mise run build
 
 同日にMobile Figma node `3132:175039`と比較した。4列の写真タイル、追加・削除操作、44px高の保存・取り消しボタンは一致している。枚数表示、写真0枚の案内、写真とステータスを分けた保存操作は、確定した仕様を反映した意図的な差分である。正常時には不要な再読み込み操作を表示せず、取得失敗時だけ表示する。
 
-標準APIで読めないHEIC／HEIFのfallback、iPhone／Android実機上の本画面、UIからの通信断・競合操作は未確認。IndexedDB、自動再送、upload状態機械、GC、バックアップ、保存サムネイル、SHA-256は実装しない。
+今回のUIへ組み込んだHEIC fallback、iPhone／Android実機上の本画面、UIからの通信断・競合操作は未確認。変換モジュール単体では、Spike時にAndroidの実HEICを含めて確認済みである。IndexedDB、自動再送、upload状態機械、GC、バックアップ、保存サムネイル、SHA-256は実装しない。

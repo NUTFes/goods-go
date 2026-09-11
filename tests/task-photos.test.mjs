@@ -6,6 +6,26 @@ import {
 } from "../src/features/user/tasks/model/convert-task-photo.ts";
 import { loadTaskPhotos, uploadTaskPhotos } from "../src/features/user/tasks/model/task-photos.ts";
 
+const JPEG_BYTES = new Uint8Array([0xff, 0xd8, 0xff, 0xdb]);
+const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const WEBP_BYTES = new TextEncoder().encode("RIFF\0\0\0\0WEBP");
+
+function ftyp(major, compatible = []) {
+  const bytes = new Uint8Array(16 + compatible.length * 4);
+  new DataView(bytes.buffer).setUint32(0, bytes.length, false);
+  bytes.set(new TextEncoder().encode("ftyp"), 4);
+  bytes.set(new TextEncoder().encode(major), 8);
+  compatible.forEach((brand, index) => {
+    bytes.set(new TextEncoder().encode(brand), 16 + index * 4);
+  });
+  return bytes;
+}
+
+function imageFile(kind, name = `photo.${kind}`, type = `image/${kind}`) {
+  const bytes = kind === "jpeg" ? JPEG_BYTES : kind === "png" ? PNG_BYTES : WEBP_BYTES;
+  return new File([bytes], name, { type });
+}
+
 test("対象外形式・空ファイル・20MB超はデコードせず拒否する", async () => {
   for (const type of ["image/avif", "image/gif", "image/svg+xml", "video/mp4"]) {
     await assert.rejects(convertTaskPhoto(new File(["x"], "photo.jpg", { type })), /JPEG/);
@@ -14,6 +34,11 @@ test("対象外形式・空ファイル・20MB超はデコードせず拒否す�
   await assert.rejects(
     convertTaskPhoto({ name: "large.jpg", type: "image/jpeg", size: 20_000_001 }),
     /20MB/,
+  );
+  await assert.rejects(convertTaskPhoto(new File([ftyp("avif", ["mif1"])], "photo.avif")), /AVIF/);
+  await assert.rejects(
+    convertTaskPhoto(new File([ftyp("mif1")], "photo.heic", { type: "image/heic" })),
+    /JPEG/,
   );
 });
 
@@ -75,8 +100,11 @@ function canvasEnvironment(
       images.push(this);
     }
     async decode() {
-      if (decodeFails) throw new DOMException("Invalid image", "EncodingError");
       assert.ok(urls.has(this.src));
+      const blob = urls.get(this.src);
+      if (decodeFails === true || (typeof decodeFails === "function" && decodeFails(blob))) {
+        throw new DOMException("Invalid image", "EncodingError");
+      }
       this.naturalWidth = requested?.width ?? width;
       this.naturalHeight = requested?.height ?? height;
     }
@@ -91,7 +119,7 @@ function canvasEnvironment(
 
 test("長辺1920・品質82%のJPEGだけを生成し、再検証後に画像リソースを解放する", async (t) => {
   const env = canvasEnvironment(t);
-  const result = await convertTaskPhoto(new File(["input"], "photo.png", { type: "image/png" }));
+  const result = await convertTaskPhoto(imageFile("png"));
   assert.equal(result.type, "image/jpeg");
   assert.deepEqual(env.requested(), {
     type: "image/jpeg",
@@ -107,14 +135,14 @@ test("長辺1920・品質82%のJPEGだけを生成し、再検証後に画像リ
 
 test("小さい写真は拡大しない", async (t) => {
   const env = canvasEnvironment(t, { width: 320, height: 240 });
-  await convertTaskPhoto(new File(["input"], "photo.webp", { type: "image/webp" }));
+  await convertTaskPhoto(imageFile("webp"));
   assert.equal(env.requested().width, 320);
   assert.equal(env.requested().height, 240);
 });
 
 test("50MP超はCanvasへの全面描画前に拒否する", async (t) => {
   const env = canvasEnvironment(t, { width: 8400, height: 6000 });
-  await assert.rejects(convertTaskPhoto(new File(["input"], "photo.jpg")), /寸法/);
+  await assert.rejects(convertTaskPhoto(imageFile("jpeg", "photo.jpg")), /寸法/);
   assert.equal(env.requested(), undefined);
   assert.equal(env.urls.size, 0);
   assert.equal(env.images[0].src, "");
@@ -122,27 +150,86 @@ test("50MP超はCanvasへの全面描画前に拒否する", async (t) => {
 
 test("3MiB超は品質を変更して再圧縮せず拒否する", async (t) => {
   const env = canvasEnvironment(t, { outputSize: 3 * 1024 * 1024 + 1 });
-  await assert.rejects(convertTaskPhoto(new File(["input"], "photo.jpg")), /3MiB/);
+  await assert.rejects(convertTaskPhoto(imageFile("jpeg", "photo.jpg")), /3MiB/);
   assert.equal(env.requested().quality, 0.82);
   assert.equal(env.urls.size, 0);
 });
 
 test("CanvasがJPEG以外を返した場合は保存に渡さない", async (t) => {
   canvasEnvironment(t, { outputType: "image/png" });
-  await assert.rejects(
-    convertTaskPhoto(new File(["input"], "photo.jpg")),
-    TaskPhotoConversionError,
-  );
+  await assert.rejects(convertTaskPhoto(imageFile("jpeg", "photo.jpg")), TaskPhotoConversionError);
 });
 
-test("標準APIで読めないHEICは、未承認のデコーダーを使わず選び直しを案内する", async (t) => {
-  const env = canvasEnvironment(t, { decodeFails: true });
-  await assert.rejects(convertTaskPhoto(new File(["input"], "photo.heic")), (error) => {
-    assert.equal(error.retryable, false);
-    assert.match(error.message, /JPEGに変換/);
-    return true;
+test("MIMEに依存せずHEIC互換ブランドを判定する", async (t) => {
+  const env = canvasEnvironment(t);
+  await convertTaskPhoto(
+    new File([ftyp("mif1", ["heic"])], "photo.bin", { type: "application/octet-stream" }),
+  );
+  assert.equal(env.requested().type, "image/jpeg");
+});
+
+test("標準APIで読めないHEICだけWorkerへfallbackする", async (t) => {
+  const env = canvasEnvironment(t, {
+    decodeFails: (blob) => /^image\/hei[cf]$/.test(blob.type),
   });
-  assert.equal(env.urls.size, 0);
+  let bitmapClosed = false;
+  const oldWorker = globalThis.Worker;
+  const oldImageData = globalThis.ImageData;
+  const oldCreateImageBitmap = globalThis.createImageBitmap;
+
+  globalThis.Worker = class {
+    listeners = new Map();
+    constructor() {
+      queueMicrotask(() => this.emit("message", { data: { type: "ready" } }));
+    }
+    addEventListener(type, listener) {
+      this.listeners.set(type, listener);
+    }
+    postMessage(message) {
+      assert.equal(message.type, "decode");
+      queueMicrotask(() =>
+        this.emit("message", {
+          data: {
+            type: "success",
+            id: message.id,
+            width: 4,
+            height: 3,
+            rgbaBuffer: new ArrayBuffer(4 * 3 * 4),
+          },
+        }),
+      );
+    }
+    emit(type, event) {
+      this.listeners.get(type)?.(event);
+    }
+    terminate() {}
+  };
+  globalThis.ImageData = class {
+    constructor(data, width, height) {
+      this.data = data;
+      this.width = width;
+      this.height = height;
+    }
+  };
+  globalThis.createImageBitmap = async (imageData) => ({
+    width: imageData.width,
+    height: imageData.height,
+    close() {
+      bitmapClosed = true;
+    },
+  });
+  t.after(() => {
+    globalThis.Worker = oldWorker;
+    globalThis.ImageData = oldImageData;
+    globalThis.createImageBitmap = oldCreateImageBitmap;
+  });
+
+  await convertTaskPhoto(new File([ftyp("heic")], "photo.heic", { type: "image/heic" }));
+  assert.deepEqual(
+    { width: env.requested().width, height: env.requested().height },
+    { width: 4, height: 3 },
+  );
+  assert.equal(bitmapClosed, true);
 });
 
 test("uploadは逐次実行し、失敗・重複・403の後も後続を処理する", async () => {
@@ -267,4 +354,43 @@ test("signed URLの発行失敗は写真取得の失敗として扱う", async (
   };
 
   await assert.rejects(loadTaskPhotos(client, "task"), /signing failed/);
+});
+
+test("写真単位のsigned URL発行失敗も再読み込み可能な取得失敗にする", async () => {
+  const client = {
+    from() {
+      return {
+        select() {
+          return this;
+        },
+        eq() {
+          return this;
+        },
+        is() {
+          return this;
+        },
+        single: async () => ({ data: { current_status: 0 }, error: null }),
+        order: async () => ({
+          data: [{ photo_id: "photo-1", task_id: "task", sort_order: 0 }],
+          error: null,
+        }),
+      };
+    },
+    storage: {
+      from() {
+        return {
+          async createSignedUrls() {
+            return {
+              data: [
+                { error: "Object not found", path: "tasks/task/photo-1.jpg", signedUrl: null },
+              ],
+              error: null,
+            };
+          },
+        };
+      },
+    },
+  };
+
+  await assert.rejects(loadTaskPhotos(client, "task"), /signed URL/);
 });
