@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { SUPABASE_AUTH_COOKIE_NAME } from "@/lib/supabase/config";
 import type { Database } from "@/types/schema.gen";
 
 export async function createClient(): Promise<SupabaseClient<Database>> {
@@ -16,6 +17,7 @@ export async function createClient(): Promise<SupabaseClient<Database>> {
   }
 
   return createServerClient<Database>(supabaseUrl, supabaseKey, {
+    cookieOptions: { name: SUPABASE_AUTH_COOKIE_NAME },
     cookies: {
       getAll() {
         return cookieStore.getAll();
