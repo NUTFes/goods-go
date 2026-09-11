@@ -223,3 +223,48 @@ test("写真0枚の取得ではsigned URLを発行しない", async () => {
   };
   assert.deepEqual(await loadTaskPhotos(client, "task"), { completed: true, photos: [] });
 });
+
+test("signed URLの発行失敗は写真取得の失敗として扱う", async () => {
+  const client = {
+    from(table) {
+      const chain = {
+        select() {
+          return this;
+        },
+        eq() {
+          return this;
+        },
+        is() {
+          return this;
+        },
+        single: async () => ({ data: { current_status: 0 }, error: null }),
+        order: async () => ({
+          data: [
+            {
+              photo_id: "photo-1",
+              task_id: "task",
+              sort_order: 0,
+              created_at: "2026-09-11T00:00:00Z",
+              deleted_at: null,
+            },
+          ],
+          error: null,
+        }),
+      };
+      assert.ok(["tasks", "task_photos"].includes(table));
+      return chain;
+    },
+    storage: {
+      from(bucket) {
+        assert.equal(bucket, "task-photos");
+        return {
+          async createSignedUrls() {
+            return { data: null, error: new Error("signing failed") };
+          },
+        };
+      },
+    },
+  };
+
+  await assert.rejects(loadTaskPhotos(client, "task"), /signing failed/);
+});

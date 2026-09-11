@@ -36,6 +36,7 @@ export async function loadTaskPhotos(client: SupabaseClient<Database>, taskId: s
         3600,
       )
     : null;
+  if (signed?.error) throw signed.error;
   return {
     completed: task.data.current_status === 3,
     photos: rows.map(
