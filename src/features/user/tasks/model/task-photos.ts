@@ -37,6 +37,13 @@ export async function loadTaskPhotos(client: SupabaseClient<Database>, taskId: s
       )
     : null;
   if (signed?.error) throw signed.error;
+  if (
+    signed &&
+    (signed.data.length !== rows.length ||
+      signed.data.some((item) => item.error || !item.signedUrl))
+  ) {
+    throw new Error("写真のsigned URLを発行できませんでした");
+  }
   return {
     completed: task.data.current_status === 3,
     photos: rows.map(
