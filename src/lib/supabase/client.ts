@@ -1,5 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { SUPABASE_AUTH_COOKIE_NAME } from "@/lib/supabase/config";
 import type { Database } from "@/types/schema.gen";
 
 export function createClient(): SupabaseClient<Database> {
@@ -10,5 +11,7 @@ export function createClient(): SupabaseClient<Database> {
     throw new Error("Missing Supabase environment variables");
   }
 
-  return createBrowserClient<Database>(supabaseUrl, supabaseKey);
+  return createBrowserClient<Database>(supabaseUrl, supabaseKey, {
+    cookieOptions: { name: SUPABASE_AUTH_COOKIE_NAME },
+  });
 }
