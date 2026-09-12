@@ -51,12 +51,14 @@ export function TaskPhotoSection({
   taskId,
   completed,
   disabled,
+  hideActionsUntilDirty,
   onEditingChange,
   onSavingChange,
 }: {
   taskId: string;
   completed: boolean;
   disabled: boolean;
+  hideActionsUntilDirty: boolean;
   onEditingChange: (editing: boolean) => void;
   onSavingChange: (saving: boolean) => void;
 }) {
@@ -91,7 +93,7 @@ export function TaskPhotoSection({
     >
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-muted-foreground">完了写真</h3>
-        <span className="text-xs text-muted-foreground">
+        <span className="sr-only">
           {photos.snapshot ? count : "—"} / {TASK_PHOTO_LIMIT}枚
         </span>
       </div>
@@ -101,9 +103,9 @@ export function TaskPhotoSection({
           写真を読み込み中…
         </p>
       ) : null}
-      <ul className="grid grid-cols-4 gap-3">
+      <ul className="grid grid-cols-4 gap-2.5">
         {!readOnly && photos.snapshot ? (
-          <li>
+          <li className="flex min-h-[78px] items-end">
             <input
               id={inputId}
               type="file"
@@ -119,9 +121,9 @@ export function TaskPhotoSection({
             />
             <label
               htmlFor={inputId}
-              className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-muted-foreground text-muted-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-ring peer-disabled:cursor-not-allowed peer-disabled:opacity-40"
+              className="flex size-[68px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-muted-foreground text-muted-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-ring peer-disabled:cursor-not-allowed peer-disabled:opacity-40"
             >
-              <Plus className="size-5" aria-hidden="true" />
+              <Plus className="size-4" aria-hidden="true" />
               <span className="text-[11px]">画像追加</span>
             </label>
           </li>
@@ -129,8 +131,8 @@ export function TaskPhotoSection({
         {photos.snapshot?.photos.map((photo, index) => {
           const deleting = photos.deletions.includes(photo.photo_id);
           return (
-            <li key={photo.photo_id} className="relative min-w-0">
-              <div className={`aspect-square rounded-lg bg-muted ${deleting ? "opacity-40" : ""}`}>
+            <li key={photo.photo_id} className="relative min-h-[78px] min-w-0 pt-2.5">
+              <div className={`size-[68px] rounded-lg bg-muted ${deleting ? "opacity-40" : ""}`}>
                 <SavedPhotoPreview key={photo.url} url={photo.url} number={index + 1} />
               </div>
               {!readOnly ? (
@@ -138,7 +140,7 @@ export function TaskPhotoSection({
                   type="button"
                   size="icon-sm"
                   variant={deleting ? "outline" : "default"}
-                  className="absolute -right-1 -top-1 size-6 rounded-full"
+                  className="absolute -right-2.5 top-0 size-5 rounded-full"
                   disabled={locked}
                   onClick={() => photos.toggleDeletion(photo.photo_id)}
                   aria-label={
@@ -147,7 +149,7 @@ export function TaskPhotoSection({
                       : `写真${index + 1}を削除予定にする`
                   }
                 >
-                  {deleting ? <RotateCcw className="size-3" /> : <X className="size-3" />}
+                  {deleting ? <RotateCcw className="size-3.5" /> : <X className="size-3.5" />}
                 </Button>
               ) : null}
               {deleting ? <p className="mt-1 text-xs text-destructive">削除予定</p> : null}
@@ -155,8 +157,8 @@ export function TaskPhotoSection({
           );
         })}
         {photos.drafts.map((photo) => (
-          <li key={photo.photoId} className="relative min-w-0">
-            <div className="flex aspect-square items-center justify-center rounded-lg bg-muted">
+          <li key={photo.photoId} className="relative min-h-[78px] min-w-0 pt-2.5">
+            <div className="flex size-[68px] items-center justify-center rounded-lg bg-muted">
               {photo.jpeg ? (
                 <DraftPreview jpeg={photo.jpeg} name={photo.file.name} />
               ) : photo.error ? (
@@ -169,12 +171,12 @@ export function TaskPhotoSection({
               <Button
                 type="button"
                 size="icon-sm"
-                className="absolute -right-1 -top-1 size-6 rounded-full"
+                className="absolute -right-2.5 top-0 size-5 rounded-full"
                 disabled={locked}
                 onClick={() => photos.remove(photo.photoId)}
                 aria-label={`${photo.file.name}を取り消す`}
               >
-                <X className="size-3" />
+                <X className="size-3.5" />
               </Button>
             ) : null}
             <p className="mt-1 truncate text-[11px] text-muted-foreground" title={photo.file.name}>
@@ -236,7 +238,7 @@ export function TaskPhotoSection({
           ) : null}
         </div>
       ) : null}
-      {!readOnly ? (
+      {!readOnly && (!hideActionsUntilDirty || photos.dirty) ? (
         <div className="flex gap-3">
           <Button
             type="button"
@@ -245,7 +247,7 @@ export function TaskPhotoSection({
             disabled={locked || !photos.dirty}
             onClick={photos.reset}
           >
-            写真の変更を戻す
+            変更を戻す
           </Button>
           <Button
             type="button"
@@ -253,7 +255,7 @@ export function TaskPhotoSection({
             disabled={locked || !canSave}
             onClick={() => (photos.deletions.length ? setConfirmDelete(true) : void photos.save())}
           >
-            {photos.saving ? "保存中…" : "写真を保存"}
+            {photos.saving ? "保存中…" : "変更保存"}
           </Button>
         </div>
       ) : photos.dirty && !photos.uncertain ? (

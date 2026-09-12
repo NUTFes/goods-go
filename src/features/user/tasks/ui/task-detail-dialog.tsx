@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Triangle, X } from "lucide-react";
+import { AlertCircle, ArrowRight, X } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -96,11 +96,6 @@ export function TaskDetailDialog({
       return;
     }
 
-    const hasStatusChange = selectedStatus !== task.currentStatus;
-    const currentNote = task.note?.trim() ?? "";
-    const nextNote = noteDraft.trim();
-    const hasNoteChange = canEditNote && currentNote !== nextNote;
-
     setErrorMessage("");
     startTransition(async () => {
       const result = await updateTaskStatusAction(
@@ -113,13 +108,21 @@ export function TaskDetailDialog({
         toast.error(result.message);
         return;
       }
-      toast.success(
-        hasStatusChange && hasNoteChange
-          ? "ステータスと備考を更新しました"
-          : hasStatusChange
-            ? "ステータスを更新しました"
-            : "備考を更新しました",
-      );
+      toast.success("タスクを保存しました", {
+        description: "変更内容が反映されました",
+        position: "top-center",
+        unstyled: true,
+        action: { label: "閉じる", onClick: () => undefined },
+        classNames: {
+          toast:
+            "flex h-[52px] w-full items-center gap-2.5 rounded-lg border border-[#16a34a] bg-white px-3 shadow-lg",
+          icon: "flex size-[18px] shrink-0 items-center justify-center text-[#16a34a] [&>svg]:size-[18px]",
+          content: "min-w-0 flex-1",
+          title: "text-xs leading-4 text-[#16a34a]",
+          description: "text-xs leading-[14px] text-[#16a34a]",
+          actionButton: "h-7 shrink-0 rounded-md bg-[#121212] px-3 text-xs leading-4 text-white",
+        },
+      });
       onOpenChange(false);
     });
   };
@@ -139,13 +142,13 @@ export function TaskDetailDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="overflow-y-scroll max-h-screen"
+        className="top-[161px] max-h-[calc(100dvh-177px)] max-w-[330px] translate-y-0 gap-3 overflow-y-auto px-4 pt-3 pb-4 sm:top-[50%] sm:max-h-[calc(100dvh-2rem)] sm:max-w-lg sm:translate-y-[-50%] sm:gap-4 sm:p-6"
         aria-describedby={descriptionId}
         aria-busy={isPending}
       >
-        <DialogHeader>
+        <DialogHeader className="gap-1.5">
           <div className="flex items-center justify-between">
-            <DialogTitle>タスク詳細</DialogTitle>
+            <DialogTitle className="text-base leading-6">タスク詳細</DialogTitle>
             <Button
               type="button"
               variant="ghost"
@@ -163,72 +166,66 @@ export function TaskDetailDialog({
           <Separator />
         </DialogHeader>
 
-        <div className="space-y-6">
-          <div className="flex flex-col items-center gap-3.5">
-            <p className="font-bold sm:text-lg">{task.fromLocationName}</p>
-            <Triangle className="size-4 rotate-180 fill-[#121212]" aria-hidden="true" />
-            <p className="sm:text-lg font-bold ">{task.toLocationName}</p>
+        <div className="space-y-3 sm:space-y-6">
+          <div className="flex h-10 items-center justify-center gap-3">
+            <p className="min-w-0 flex-1 text-center text-lg font-bold">{task.fromLocationName}</p>
+            <ArrowRight className="size-5 shrink-0" aria-hidden="true" />
+            <p className="min-w-0 flex-1 text-center text-lg font-bold">{task.toLocationName}</p>
           </div>
 
-          <div className="space-y-3">
-            <div className="rounded-xl border border-[#e5e5e5] bg-[#e6e6e6] p-3">
-              <p className="text-sm font-semibold text-[#595959]">
-                {canEditStatus ? "ステータス変更" : "ステータス"}
-              </p>
-              <div className="mt-2">
-                {canEditStatus ? (
-                  <TaskStatusSegmentedControl
-                    value={selectedStatus}
-                    statuses={editableStatuses}
-                    disabled={editingDisabled}
-                    onChange={setSelectedStatus}
-                  />
-                ) : (
-                  <TaskStatusStepper status={task.currentStatus} />
-                )}
+          <div>
+            {canEditStatus ? (
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-[#595959]">ステータス変更</p>
+                <TaskStatusSegmentedControl
+                  value={selectedStatus}
+                  statuses={editableStatuses}
+                  disabled={editingDisabled}
+                  onChange={setSelectedStatus}
+                />
               </div>
-            </div>
-
-            <div className="rounded-xl border border-[#e5e5e5] bg-[#e6e6e6] p-3">
-              <p className="text-sm font-semibold text-[#595959]">物品種類・数量</p>
-              <p className="mt-2 text-sm text-black">
-                <span>{task.itemName}</span>
-                <span className="mx-1">×</span>
-                <span>{task.quantity}</span>
-              </p>
-            </div>
+            ) : (
+              <TaskStatusStepper status={task.currentStatus} />
+            )}
           </div>
 
-          <section className="space-y-3">
-            <h3 className="text-base font-bold">タスク情報</h3>
-            <div className="rounded-xl bg-[#e6e6e6] p-3">
-              <div className="flex gap-12">
-                <div>
-                  <p className="text-sm font-semibold text-[#595959]">作業予定時刻</p>
-                  <p className="mt-1.5 text-sm">{`${task.scheduledStartTime}〜${task.scheduledEndTime}`}</p>
-                </div>
+          <section className="space-y-1">
+            <h3 className="text-sm font-bold text-[#595959]">タスク内容</h3>
+            <div className="rounded-lg bg-[#e6e6e6] px-2 py-1">
+              <div className="grid min-h-8 grid-cols-[88px_1fr] items-center border-b border-[#bababa] py-1.5">
+                <p className="text-[11px] leading-[14px] text-[#595959]">物品名・個数</p>
+                <p className="min-w-0 text-sm">
+                  {task.itemName}×{task.quantity}
+                </p>
               </div>
-
-              <div className="mt-4">
-                <p className="text-sm font-semibold text-[#595959]">担当者</p>
-                <p className="mt-1.5 text-sm">{task.leaderName ?? "未設定"}</p>
+              <div className="grid min-h-8 grid-cols-[88px_1fr] items-center border-b border-[#bababa] py-1.5">
+                <p className="text-[11px] leading-[14px] text-[#595959]">予定作業時間</p>
+                <p className="min-w-0 text-sm">{`${task.scheduledStartTime}〜${task.scheduledEndTime}`}</p>
               </div>
-
-              <div className="mt-4">
-                <p className="text-sm font-semibold text-[#595959]">タスク備考</p>
-                <div className="mt-1.5 space-y-2">
-                  <Textarea
-                    value={!canEditNote && !task.note?.trim() ? "なし" : noteDraft}
-                    onChange={(event) => setNoteDraft(event.target.value)}
-                    maxLength={TASK_NOTE_MAX_LENGTH}
-                    disabled={!canEditNote || editingDisabled}
-                    aria-label="タスク備考"
-                    placeholder={canEditNote ? "補足があれば記入してください" : ""}
-                    className="min-h-24 bg-white px-3 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-70"
-                  />
-                </div>
+              <div className="grid min-h-8 grid-cols-[88px_1fr] items-center py-1.5">
+                <p className="text-[11px] leading-[14px] text-[#595959]">担当者</p>
+                <p className="min-w-0 text-sm">{task.leaderName ?? "未設定"}</p>
               </div>
             </div>
+          </section>
+
+          <section className="space-y-1">
+            <h3 className="text-sm font-bold text-[#595959]">タスク備考</h3>
+            {canEditNote ? (
+              <Textarea
+                value={noteDraft}
+                onChange={(event) => setNoteDraft(event.target.value)}
+                maxLength={TASK_NOTE_MAX_LENGTH}
+                disabled={editingDisabled}
+                aria-label="タスク備考"
+                placeholder="補足があれば記入してください"
+                className="min-h-[76px] resize-none bg-white px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-70"
+              />
+            ) : (
+              <div className="min-h-[76px] whitespace-pre-wrap rounded-lg bg-[#e6e6e6] px-3 py-2 text-sm leading-5 text-[#595959]">
+                {task.note?.trim() || "なし"}
+              </div>
+            )}
           </section>
 
           {isMobile && open ? (
@@ -236,6 +233,7 @@ export function TaskDetailDialog({
               taskId={task.taskId}
               completed={task.currentStatus === 3}
               disabled={isPending}
+              hideActionsUntilDirty={canEditStatus || canEditNote}
               onEditingChange={setPhotoEditing}
               onSavingChange={setPhotoSaving}
             />
@@ -253,34 +251,27 @@ export function TaskDetailDialog({
             </p>
           ) : null}
 
-          {canEditStatus || canEditNote ? (
-            <>
-              {photoEditing ? (
-                <p className="text-xs text-muted-foreground">
-                  写真の変更を保存するか戻してから、ステータス・備考を保存してください。
-                </p>
-              ) : null}
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10 border-[#121212]"
-                  onClick={handleReset}
-                  disabled={editingDisabled}
-                >
-                  リセット
-                </Button>
-                <Button
-                  type="button"
-                  className="h-10 bg-[#121212] hover:bg-[#121212]/90"
-                  onClick={handleSave}
-                  disabled={editingDisabled || (canEditNote && isNoteTooLong)}
-                  aria-describedby={errorId}
-                >
-                  {isPending ? "保存中..." : isMobile ? "ステータス・備考を保存" : "変更保存"}
-                </Button>
-              </div>
-            </>
+          {(canEditStatus || canEditNote) && !photoEditing ? (
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-11 flex-1"
+                onClick={handleReset}
+                disabled={editingDisabled}
+              >
+                {isMobile ? "変更を戻す" : "リセット"}
+              </Button>
+              <Button
+                type="button"
+                className="h-11 flex-1 bg-[#0017c1] hover:bg-[#0017c1]/90"
+                onClick={handleSave}
+                disabled={editingDisabled || (canEditNote && isNoteTooLong)}
+                aria-describedby={errorId}
+              >
+                {isPending ? "保存中..." : "変更保存"}
+              </Button>
+            </div>
           ) : null}
         </div>
       </DialogContent>

@@ -207,7 +207,9 @@ export function useTaskPhotos(taskId: string) {
       setUncertain(false);
       replaceDrafts([]);
       setDeletions([]);
-      toast.success("写真を保存しました");
+      toast.success(deleteIds.length ? "写真を削除しました" : "写真を保存しました", {
+        position: "bottom-center",
+      });
       setSnapshot(null);
       const data = await loadTaskPhotos(client, taskId);
       if (alive.current) setSnapshot(data);

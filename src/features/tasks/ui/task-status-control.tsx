@@ -19,44 +19,38 @@ type TaskStatusSegmentedControlProps = {
 export function TaskStatusStepper({ status }: TaskStatusStepperProps) {
   return (
     <div
-      className="grid grid-cols-4 pt-1"
+      className="relative flex justify-between pt-1"
       role="img"
       aria-label={`現在のステータス: ${getTaskStatusLabel(status)}`}
     >
-      {TASK_STATUS_OPTIONS.map((option, index) => {
+      <div className="absolute left-5 right-5 top-[11px] flex h-0.5" aria-hidden="true">
+        {TASK_STATUS_OPTIONS.slice(1).map((option) => (
+          <span
+            key={option.value}
+            className={cn("flex-1", option.value <= status ? "bg-[#F08300]" : "bg-[#e5e5e5]")}
+          />
+        ))}
+      </div>
+      {TASK_STATUS_OPTIONS.map((option) => {
         const reached = option.value <= status;
-        const isCurrent = option.value === status;
 
         return (
-          <div key={option.value} className="relative flex min-w-0 flex-col items-center gap-1.5">
-            {index > 0 ? (
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "absolute right-1/2 top-3 h-0.5 w-full",
-                  reached ? "bg-[#F08300]" : "bg-[#bfbfbf]",
-                )}
-              />
-            ) : null}
+          <div key={option.value} className="relative flex w-10 flex-col items-center gap-1.5">
             <span
               aria-hidden="true"
               className={cn(
-                "relative z-10 flex size-6 items-center justify-center rounded-full border-2 bg-white",
-                reached ? "border-[#F08300] text-[#F08300]" : "border-[#bfbfbf] text-[#8c8c8c]",
+                "relative z-10 flex size-4 items-center justify-center rounded-full border-2",
+                reached
+                  ? "border-[#F08300] bg-[#F08300] text-white"
+                  : "border-[#e5e5e5] bg-white text-[#a3a3a3]",
               )}
             >
-              {reached && !isCurrent ? (
-                <Check className="size-3.5 stroke-[3]" />
-              ) : (
-                <span
-                  className={cn("size-2 rounded-full", reached ? "bg-[#F08300]" : "bg-[#bfbfbf]")}
-                />
-              )}
+              {reached ? <Check className="size-2.5 stroke-[3]" /> : null}
             </span>
             <span
               className={cn(
-                "text-center text-[11px] leading-tight",
-                reached ? "font-semibold text-[#B55700]" : "text-[#737373]",
+                "text-center text-xs leading-4",
+                reached ? "text-[#E87000]" : "text-[#a3a3a3]",
               )}
             >
               {option.label}
@@ -84,7 +78,7 @@ export function TaskStatusSegmentedControl({
         }
       }}
       disabled={disabled}
-      className="grid overflow-hidden rounded-lg border border-[#bfbfbf] bg-white"
+      className="grid w-full overflow-hidden rounded-lg border border-[#bfbfbf] bg-white"
       style={{ gridTemplateColumns: `repeat(${statuses.length}, minmax(0, 1fr))` }}
       aria-label="タスクステータス"
     >
@@ -94,7 +88,7 @@ export function TaskStatusSegmentedControl({
           value={String(status)}
           aria-label={getTaskStatusLabel(status)}
           className={cn(
-            "h-9 w-full min-w-0 rounded-none bg-white px-1 text-xs text-[#595959] transition-colors hover:bg-[#f5f5f5]",
+            "h-11 w-full min-w-0 rounded-none bg-white px-1 text-sm text-[#595959] transition-colors hover:bg-[#f5f5f5]",
             "data-[state=on]:bg-[#121212] data-[state=on]:font-semibold data-[state=on]:text-white data-[state=on]:hover:bg-[#121212]",
             index > 0 && "border-l border-[#bfbfbf]",
           )}
