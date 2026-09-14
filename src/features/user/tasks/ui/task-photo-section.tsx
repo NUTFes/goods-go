@@ -4,6 +4,7 @@ import { Plus, RotateCcw, X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +17,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TASK_PHOTO_ACCEPT, TASK_PHOTO_LIMIT } from "../model/convert-task-photo";
 import type { TaskPhotosState } from "../model/use-task-photos";
+
+const EMPTY_MESSAGE = "写真はありません。写真なしでも構いません。";
 
 function DraftPreview({ jpeg, name }: { jpeg: Blob; name: string }) {
   const [url, setUrl] = useState("");
@@ -65,7 +68,8 @@ export function TaskPhotoSection({
   const count =
     (photos.snapshot?.photos.filter((photo) => !photos.deletions.includes(photo.photo_id)).length ??
       0) + photos.drafts.length;
-  const hasPendingDeletion = photos.deletions.length > 0;
+  const empty =
+    !photos.loading && Boolean(photos.snapshot) && count === 0 && photos.deletions.length === 0;
   const canSave =
     photos.dirty &&
     count <= TASK_PHOTO_LIMIT &&
@@ -92,7 +96,9 @@ export function TaskPhotoSection({
       ) : null}
       <ul className="grid grid-cols-4 gap-2.5">
         {!readOnly && photos.snapshot ? (
-          <li className="flex min-h-[98px] items-start pt-2.5">
+          <li
+            className={cn("flex min-h-[98px] flex-col items-start pt-2.5", empty && "col-span-4")}
+          >
             <input
               id={inputId}
               type="file"
@@ -113,6 +119,7 @@ export function TaskPhotoSection({
               <Plus className="size-4" aria-hidden="true" />
               <span className="text-[11px]">画像追加</span>
             </label>
+            {empty ? <p className="mt-1 text-xs text-muted-foreground">{EMPTY_MESSAGE}</p> : null}
           </li>
         ) : null}
         {photos.snapshot?.photos.map((photo, index) => {
@@ -166,7 +173,10 @@ export function TaskPhotoSection({
                 <X className="size-3.5" />
               </Button>
             ) : null}
-            <p className="mt-1 truncate text-[11px] text-muted-foreground" title={photo.file.name}>
+            <p
+              className="mt-1 truncate text-[11px] leading-4 text-muted-foreground"
+              title={photo.file.name}
+            >
               未保存：{photo.file.name}
             </p>
             {photo.error ? (
@@ -189,9 +199,7 @@ export function TaskPhotoSection({
           </li>
         ))}
       </ul>
-      {!photos.loading && photos.snapshot && count === 0 && !hasPendingDeletion ? (
-        <p className="text-xs text-muted-foreground">写真はありません。写真なしでも構いません。</p>
-      ) : null}
+      {readOnly && empty ? <p className="text-xs text-muted-foreground">{EMPTY_MESSAGE}</p> : null}
       {readOnly ? (
         <p className="text-xs text-muted-foreground">完了したタスクの写真は変更できません。</p>
       ) : null}
