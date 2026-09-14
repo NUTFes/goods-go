@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TASK_PHOTO_ACCEPT, TASK_PHOTO_LIMIT } from "../model/convert-task-photo";
-import { useTaskPhotos } from "../model/use-task-photos";
+import type { TaskPhotosState } from "../model/use-task-photos";
 
 function DraftPreview({ jpeg, name }: { jpeg: Blob; name: string }) {
   const [url, setUrl] = useState("");
@@ -48,21 +48,16 @@ function SavedPhotoPreview({ url, number }: { url: string | null; number: number
 }
 
 export function TaskPhotoSection({
-  taskId,
+  photos,
   completed,
   disabled,
   hideActionsUntilDirty,
-  onEditingChange,
-  onSavingChange,
 }: {
-  taskId: string;
+  photos: TaskPhotosState;
   completed: boolean;
   disabled: boolean;
   hideActionsUntilDirty: boolean;
-  onEditingChange: (editing: boolean) => void;
-  onSavingChange: (saving: boolean) => void;
 }) {
-  const photos = useTaskPhotos(taskId);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const inputId = useId();
   const readOnly = completed || photos.snapshot?.completed;
@@ -75,15 +70,6 @@ export function TaskPhotoSection({
     count <= TASK_PHOTO_LIMIT &&
     !photos.converting &&
     photos.drafts.every((photo) => photo.jpeg);
-
-  useEffect(() => {
-    onEditingChange(photos.dirty || photos.converting || photos.uncertain);
-    return () => onEditingChange(false);
-  }, [onEditingChange, photos.dirty, photos.converting, photos.uncertain]);
-  useEffect(() => {
-    onSavingChange(photos.saving);
-    return () => onSavingChange(false);
-  }, [onSavingChange, photos.saving]);
 
   return (
     <section

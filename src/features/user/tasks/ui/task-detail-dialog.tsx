@@ -31,6 +31,7 @@ import {
 } from "@/features/tasks/ui/task-status-control";
 import type { AppRole } from "@/lib/auth/roles";
 import { TASK_NOTE_MAX_LENGTH, type TaskStatus, type UserTask } from "../model/types";
+import { useTaskPhotos } from "../model/use-task-photos";
 import { updateTaskStatusAction } from "../server/actions";
 import { TaskPhotoSection } from "./task-photo-section";
 
@@ -54,9 +55,10 @@ export function TaskDetailDialog({
   const [errorMessage, setErrorMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
-  const [photoEditing, setPhotoEditing] = useState(false);
-  const [photoSaving, setPhotoSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
+  const photos = useTaskPhotos(task?.taskId ?? "", Boolean(task && isMobile && open));
+  const photoEditing = photos.dirty || photos.converting || photos.uncertain;
+  const photoSaving = photos.saving;
   const editingDisabled = isPending || photoEditing || photoSaving;
 
   const isDirty = useMemo(() => {
@@ -230,12 +232,10 @@ export function TaskDetailDialog({
 
           {isMobile && open ? (
             <TaskPhotoSection
-              taskId={task.taskId}
+              photos={photos}
               completed={task.currentStatus === 3}
               disabled={isPending}
               hideActionsUntilDirty={canEditStatus || canEditNote}
-              onEditingChange={setPhotoEditing}
-              onSavingChange={setPhotoSaving}
             />
           ) : null}
 

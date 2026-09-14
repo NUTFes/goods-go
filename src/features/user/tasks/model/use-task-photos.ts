@@ -6,11 +6,11 @@ import { createClient } from "@/lib/supabase/client";
 import { convertTaskPhoto, TaskPhotoConversionError, TASK_PHOTO_LIMIT } from "./convert-task-photo";
 import { loadTaskPhotos, photoSaveMessage, uploadTaskPhotos, type PhotoDraft } from "./task-photos";
 
-export function useTaskPhotos(taskId: string) {
+export function useTaskPhotos(taskId: string, enabled = true) {
   const [snapshot, setSnapshot] = useState<Awaited<ReturnType<typeof loadTaskPhotos>> | null>(null);
   const [drafts, setDrafts] = useState<PhotoDraft[]>([]);
   const [deletions, setDeletions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [converting, setConverting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uncertain, setUncertain] = useState(false);
@@ -25,8 +25,13 @@ export function useTaskPhotos(taskId: string) {
   }
 
   useEffect(() => {
+    if (!enabled) {
+      alive.current = false;
+      return;
+    }
     alive.current = true;
     let cancelled = false;
+    setLoading(true);
     loadTaskPhotos(createClient(), taskId)
       .then((data) => {
         if (!cancelled) setSnapshot(data);
@@ -41,7 +46,7 @@ export function useTaskPhotos(taskId: string) {
       cancelled = true;
       alive.current = false;
     };
-  }, [taskId]);
+  }, [enabled, taskId]);
 
   async function reload() {
     if (working.current || uncertain) return;
@@ -249,3 +254,5 @@ export function useTaskPhotos(taskId: string) {
     save,
   };
 }
+
+export type TaskPhotosState = ReturnType<typeof useTaskPhotos>;
