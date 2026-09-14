@@ -65,6 +65,7 @@ export function TaskPhotoSection({
   const count =
     (photos.snapshot?.photos.filter((photo) => !photos.deletions.includes(photo.photo_id)).length ??
       0) + photos.drafts.length;
+  const hasPendingDeletion = photos.deletions.length > 0;
   const canSave =
     photos.dirty &&
     count <= TASK_PHOTO_LIMIT &&
@@ -91,7 +92,7 @@ export function TaskPhotoSection({
       ) : null}
       <ul className="grid grid-cols-4 gap-2.5">
         {!readOnly && photos.snapshot ? (
-          <li className="flex min-h-[78px] items-end">
+          <li className="flex min-h-[98px] items-start pt-2.5">
             <input
               id={inputId}
               type="file"
@@ -117,7 +118,7 @@ export function TaskPhotoSection({
         {photos.snapshot?.photos.map((photo, index) => {
           const deleting = photos.deletions.includes(photo.photo_id);
           return (
-            <li key={photo.photo_id} className="relative min-h-[78px] min-w-0 pt-2.5">
+            <li key={photo.photo_id} className="relative min-h-[98px] min-w-0 pt-2.5">
               <div className={`size-[68px] rounded-lg bg-muted ${deleting ? "opacity-40" : ""}`}>
                 <SavedPhotoPreview key={photo.url} url={photo.url} number={index + 1} />
               </div>
@@ -143,7 +144,7 @@ export function TaskPhotoSection({
           );
         })}
         {photos.drafts.map((photo) => (
-          <li key={photo.photoId} className="relative min-h-[78px] min-w-0 pt-2.5">
+          <li key={photo.photoId} className="relative min-h-[98px] min-w-0 pt-2.5">
             <div className="flex size-[68px] items-center justify-center rounded-lg bg-muted">
               {photo.jpeg ? (
                 <DraftPreview jpeg={photo.jpeg} name={photo.file.name} />
@@ -188,7 +189,7 @@ export function TaskPhotoSection({
           </li>
         ))}
       </ul>
-      {!photos.loading && photos.snapshot && count === 0 ? (
+      {!photos.loading && photos.snapshot && count === 0 && !hasPendingDeletion ? (
         <p className="text-xs text-muted-foreground">写真はありません。写真なしでも構いません。</p>
       ) : null}
       {readOnly ? (
