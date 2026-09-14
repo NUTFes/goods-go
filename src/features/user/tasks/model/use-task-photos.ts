@@ -25,11 +25,14 @@ export function useTaskPhotos(taskId: string, enabled = true) {
   }
 
   useEffect(() => {
-    if (!enabled) {
-      alive.current = false;
-      return;
-    }
     alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     setLoading(true);
     loadTaskPhotos(createClient(), taskId)
@@ -44,7 +47,6 @@ export function useTaskPhotos(taskId: string, enabled = true) {
       });
     return () => {
       cancelled = true;
-      alive.current = false;
     };
   }, [enabled, taskId]);
 
