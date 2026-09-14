@@ -16,23 +16,6 @@ type DecodedPhoto = {
   height: number;
   release: () => void;
 };
-type WorkerMessage =
-  | { type: "ready" }
-  | { type: "startup-error"; message: string }
-  | {
-      type: "success";
-      id: string;
-      width: number;
-      height: number;
-      rgbaBuffer: ArrayBuffer;
-    }
-  | {
-      type: "error";
-      id: string;
-      code: "decode_failed" | "dimensions_too_large";
-      message: string;
-    };
-
 export class TaskPhotoConversionError extends Error {
   readonly retryable: boolean;
   constructor(message: string, retryable = false) {
@@ -108,109 +91,15 @@ async function decodeWithImageElement(blob: Blob): Promise<DecodedPhoto> {
   }
 }
 
-let libheifWorker: Worker | undefined;
-let libheifReady: Promise<void> | undefined;
-const pendingDecodes = new Map<
-  string,
-  {
-    resolve: (message: Extract<WorkerMessage, { type: "success" }>) => void;
-    reject: (error: Error) => void;
-  }
->();
-
-function stopLibheifWorker(worker: Worker, error: Error) {
-  for (const pending of pendingDecodes.values()) pending.reject(error);
-  pendingDecodes.clear();
-  worker.terminate();
-  if (libheifWorker === worker) {
-    libheifWorker = undefined;
-    libheifReady = undefined;
-  }
-}
-
-async function ensureLibheifWorker() {
-  if (!libheifWorker) {
-    const worker = new Worker(new URL("./libheif-primary.worker.ts", import.meta.url), {
-      type: "module",
-    });
-    libheifWorker = worker;
-    libheifReady = new Promise<void>((resolve, reject) => {
-      worker.addEventListener("message", (event: MessageEvent<WorkerMessage>) => {
-        const message = event.data;
-        if (message.type === "ready") {
-          resolve();
-          return;
-        }
-        if (message.type === "startup-error") {
-          reject(new Error(message.message));
-          return;
-        }
-        const pending = pendingDecodes.get(message.id);
-        if (!pending) return;
-        pendingDecodes.delete(message.id);
-        if (message.type === "success") {
-          pending.resolve(message);
-        } else if (message.code === "dimensions_too_large") {
-          pending.reject(new TaskPhotoConversionError(message.message));
-        } else {
-          pending.reject(new Error(message.message));
-        }
-      });
-      worker.addEventListener("error", (event) => {
-        const error = new Error(event.message || "libheif-js worker error");
-        reject(error);
-        stopLibheifWorker(worker, error);
-      });
-    });
-  }
-
-  const worker = libheifWorker;
-  const ready = libheifReady;
-  if (!worker || !ready) throw new Error("libheif-js workerを初期化できませんでした");
-  try {
-    await ready;
-    return worker;
-  } catch (error) {
-    stopLibheifWorker(worker, error instanceof Error ? error : new Error(String(error)));
-    throw error;
-  }
-}
-
-async function decodeWithLibheif(buffer: ArrayBuffer): Promise<DecodedPhoto> {
-  const worker = await ensureLibheifWorker();
-  const id = crypto.randomUUID();
-  const result = await new Promise<Extract<WorkerMessage, { type: "success" }>>(
-    (resolve, reject) => {
-      pendingDecodes.set(id, { resolve, reject });
-      try {
-        worker.postMessage({ type: "decode", id, buffer }, [buffer]);
-      } catch (error) {
-        pendingDecodes.delete(id);
-        reject(error);
-      }
-    },
-  );
-  const imageData = new ImageData(
-    new Uint8ClampedArray(result.rgbaBuffer),
-    result.width,
-    result.height,
-  );
-  const bitmap = await createImageBitmap(imageData);
-  return {
-    source: bitmap,
-    width: bitmap.width,
-    height: bitmap.height,
-    release: () => bitmap.close(),
-  };
-}
-
 async function decodeInput(buffer: ArrayBuffer, kind: InputKind): Promise<DecodedPhoto> {
   try {
     return await decodeWithImageElement(new Blob([buffer], { type: mimeFor(kind) }));
   } catch (standardError) {
     if (kind !== "heic" && kind !== "heif") throw standardError;
+    throw new TaskPhotoConversionError(
+      "この端末ではHEIC／HEIFを変換できません。JPEGで撮影するか、別の形式へ変換して選び直してください。",
+    );
   }
-  return decodeWithLibheif(buffer);
 }
 
 // タスク写真専用。Canvasへ描画し、元画像のEXIF・位置情報を引き継がない。

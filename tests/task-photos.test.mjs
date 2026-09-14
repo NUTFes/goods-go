@@ -168,68 +168,14 @@ test("MIMEに依存せずHEIC互換ブランドを判定する", async (t) => {
   assert.equal(env.requested().type, "image/jpeg");
 });
 
-test("標準APIで読めないHEICだけWorkerへfallbackする", async (t) => {
-  const env = canvasEnvironment(t, {
+test("標準APIで読めないHEICは選び直しを案内する", async (t) => {
+  canvasEnvironment(t, {
     decodeFails: (blob) => /^image\/hei[cf]$/.test(blob.type),
   });
-  let bitmapClosed = false;
-  const oldWorker = globalThis.Worker;
-  const oldImageData = globalThis.ImageData;
-  const oldCreateImageBitmap = globalThis.createImageBitmap;
-
-  globalThis.Worker = class {
-    listeners = new Map();
-    constructor() {
-      queueMicrotask(() => this.emit("message", { data: { type: "ready" } }));
-    }
-    addEventListener(type, listener) {
-      this.listeners.set(type, listener);
-    }
-    postMessage(message) {
-      assert.equal(message.type, "decode");
-      queueMicrotask(() =>
-        this.emit("message", {
-          data: {
-            type: "success",
-            id: message.id,
-            width: 4,
-            height: 3,
-            rgbaBuffer: new ArrayBuffer(4 * 3 * 4),
-          },
-        }),
-      );
-    }
-    emit(type, event) {
-      this.listeners.get(type)?.(event);
-    }
-    terminate() {}
-  };
-  globalThis.ImageData = class {
-    constructor(data, width, height) {
-      this.data = data;
-      this.width = width;
-      this.height = height;
-    }
-  };
-  globalThis.createImageBitmap = async (imageData) => ({
-    width: imageData.width,
-    height: imageData.height,
-    close() {
-      bitmapClosed = true;
-    },
-  });
-  t.after(() => {
-    globalThis.Worker = oldWorker;
-    globalThis.ImageData = oldImageData;
-    globalThis.createImageBitmap = oldCreateImageBitmap;
-  });
-
-  await convertTaskPhoto(new File([ftyp("heic")], "photo.heic", { type: "image/heic" }));
-  assert.deepEqual(
-    { width: env.requested().width, height: env.requested().height },
-    { width: 4, height: 3 },
+  await assert.rejects(
+    convertTaskPhoto(new File([ftyp("heic")], "photo.heic", { type: "image/heic" })),
+    /選び直し/,
   );
-  assert.equal(bitmapClosed, true);
 });
 
 test("uploadは逐次実行し、失敗・重複・403の後も後続を処理する", async () => {
