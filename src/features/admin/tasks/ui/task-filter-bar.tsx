@@ -1,4 +1,4 @@
-import { Calendar, Filter, ImageIcon, ListTodo, MapPin, Package, User, X } from "lucide-react";
+import { Filter, ImageIcon, ListTodo, MapPin, Package, User, X } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,17 +117,42 @@ function resolveLabel(options: { value: string; label: string }[], value: string
   return options.find((option) => option.value === value)?.label ?? null;
 }
 
-const toggleItemClass =
-  "h-8 rounded-full border border-zinc-200 bg-white px-4 text-xs font-normal text-zinc-600 data-[state=on]:border-zinc-900 data-[state=on]:bg-zinc-900 data-[state=on]:text-white hover:bg-zinc-100";
+const statusToggleItemClass =
+  "h-9 bg-white px-4 text-sm font-normal text-zinc-600 hover:bg-zinc-100 data-[state=on]:bg-zinc-900 data-[state=on]:text-white";
 
-function statusFilterLabel(status: TaskFilterState["status"]): string | null {
-  if (status === "all") {
-    return null;
-  }
-  if (status === "reviewWithPhotos") {
-    return "確認中・写真あり";
-  }
-  return STATUS_OPTIONS[Number(status)].label;
+const dateToggleItemClass =
+  "h-11 !w-24 !rounded-t-xl !rounded-b-none !bg-zinc-300 px-5 py-3 text-sm font-bold text-zinc-600 hover:!bg-zinc-200 data-[state=on]:!bg-white data-[state=on]:text-zinc-900";
+
+export function TaskDateTabs({
+  filters,
+  onChange,
+}: Pick<TaskFilterBarProps, "filters" | "onChange">) {
+  return (
+    <ToggleGroup
+      type="single"
+      value={filters.day}
+      onValueChange={(value) =>
+        onChange({
+          ...filters,
+          day: (value || "all") as TaskFilterState["day"],
+        })
+      }
+      aria-label="日程"
+    >
+      <ToggleGroupItem value="all" className={dateToggleItemClass}>
+        全日程
+      </ToggleGroupItem>
+      {EVENT_DAY_OPTIONS.map((option) => (
+        <ToggleGroupItem
+          key={option.value}
+          value={String(option.value)}
+          className={dateToggleItemClass}
+        >
+          {option.label}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  );
 }
 
 export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBarProps) {
@@ -135,89 +160,45 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
   const leaderLabel = resolveLabel(filterOptions.leaders, filters.leaderUserId);
   const fromLabel = resolveLabel(filterOptions.locations, filters.fromLocationId);
   const toLabel = resolveLabel(filterOptions.locations, filters.toLocationId);
-  const statusLabel = statusFilterLabel(filters.status);
 
   const tags = [
-    filters.day !== "all"
-      ? {
-          key: "day" as const,
-          label: EVENT_DAY_OPTIONS[Number(filters.day)].label,
-        }
-      : null,
-    statusLabel
-      ? {
-          key: "status" as const,
-          label: statusLabel,
-        }
-      : null,
     itemLabel
       ? {
           key: "itemId" as const,
           label: itemLabel,
-          icon: <Package className="size-3" aria-hidden="true" />,
         }
       : null,
     leaderLabel
       ? {
           key: "leaderUserId" as const,
           label: leaderLabel,
-          icon: <User className="size-3" aria-hidden="true" />,
         }
       : null,
     fromLabel
       ? {
           key: "fromLocationId" as const,
-          label: `From : ${fromLabel}`,
-          icon: <MapPin className="size-3" aria-hidden="true" />,
+          label: `From：${fromLabel}`,
         }
       : null,
     toLabel
       ? {
           key: "toLocationId" as const,
-          label: `To : ${toLabel}`,
-          icon: <MapPin className="size-3" aria-hidden="true" />,
+          label: `To：${toLabel}`,
         }
       : null,
   ].filter((tag) => tag !== null);
 
   return (
-    <section className="space-y-4 rounded-[10px] border bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-center gap-3">
+    <section className="space-y-3 bg-white px-5 py-4">
+      <div className="flex items-center gap-3 overflow-x-auto">
         <div className="flex items-center gap-2">
-          <Calendar className="size-4 text-zinc-600" aria-hidden="true" />
-          <span className="text-sm font-medium text-zinc-700">日程</span>
+          <div className="flex items-center gap-1">
+            <ListTodo className="size-5 text-zinc-900" aria-hidden="true" />
+            <span className="text-sm text-zinc-900">ステータス</span>
+          </div>
           <ToggleGroup
             type="single"
-            value={filters.day}
-            onValueChange={(value) =>
-              onChange({
-                ...filters,
-                day: (value || "all") as TaskFilterState["day"],
-              })
-            }
-          >
-            <ToggleGroupItem value="all" className={toggleItemClass}>
-              全日程
-            </ToggleGroupItem>
-            {EVENT_DAY_OPTIONS.map((option) => (
-              <ToggleGroupItem
-                key={option.value}
-                value={String(option.value)}
-                className={toggleItemClass}
-              >
-                {option.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-
-        <div className="mx-2 h-6 w-px bg-zinc-200" />
-
-        <div className="flex items-center gap-2">
-          <ListTodo className="size-4 text-zinc-600" aria-hidden="true" />
-          <span className="text-sm font-medium text-zinc-700">ステータス</span>
-          <ToggleGroup
-            type="single"
+            variant="outline"
             value={filters.status}
             onValueChange={(value) =>
               onChange({
@@ -226,34 +207,41 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
               })
             }
           >
-            <ToggleGroupItem value="all" className={toggleItemClass}>
+            <ToggleGroupItem value="all" className={statusToggleItemClass}>
               すべて
             </ToggleGroupItem>
-            {STATUS_OPTIONS.map((option) => (
+            {STATUS_OPTIONS.filter((option) => option.value !== 3).map((option) => (
               <ToggleGroupItem
                 key={option.value}
                 value={String(option.value)}
-                className={toggleItemClass}
+                className={statusToggleItemClass}
               >
                 {option.label}
               </ToggleGroupItem>
             ))}
-            <ToggleGroupItem value="reviewWithPhotos" className={toggleItemClass}>
+            <ToggleGroupItem value="reviewWithPhotos" className={statusToggleItemClass}>
               <ImageIcon className="size-3.5" aria-hidden="true" />
               確認中・写真あり
             </ToggleGroupItem>
+            {STATUS_OPTIONS.filter((option) => option.value === 3).map((option) => (
+              <ToggleGroupItem
+                key={option.value}
+                value={String(option.value)}
+                className={statusToggleItemClass}
+              >
+                {option.label}
+              </ToggleGroupItem>
+            ))}
           </ToggleGroup>
         </div>
 
-        <div className="mx-2 h-6 w-px bg-zinc-200" />
-
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-3">
           <SelectFilter
             value={filters.itemId}
             icon={<Package className="size-4 text-zinc-500" />}
             placeholder="物品選択"
             options={filterOptions.items}
-            className="w-[180px]"
+            className="w-40"
             onValueChange={(value) => onChange({ ...filters, itemId: value })}
           />
           <SelectFilter
@@ -261,7 +249,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
             icon={<User className="size-4 text-zinc-500" />}
             placeholder="指揮者"
             options={filterOptions.leaders}
-            className="w-[160px]"
+            className="w-40"
             onValueChange={(value) => onChange({ ...filters, leaderUserId: value })}
           />
           <SelectFilter
@@ -269,7 +257,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
             icon={<MapPin className="size-4 text-zinc-500" />}
             placeholder="From"
             options={filterOptions.locations}
-            className="w-[180px]"
+            className="w-40"
             showGroups
             onValueChange={(value) => onChange({ ...filters, fromLocationId: value })}
           />
@@ -278,7 +266,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
             icon={<MapPin className="size-4 text-zinc-500" />}
             placeholder="To"
             options={filterOptions.locations}
-            className="w-[180px]"
+            className="w-40"
             showGroups
             onValueChange={(value) => onChange({ ...filters, toLocationId: value })}
           />
@@ -292,9 +280,8 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
             <Badge
               key={tag.key}
               variant="outline"
-              className="gap-1 rounded-full border-zinc-900 bg-white px-3 py-1 text-zinc-900 font-normal"
+              className="gap-1 rounded-full border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-900 font-normal"
             >
-              {tag.icon}
               <span className="max-w-[192px] truncate" title={tag.label}>
                 {tag.label}
               </span>
@@ -303,7 +290,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
                 onClick={() =>
                   onChange({
                     ...filters,
-                    [tag.key]: tag.key === "day" || tag.key === "status" ? "all" : "",
+                    [tag.key]: "",
                   })
                 }
                 className="ml-1 rounded-full p-0.5 hover:bg-zinc-100"

@@ -12,7 +12,7 @@ import type {
   TaskSortKey,
 } from "../model/types";
 import { TaskDeleteDialog } from "./task-delete-dialog";
-import { TaskFilterBar } from "./task-filter-bar";
+import { TaskDateTabs, TaskFilterBar } from "./task-filter-bar";
 import { TaskFormDialog } from "./task-form-dialog";
 import { TaskPhotoConfirmDialog } from "./task-photo-confirm-dialog";
 import { TaskTable } from "./task-table";
@@ -64,9 +64,15 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
 
   return (
     <main className="px-16 py-8">
-      <div className="space-y-4">
-        <div className="flex justify-end">
-          <AdminAddButton type="button" disabled={isPending} onClick={() => setCreateOpen(true)}>
+      <div>
+        <div className="flex h-16 items-end justify-between">
+          <TaskDateTabs filters={filters} onChange={handleFilterChange} />
+          <AdminAddButton
+            type="button"
+            className="self-start"
+            disabled={isPending}
+            onClick={() => setCreateOpen(true)}
+          >
             タスクを追加
           </AdminAddButton>
         </div>
@@ -77,15 +83,17 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
           onChange={handleFilterChange}
         />
 
-        <TaskTable
-          tasks={tasks}
-          sort={sort}
-          isNavigating={isPending}
-          onSort={handleSortChange}
-          onViewPhotos={(task) => setViewingTask(task)}
-          onEdit={(task) => setEditingTask(task)}
-          onDelete={(task) => setDeletingTask(task)}
-        />
+        <div className="mt-1">
+          <TaskTable
+            tasks={tasks}
+            sort={sort}
+            isNavigating={isPending}
+            onSort={handleSortChange}
+            onViewPhotos={(task) => setViewingTask(task)}
+            onEdit={(task) => setEditingTask(task)}
+            onDelete={(task) => setDeletingTask(task)}
+          />
+        </div>
       </div>
 
       <TaskFormDialog
