@@ -72,16 +72,18 @@ export async function getAdminTaskListPageData(
 
   tasksQuery = tasksQuery.order("created", { ascending: false });
 
-  const [tasksResult, itemsResult, locationsResult, leadersResult] = await Promise.all([
-    tasksQuery,
-    supabase.from("items").select("item_id,name").is("deleted", null),
-    supabase.from("locations").select("location_id,name,parent_location_id").is("deleted", null),
-    supabase
-      .from("users")
-      .select("user_id,name,role")
-      .is("deleted", null)
-      .in("role", [APP_ROLES.ADMIN, APP_ROLES.LEADER]),
-  ]);
+  const [tasksResult, itemsResult, locationsResult, leadersResult, taskPhotosResult] =
+    await Promise.all([
+      tasksQuery,
+      supabase.from("items").select("item_id,name").is("deleted", null),
+      supabase.from("locations").select("location_id,name,parent_location_id").is("deleted", null),
+      supabase
+        .from("users")
+        .select("user_id,name,role")
+        .is("deleted", null)
+        .in("role", [APP_ROLES.ADMIN, APP_ROLES.LEADER]),
+      supabase.from("task_photos").select("task_id").is("deleted_at", null),
+    ]);
 
   if (tasksResult.error) {
     throw new Error(tasksResult.error.message);
@@ -99,10 +101,18 @@ export async function getAdminTaskListPageData(
     throw new Error(leadersResult.error.message);
   }
 
+  if (taskPhotosResult.error) {
+    throw new Error(taskPhotosResult.error.message);
+  }
+
   const tasksRows = (tasksResult.data ?? []) as TaskRow[];
   const itemRows = (itemsResult.data ?? []) as ItemRow[];
   const locationRows = (locationsResult.data ?? []) as LocationRow[];
   const leaderRows = (leadersResult.data ?? []) as LeaderRow[];
+  const photoCountByTaskId = new Map<string, number>();
+  for (const photo of taskPhotosResult.data ?? []) {
+    photoCountByTaskId.set(photo.task_id, (photoCountByTaskId.get(photo.task_id) ?? 0) + 1);
+  }
 
   const itemNameById = new Map(itemRows.map((item) => [item.item_id, item.name]));
   const locationNameById = new Map(
@@ -118,6 +128,7 @@ export async function getAdminTaskListPageData(
 
       return {
         taskId: task.task_id,
+        photoCount: photoCountByTaskId.get(task.task_id) ?? 0,
         eventDayType: task.event_day_type as 0 | 1 | 2,
         currentStatus: task.current_status,
         itemId: task.item_id,
