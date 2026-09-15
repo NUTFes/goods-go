@@ -27,15 +27,15 @@ type TaskPhotoConfirmDialogProps = {
 };
 
 function PhotoViewer({ viewer }: { viewer: ReturnType<typeof useTaskPhotoViewer> }) {
-  const total = viewer.photos.length;
+  const total = viewer.photoIds.length;
 
   return (
     <div className="space-y-3">
       <div className="relative overflow-hidden rounded-lg bg-zinc-100">
         <AspectRatio ratio={16 / 9}>
           <div className="flex size-full items-center justify-center">
-            {viewer.loadingList || viewer.loadingCurrent ? <Spinner className="size-6" /> : null}
-            {!viewer.loadingList && !viewer.loadingCurrent && viewer.currentUrl && !viewer.error ? (
+            {viewer.loadingCurrent ? <Spinner className="size-6" /> : null}
+            {!viewer.loadingCurrent && viewer.currentUrl && !viewer.error ? (
               <img
                 key={viewer.currentUrl}
                 src={viewer.currentUrl}
@@ -44,10 +44,10 @@ function PhotoViewer({ viewer }: { viewer: ReturnType<typeof useTaskPhotoViewer>
                 onError={viewer.reportCurrentPhotoError}
               />
             ) : null}
-            {!viewer.loadingList && !viewer.loadingCurrent && total === 0 && !viewer.error ? (
+            {!viewer.loadingCurrent && total === 0 && !viewer.error ? (
               <p className="text-sm text-zinc-500">写真はありません</p>
             ) : null}
-            {!viewer.loadingList && !viewer.loadingCurrent && viewer.error ? (
+            {!viewer.loadingCurrent && viewer.error ? (
               <div className="space-y-2 text-center">
                 <p className="text-sm text-red-600">{viewer.error}</p>
                 <Button
@@ -68,7 +68,7 @@ function PhotoViewer({ viewer }: { viewer: ReturnType<typeof useTaskPhotoViewer>
           size="icon-sm"
           variant="outline"
           className="absolute left-3 top-1/2 rounded-full bg-white/90 -translate-y-1/2"
-          disabled={viewer.currentIndex === 0 || viewer.loadingList}
+          disabled={viewer.currentIndex === 0}
           onClick={() => viewer.selectPhoto(viewer.currentIndex - 1)}
           aria-label="前の写真"
         >
@@ -79,7 +79,7 @@ function PhotoViewer({ viewer }: { viewer: ReturnType<typeof useTaskPhotoViewer>
           size="icon-sm"
           variant="outline"
           className="absolute right-3 top-1/2 rounded-full bg-white/90 -translate-y-1/2"
-          disabled={viewer.currentIndex >= total - 1 || viewer.loadingList}
+          disabled={viewer.currentIndex >= total - 1}
           onClick={() => viewer.selectPhoto(viewer.currentIndex + 1)}
           aria-label="次の写真"
         >
@@ -92,11 +92,11 @@ function PhotoViewer({ viewer }: { viewer: ReturnType<typeof useTaskPhotoViewer>
 
       {total > 1 ? (
         <div className="flex gap-2 overflow-x-auto pb-1" aria-label="写真一覧">
-          {viewer.photos.map((photo, index) => {
-            const signedPhoto = viewer.signedPhotos[photo.photoId];
+          {viewer.photoIds.map((photoId, index) => {
+            const signedPhoto = viewer.signedPhotos[photoId];
             return (
               <button
-                key={photo.photoId}
+                key={photoId}
                 type="button"
                 className={cn(
                   "flex h-[61px] w-[84px] shrink-0 items-center justify-center overflow-hidden rounded-md border-2 bg-zinc-100 text-xs text-zinc-500",
@@ -154,7 +154,7 @@ function TaskInformation({ task }: { task: AdminTask }) {
 
 export function TaskPhotoConfirmDialog({ open, task, onOpenChange }: TaskPhotoConfirmDialogProps) {
   const [isPending, startTransition] = useTransition();
-  const viewer = useTaskPhotoViewer(task?.taskId ?? "", open && task !== null);
+  const viewer = useTaskPhotoViewer(task?.taskId ?? "", task?.photoIds ?? []);
 
   if (!task) {
     return null;
@@ -174,7 +174,10 @@ export function TaskPhotoConfirmDialog({ open, task, onOpenChange }: TaskPhotoCo
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] w-[560px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[14px] p-6 sm:max-w-[560px]">
+      <DialogContent
+        className="max-h-[calc(100vh-2rem)] w-[560px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[14px] p-6 sm:max-w-[560px]"
+        onOpenAutoFocus={viewer.openViewer}
+      >
         <DialogHeader className="border-b pb-4 pr-8">
           <DialogTitle className="flex items-center gap-5">
             <span className="truncate">{task.fromLocationName}</span>

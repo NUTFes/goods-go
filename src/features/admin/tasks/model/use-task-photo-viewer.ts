@@ -1,12 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { taskPhotoPath } from "@/features/tasks/model/task-photo";
 import { createClient } from "@/lib/supabase/client";
-
-type TaskPhotoReference = {
-  photoId: string;
-};
 
 type SignedPhoto = {
   url: string;
@@ -15,20 +11,18 @@ type SignedPhoto = {
 
 const SIGNED_URL_EXPIRES_IN_SECONDS = 60;
 
-export function useTaskPhotoViewer(taskId: string, open: boolean) {
+export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
   const [client] = useState(createClient);
-  const [photos, setPhotos] = useState<TaskPhotoReference[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [signedPhotos, setSignedPhotos] = useState<Record<string, SignedPhoto>>({});
-  const [loadingList, setLoadingList] = useState(false);
   const [loadingPhotoId, setLoadingPhotoId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  const currentPhoto = photos[currentIndex] ?? null;
-  const currentSignedPhoto = currentPhoto ? signedPhotos[currentPhoto.photoId] : undefined;
+  const currentPhotoId = photoIds[currentIndex] ?? null;
+  const currentSignedPhoto = currentPhotoId ? signedPhotos[currentPhotoId] : undefined;
 
   const loadSignedPhoto = useCallback(
-    async (photoId: string, force = false) => {
+    (photoId: string, force = false) => {
       const cached = signedPhotos[photoId];
       if (!force && cached && cached.expiresAt > Date.now()) {
         return;
@@ -36,94 +30,68 @@ export function useTaskPhotoViewer(taskId: string, open: boolean) {
 
       setLoadingPhotoId(photoId);
       setError("");
-      const { data, error: signedUrlError } = await client.storage
+      void client.storage
         .from("task-photos")
-        .createSignedUrl(taskPhotoPath(taskId, photoId), SIGNED_URL_EXPIRES_IN_SECONDS);
-
-      if (signedUrlError || !data.signedUrl) {
-        setError("写真を表示できませんでした。再読み込みしてください。");
-      } else {
-        setSignedPhotos((current) => ({
-          ...current,
-          [photoId]: {
-            url: data.signedUrl,
-            expiresAt: Date.now() + SIGNED_URL_EXPIRES_IN_SECONDS * 1000,
-          },
-        }));
-      }
-      setLoadingPhotoId((current) => (current === photoId ? null : current));
+        .createSignedUrl(taskPhotoPath(taskId, photoId), SIGNED_URL_EXPIRES_IN_SECONDS)
+        .then(({ data, error: signedUrlError }) => {
+          if (signedUrlError || !data.signedUrl) {
+            setError("写真を表示できませんでした。再読み込みしてください。");
+            return;
+          }
+          setSignedPhotos((current) => ({
+            ...current,
+            [photoId]: {
+              url: data.signedUrl,
+              expiresAt: Date.now() + SIGNED_URL_EXPIRES_IN_SECONDS * 1000,
+            },
+          }));
+        })
+        .catch(() => {
+          setError("写真を表示できませんでした。再読み込みしてください。");
+        })
+        .finally(() => {
+          setLoadingPhotoId((current) => (current === photoId ? null : current));
+        });
     },
     [client, signedPhotos, taskId],
   );
 
-  const loadPhotoList = useCallback(async () => {
-    setLoadingList(true);
-    setError("");
-    setPhotos([]);
-    setSignedPhotos({});
+  const openViewer = () => {
     setCurrentIndex(0);
-
-    const { data, error: photoListError } = await client
-      .from("task_photos")
-      .select("photo_id, sort_order")
-      .eq("task_id", taskId)
-      .is("deleted_at", null)
-      .order("sort_order");
-
-    if (photoListError) {
-      setError("写真を取得できませんでした。再読み込みしてください。");
-    } else {
-      setPhotos(
-        data.map((photo) => ({
-          photoId: photo.photo_id,
-        })),
-      );
+    setError("");
+    const firstPhotoId = photoIds[0];
+    if (firstPhotoId) {
+      void loadSignedPhoto(firstPhotoId);
     }
-    setLoadingList(false);
-  }, [client, taskId]);
-
-  useEffect(() => {
-    if (open) {
-      void loadPhotoList();
-    }
-  }, [loadPhotoList, open]);
-
-  useEffect(() => {
-    if (open && currentPhoto) {
-      void loadSignedPhoto(currentPhoto.photoId);
-    }
-  }, [currentPhoto, loadSignedPhoto, open]);
+  };
 
   const selectPhoto = (index: number) => {
-    if (index >= 0 && index < photos.length) {
+    const photoId = photoIds[index];
+    if (photoId) {
       setCurrentIndex(index);
+      setError("");
+      void loadSignedPhoto(photoId);
     }
   };
 
   const retryCurrentPhoto = () => {
-    if (currentPhoto) {
-      void loadSignedPhoto(currentPhoto.photoId, true);
-    } else {
-      void loadPhotoList();
+    if (currentPhotoId) {
+      void loadSignedPhoto(currentPhotoId, true);
     }
   };
 
   const reportCurrentPhotoError = () => {
-    if (!currentPhoto) {
-      return;
-    }
     setError("写真を表示できませんでした。再読み込みしてください。");
   };
 
   return {
-    photos,
+    photoIds,
     currentIndex,
-    currentPhoto,
     currentUrl: currentSignedPhoto?.url ?? null,
     signedPhotos,
-    loadingList,
-    loadingCurrent: currentPhoto?.photoId === loadingPhotoId,
+    loadingCurrent: currentPhotoId === loadingPhotoId,
     error,
+    openViewer,
     selectPhoto,
     retryCurrentPhoto,
     reportCurrentPhotoError,

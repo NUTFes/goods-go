@@ -41,6 +41,7 @@ export type TaskFilterOptions = {
 export type AdminTask = {
   taskId: string;
   photoCount: number;
+  photoIds: string[];
   eventDayType: EventDayType;
   currentStatus: TaskStatus;
   itemId: string;

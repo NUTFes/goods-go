@@ -84,7 +84,11 @@ export async function getAdminTaskListPageData(
         .select("user_id,name,role")
         .is("deleted", null)
         .in("role", [APP_ROLES.ADMIN, APP_ROLES.LEADER]),
-      supabase.from("task_photos").select("task_id").is("deleted_at", null),
+      supabase
+        .from("task_photos")
+        .select("task_id,photo_id,sort_order")
+        .is("deleted_at", null)
+        .order("sort_order"),
     ]);
 
   if (tasksResult.error) {
@@ -111,9 +115,11 @@ export async function getAdminTaskListPageData(
   const itemRows = (itemsResult.data ?? []) as ItemRow[];
   const locationRows = (locationsResult.data ?? []) as LocationRow[];
   const leaderRows = (leadersResult.data ?? []) as LeaderRow[];
-  const photoCountByTaskId = new Map<string, number>();
+  const photoIdsByTaskId = new Map<string, string[]>();
   for (const photo of taskPhotosResult.data ?? []) {
-    photoCountByTaskId.set(photo.task_id, (photoCountByTaskId.get(photo.task_id) ?? 0) + 1);
+    const photoIds = photoIdsByTaskId.get(photo.task_id) ?? [];
+    photoIds.push(photo.photo_id);
+    photoIdsByTaskId.set(photo.task_id, photoIds);
   }
 
   const itemNameById = new Map(itemRows.map((item) => [item.item_id, item.name]));
@@ -127,9 +133,11 @@ export async function getAdminTaskListPageData(
       throw new Error(`Unknown task status: ${task.current_status}`);
     }
 
+    const photoIds = photoIdsByTaskId.get(task.task_id) ?? [];
     return {
       taskId: task.task_id,
-      photoCount: photoCountByTaskId.get(task.task_id) ?? 0,
+      photoCount: photoIds.length,
+      photoIds,
       eventDayType: task.event_day_type as 0 | 1 | 2,
       currentStatus: task.current_status,
       itemId: task.item_id,
