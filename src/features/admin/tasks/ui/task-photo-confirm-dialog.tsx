@@ -189,7 +189,7 @@ export function TaskPhotoConfirmDialog({ open, task, onOpenChange }: TaskPhotoCo
           </DialogDescription>
         </DialogHeader>
 
-        <section className="space-y-3">
+        <section className="min-w-0 space-y-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <ImageIcon className="size-4" aria-hidden="true" />
             確認写真
