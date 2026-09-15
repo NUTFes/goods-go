@@ -70,10 +70,10 @@ export function TaskTable({
           <col className="w-[100px]" />
           <col className="w-[100px]" />
           <col className="w-[128px]" />
-          <col className="w-[108px]" />
-          <col className="w-[56px]" />
-          <col className="w-[56px]" />
-          <col className="w-[56px]" />
+          <col className="w-[94px]" />
+          <col className="w-[44px]" />
+          <col className="w-[44px]" />
+          <col className="w-[44px]" />
         </colgroup>
         <TableHeader className="[&_tr]:border-none">
           <TableRow className="bg-zinc-900 hover:bg-zinc-900 [&>th]:px-4">
@@ -124,13 +124,13 @@ export function TaskTable({
             <TableHead className="h-11 text-white text-center">作業終了時刻</TableHead>
             <TableHead className="h-11 text-white text-center">指揮者</TableHead>
             <TableHead className="h-11 text-white text-center">備考</TableHead>
-            <TableHead className="h-11 w-14 min-w-14 bg-zinc-900 text-center text-white sticky right-28 before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-linear-to-r before:from-transparent before:to-black/20 before:pointer-events-none before:content-[''] z-10 border-l border-zinc-800">
+            <TableHead className="h-11 w-11 min-w-11 bg-zinc-900 text-center text-white sticky right-[88px] before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-linear-to-r before:from-transparent before:to-black/20 before:pointer-events-none before:content-[''] z-10 border-l border-zinc-800 !px-1">
               確認
             </TableHead>
-            <TableHead className="h-11 w-14 min-w-14 bg-zinc-900 text-center text-white sticky right-14 z-10">
+            <TableHead className="h-11 w-11 min-w-11 bg-zinc-900 text-center text-white sticky right-11 z-10 !px-1">
               編集
             </TableHead>
-            <TableHead className="h-11 w-14 min-w-14 bg-zinc-900 text-center text-white sticky right-0 last:rounded-tr-lg z-10">
+            <TableHead className="h-11 w-11 min-w-11 bg-zinc-900 text-center text-white sticky right-0 last:rounded-tr-lg z-10 !px-1">
               削除
             </TableHead>
           </TableRow>
@@ -168,11 +168,11 @@ export function TaskTable({
               <TableCell className="text-center">
                 <TruncatedCellText value={task.note || "-"} className="max-w-[104px]" />
               </TableCell>
-              <TableCell className="text-center bg-white sticky right-28 before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-linear-to-r before:from-transparent before:to-black/4 before:pointer-events-none before:content-[''] z-10 border-l border-zinc-200">
+              <TableCell className="text-center bg-white sticky right-[88px] before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-linear-to-r before:from-transparent before:to-black/4 before:pointer-events-none before:content-[''] z-10 border-l border-zinc-200 !px-1">
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   className="relative"
                   disabled={task.photoCount === 0}
                   onClick={() => onViewPhotos(task)}
@@ -184,22 +184,22 @@ export function TaskTable({
                   </span>
                 </Button>
               </TableCell>
-              <TableCell className="text-center bg-white sticky right-14 z-10">
+              <TableCell className="text-center bg-white sticky right-11 z-10 !px-1">
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   onClick={() => onEdit(task)}
                   aria-label="編集"
                 >
                   <Pencil className="size-4 text-green-600" aria-hidden="true" />
                 </Button>
               </TableCell>
-              <TableCell className="text-center bg-white sticky right-0 z-10">
+              <TableCell className="text-center bg-white sticky right-0 z-10 !px-1">
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   onClick={() => onDelete(task)}
                   aria-label="削除"
                 >
