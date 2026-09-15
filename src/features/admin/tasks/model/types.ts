@@ -6,7 +6,7 @@ export type { TaskStatus } from "@/features/tasks/model/task-status";
 
 export type TaskFilterState = {
   day: "all" | "0" | "1" | "2";
-  status: "all" | "0" | "1" | "2" | "3";
+  status: "all" | "0" | "1" | "2" | "3" | "reviewWithPhotos";
   itemId: string;
   leaderUserId: string;
   fromLocationId: string;

@@ -1,4 +1,4 @@
-import { Calendar, Filter, ListTodo, MapPin, Package, User, X } from "lucide-react";
+import { Calendar, Filter, ImageIcon, ListTodo, MapPin, Package, User, X } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -120,11 +120,22 @@ function resolveLabel(options: { value: string; label: string }[], value: string
 const toggleItemClass =
   "h-8 rounded-full border border-zinc-200 bg-white px-4 text-xs font-normal text-zinc-600 data-[state=on]:border-zinc-900 data-[state=on]:bg-zinc-900 data-[state=on]:text-white hover:bg-zinc-100";
 
+function statusFilterLabel(status: TaskFilterState["status"]): string | null {
+  if (status === "all") {
+    return null;
+  }
+  if (status === "reviewWithPhotos") {
+    return "確認中・写真あり";
+  }
+  return STATUS_OPTIONS[Number(status)].label;
+}
+
 export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBarProps) {
   const itemLabel = resolveLabel(filterOptions.items, filters.itemId);
   const leaderLabel = resolveLabel(filterOptions.leaders, filters.leaderUserId);
   const fromLabel = resolveLabel(filterOptions.locations, filters.fromLocationId);
   const toLabel = resolveLabel(filterOptions.locations, filters.toLocationId);
+  const statusLabel = statusFilterLabel(filters.status);
 
   const tags = [
     filters.day !== "all"
@@ -133,10 +144,10 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
           label: EVENT_DAY_OPTIONS[Number(filters.day)].label,
         }
       : null,
-    filters.status !== "all"
+    statusLabel
       ? {
           key: "status" as const,
-          label: STATUS_OPTIONS[Number(filters.status)].label,
+          label: statusLabel,
         }
       : null,
     itemLabel
@@ -227,6 +238,10 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
                 {option.label}
               </ToggleGroupItem>
             ))}
+            <ToggleGroupItem value="reviewWithPhotos" className={toggleItemClass}>
+              <ImageIcon className="size-3.5" aria-hidden="true" />
+              確認中・写真あり
+            </ToggleGroupItem>
           </ToggleGroup>
         </div>
 
