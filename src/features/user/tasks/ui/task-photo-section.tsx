@@ -96,9 +96,7 @@ export function TaskPhotoSection({
       ) : null}
       <ul className="grid grid-cols-4 gap-2.5">
         {!readOnly && photos.snapshot ? (
-          <li
-            className={cn("flex min-h-[98px] flex-col items-start pt-2.5", empty && "col-span-4")}
-          >
+          <li className={cn("flex flex-col items-start pt-2.5", empty && "col-span-4")}>
             <input
               id={inputId}
               type="file"
@@ -125,7 +123,7 @@ export function TaskPhotoSection({
         {photos.snapshot?.photos.map((photo, index) => {
           const deleting = photos.deletions.includes(photo.photo_id);
           return (
-            <li key={photo.photo_id} className="relative min-h-[98px] min-w-0 pt-2.5">
+            <li key={photo.photo_id} className="relative min-w-0 pt-2.5">
               <div className={`size-[68px] rounded-lg bg-muted ${deleting ? "opacity-40" : ""}`}>
                 <SavedPhotoPreview key={photo.url} url={photo.url} number={index + 1} />
               </div>
@@ -146,59 +144,70 @@ export function TaskPhotoSection({
                   {deleting ? <RotateCcw className="size-3.5" /> : <X className="size-3.5" />}
                 </Button>
               ) : null}
-              {deleting ? <p className="mt-1 text-xs text-destructive">削除予定</p> : null}
             </li>
           );
         })}
-        {photos.drafts.map((photo) => (
-          <li key={photo.photoId} className="relative min-h-[98px] min-w-0 pt-2.5">
-            <div className="flex size-[68px] items-center justify-center rounded-lg bg-muted">
-              {photo.jpeg ? (
-                <DraftPreview jpeg={photo.jpeg} name={photo.file.name} />
-              ) : photo.error ? (
-                <span className="px-1 text-center text-xs">変換できません</span>
-              ) : (
-                <Spinner aria-label={`${photo.file.name}を変換中`} />
-              )}
-            </div>
-            {!readOnly ? (
-              <Button
-                type="button"
-                size="icon-sm"
-                className="absolute -right-2.5 top-0 size-5 rounded-full"
-                disabled={locked}
-                onClick={() => photos.remove(photo.photoId)}
-                aria-label={`${photo.file.name}を取り消す`}
-              >
-                <X className="size-3.5" />
-              </Button>
-            ) : null}
-            <p
-              className="mt-1 truncate text-[11px] leading-4 text-muted-foreground"
-              title={photo.file.name}
-            >
-              未保存：{photo.file.name}
-            </p>
-            {photo.error ? (
-              <p role="alert" className="mt-1 break-words text-xs text-destructive">
-                {photo.error}
-              </p>
-            ) : null}
-            {!readOnly && photo.retryable && !photo.jpeg ? (
+        {photos.drafts
+          .filter((photo) => !photo.error)
+          .map((photo) => (
+            <li key={photo.photoId} className="relative min-w-0 pt-2.5">
+              <div className="flex size-[68px] items-center justify-center rounded-lg bg-muted">
+                {photo.jpeg ? (
+                  <DraftPreview jpeg={photo.jpeg} name={photo.file.name} />
+                ) : (
+                  <Spinner aria-label={`${photo.file.name}を変換中`} />
+                )}
+              </div>
+              {!readOnly ? (
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  className="absolute -right-2.5 top-0 size-5 rounded-full"
+                  disabled={locked}
+                  onClick={() => photos.remove(photo.photoId)}
+                  aria-label={`${photo.file.name}を取り消す`}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              ) : null}
+            </li>
+          ))}
+      </ul>
+      {photos.drafts
+        .filter((photo) => photo.error)
+        .map((photo) => (
+          <p
+            key={photo.photoId}
+            role="alert"
+            className="flex flex-wrap items-center gap-2 text-xs text-destructive"
+          >
+            <span className="break-all">
+              {photo.file.name}：{photo.error}
+            </span>
+            {!readOnly && photo.retryable ? (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="mt-1 h-7 px-1 text-xs"
+                className="h-7 px-2 text-xs"
                 disabled={locked || photos.converting}
                 onClick={() => photos.retry(photo.photoId)}
               >
                 再試行
               </Button>
             ) : null}
-          </li>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              disabled={locked}
+              onClick={() => photos.remove(photo.photoId)}
+            >
+              取り消す
+            </Button>
+          </p>
         ))}
-      </ul>
       {readOnly && empty ? <p className="text-xs text-muted-foreground">{EMPTY_MESSAGE}</p> : null}
       {readOnly ? (
         <p className="text-xs text-muted-foreground">完了したタスクの写真は変更できません。</p>
