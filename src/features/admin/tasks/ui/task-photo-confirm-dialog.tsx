@@ -1,6 +1,8 @@
 "use client";
 
 import { ArrowRight, ChevronLeft, ChevronRight, ImageIcon, Package, UserRound } from "lucide-react";
+import { useTransition } from "react";
+import { toast } from "sonner";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,9 +14,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { TASK_STATUSES } from "@/features/tasks/model/task-status";
 import { cn } from "@/lib/utils";
 import { useTaskPhotoViewer } from "../model/use-task-photo-viewer";
 import type { AdminTask } from "../model/types";
+import { completeTaskAction } from "../server/actions";
 
 type TaskPhotoConfirmDialogProps = {
   open: boolean;
@@ -149,14 +153,27 @@ function TaskInformation({ task }: { task: AdminTask }) {
 }
 
 export function TaskPhotoConfirmDialog({ open, task, onOpenChange }: TaskPhotoConfirmDialogProps) {
+  const [isPending, startTransition] = useTransition();
   const viewer = useTaskPhotoViewer(task?.taskId ?? "", open && task !== null);
 
   if (!task) {
     return null;
   }
 
+  const handleComplete = () => {
+    startTransition(async () => {
+      const result = await completeTaskAction(task.taskId);
+      if (!result.ok) {
+        toast.error(result.message ?? "ステータスを変更できませんでした");
+        return;
+      }
+      toast.success("ステータスを完了にしました");
+      onOpenChange(false);
+    });
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
       <DialogContent className="max-h-[calc(100vh-2rem)] w-[560px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[14px] p-6 sm:max-w-[560px]">
         <DialogHeader className="border-b pb-4 pr-8">
           <DialogTitle className="flex items-center gap-5">
@@ -183,6 +200,16 @@ export function TaskPhotoConfirmDialog({ open, task, onOpenChange }: TaskPhotoCo
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             閉じる
           </Button>
+          {task.currentStatus !== TASK_STATUSES.DONE ? (
+            <Button
+              type="button"
+              className="bg-green-700 hover:bg-green-800"
+              disabled={isPending}
+              onClick={handleComplete}
+            >
+              {isPending ? "変更中…" : "ステータスを完了にする"}
+            </Button>
+          ) : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>
