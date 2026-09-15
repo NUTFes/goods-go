@@ -14,6 +14,7 @@ import type {
 import { TaskDeleteDialog } from "./task-delete-dialog";
 import { TaskFilterBar } from "./task-filter-bar";
 import { TaskFormDialog } from "./task-form-dialog";
+import { TaskPhotoConfirmDialog } from "./task-photo-confirm-dialog";
 import { TaskTable } from "./task-table";
 
 type TaskListPageViewProps = {
@@ -30,6 +31,7 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
   const [createOpen, setCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<AdminTask | null>(null);
   const [deletingTask, setDeletingTask] = useState<AdminTask | null>(null);
+  const [viewingTask, setViewingTask] = useState<AdminTask | null>(null);
 
   const handleFilterChange = (nextFilters: TaskFilterState) => {
     startTransition(() => {
@@ -61,7 +63,7 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
   };
 
   return (
-    <main className="px-16 py-8">
+    <main className="px-8 py-8">
       <div className="space-y-4">
         <div className="flex justify-end">
           <AdminAddButton type="button" disabled={isPending} onClick={() => setCreateOpen(true)}>
@@ -80,6 +82,7 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
           sort={sort}
           isNavigating={isPending}
           onSort={handleSortChange}
+          onViewPhotos={(task) => setViewingTask(task)}
           onEdit={(task) => setEditingTask(task)}
           onDelete={(task) => setDeletingTask(task)}
         />
@@ -110,6 +113,16 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
         onOpenChange={(open) => {
           if (!open) {
             setDeletingTask(null);
+          }
+        }}
+      />
+
+      <TaskPhotoConfirmDialog
+        open={viewingTask !== null}
+        task={viewingTask}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewingTask(null);
           }
         }}
       />

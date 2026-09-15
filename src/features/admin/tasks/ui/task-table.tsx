@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, ImageIcon, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ type TaskTableProps = {
   sort: TaskSortState;
   isNavigating?: boolean;
   onSort: (key: TaskSortKey) => void;
+  onViewPhotos: (task: AdminTask) => void;
   onEdit: (task: AdminTask) => void;
   onDelete: (task: AdminTask) => void;
 };
@@ -46,7 +47,15 @@ function TruncatedCellText({
   );
 }
 
-export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete }: TaskTableProps) {
+export function TaskTable({
+  tasks,
+  sort,
+  isNavigating,
+  onSort,
+  onViewPhotos,
+  onEdit,
+  onDelete,
+}: TaskTableProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200">
       <Table className="min-w-[1312px] table-fixed">
@@ -62,6 +71,7 @@ export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete 
           <col className="w-[100px]" />
           <col className="w-[128px]" />
           <col className="w-[108px]" />
+          <col className="w-[56px]" />
           <col className="w-[56px]" />
           <col className="w-[56px]" />
         </colgroup>
@@ -114,7 +124,10 @@ export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete 
             <TableHead className="h-11 text-white text-center">作業終了時刻</TableHead>
             <TableHead className="h-11 text-white text-center">指揮者</TableHead>
             <TableHead className="h-11 text-white text-center">備考</TableHead>
-            <TableHead className="h-11 w-14 min-w-14 bg-zinc-900 text-center text-white sticky right-14 before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-linear-to-r before:from-transparent before:to-black/20 before:pointer-events-none before:content-[''] z-10 border-l border-zinc-800">
+            <TableHead className="h-11 w-14 min-w-14 bg-zinc-900 text-center text-white sticky right-28 before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-linear-to-r before:from-transparent before:to-black/20 before:pointer-events-none before:content-[''] z-10 border-l border-zinc-800">
+              確認
+            </TableHead>
+            <TableHead className="h-11 w-14 min-w-14 bg-zinc-900 text-center text-white sticky right-14 z-10">
               編集
             </TableHead>
             <TableHead className="h-11 w-14 min-w-14 bg-zinc-900 text-center text-white sticky right-0 last:rounded-tr-lg z-10">
@@ -155,7 +168,23 @@ export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete 
               <TableCell className="text-center">
                 <TruncatedCellText value={task.note || "-"} className="max-w-[104px]" />
               </TableCell>
-              <TableCell className="text-center bg-white sticky right-14 before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-linear-to-r before:from-transparent before:to-black/4 before:pointer-events-none before:content-[''] z-10 border-l border-zinc-200">
+              <TableCell className="text-center bg-white sticky right-28 before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-linear-to-r before:from-transparent before:to-black/4 before:pointer-events-none before:content-[''] z-10 border-l border-zinc-200">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="relative"
+                  disabled={task.photoCount === 0}
+                  onClick={() => onViewPhotos(task)}
+                  aria-label={`写真を確認（${task.photoCount}枚）`}
+                >
+                  <ImageIcon className="size-[18px]" aria-hidden="true" />
+                  <span className="absolute right-0 top-0 flex size-4 items-center justify-center rounded-full border-2 border-white bg-zinc-900 text-[10px] leading-none text-white">
+                    {task.photoCount}
+                  </span>
+                </Button>
+              </TableCell>
+              <TableCell className="text-center bg-white sticky right-14 z-10">
                 <Button
                   type="button"
                   variant="ghost"
@@ -181,7 +210,7 @@ export function TaskTable({ tasks, sort, isNavigating, onSort, onEdit, onDelete 
           ))}
           {tasks.length === 0 && (
             <TableRow className="bg-white hover:bg-transparent">
-              <TableCell colSpan={13} className="py-12 text-center text-sm text-zinc-500">
+              <TableCell colSpan={14} className="py-12 text-center text-sm text-zinc-500">
                 該当するタスクはありません
               </TableCell>
             </TableRow>

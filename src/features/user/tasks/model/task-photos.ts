@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { taskPhotoPath } from "@/features/tasks/model/task-photo";
 import type { Database, Tables } from "@/types/schema.gen";
 
 export type TaskPhoto = Tables<"task_photos"> & { url: string | null };
@@ -9,8 +10,6 @@ export type PhotoDraft = {
   error?: string;
   retryable?: boolean;
 };
-
-export const taskPhotoPath = (taskId: string, photoId: string) => `tasks/${taskId}/${photoId}.jpg`;
 
 export async function loadTaskPhotos(client: SupabaseClient<Database>, taskId: string) {
   const [task, photos] = await Promise.all([
