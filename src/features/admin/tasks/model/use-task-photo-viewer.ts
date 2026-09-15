@@ -16,7 +16,7 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [signedPhotos, setSignedPhotos] = useState<Record<string, SignedPhoto>>({});
   const [loadingPhotoId, setLoadingPhotoId] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [errorPhotoId, setErrorPhotoId] = useState<string | null>(null);
 
   const currentPhotoId = photoIds[currentIndex] ?? null;
   const currentSignedPhoto = currentPhotoId ? signedPhotos[currentPhotoId] : undefined;
@@ -29,13 +29,13 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
       }
 
       setLoadingPhotoId(photoId);
-      setError("");
+      setErrorPhotoId((current) => (current === photoId ? null : current));
       void client.storage
         .from("task-photos")
         .createSignedUrl(taskPhotoPath(taskId, photoId), SIGNED_URL_EXPIRES_IN_SECONDS)
         .then(({ data, error: signedUrlError }) => {
           if (signedUrlError || !data.signedUrl) {
-            setError("写真を表示できませんでした。再読み込みしてください。");
+            setErrorPhotoId(photoId);
             return;
           }
           setSignedPhotos((current) => ({
@@ -47,7 +47,7 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
           }));
         })
         .catch(() => {
-          setError("写真を表示できませんでした。再読み込みしてください。");
+          setErrorPhotoId(photoId);
         })
         .finally(() => {
           setLoadingPhotoId((current) => (current === photoId ? null : current));
@@ -58,7 +58,7 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
 
   const openViewer = () => {
     setCurrentIndex(0);
-    setError("");
+    setErrorPhotoId(null);
     const firstPhotoId = photoIds[0];
     if (firstPhotoId) {
       void loadSignedPhoto(firstPhotoId);
@@ -69,7 +69,6 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
     const photoId = photoIds[index];
     if (photoId) {
       setCurrentIndex(index);
-      setError("");
       void loadSignedPhoto(photoId);
     }
   };
@@ -81,7 +80,7 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
   };
 
   const reportCurrentPhotoError = () => {
-    setError("写真を表示できませんでした。再読み込みしてください。");
+    setErrorPhotoId(currentPhotoId);
   };
 
   return {
@@ -90,7 +89,8 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
     currentUrl: currentSignedPhoto?.url ?? null,
     signedPhotos,
     loadingCurrent: currentPhotoId === loadingPhotoId,
-    error,
+    error:
+      errorPhotoId === currentPhotoId ? "写真を表示できませんでした。再読み込みしてください。" : "",
     openViewer,
     selectPhoto,
     retryCurrentPhoto,
