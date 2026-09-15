@@ -15,42 +15,52 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
   const [client] = useState(createClient);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [signedPhotos, setSignedPhotos] = useState<Record<string, SignedPhoto>>({});
-  const [loadingPhotoId, setLoadingPhotoId] = useState<string | null>(null);
-  const [errorPhotoId, setErrorPhotoId] = useState<string | null>(null);
+  const [loadingPhotoIds, setLoadingPhotoIds] = useState<string[]>([]);
+  const [errorPhotoIds, setErrorPhotoIds] = useState<string[]>([]);
 
   const currentPhotoId = photoIds[currentIndex] ?? null;
   const currentSignedPhoto = currentPhotoId ? signedPhotos[currentPhotoId] : undefined;
 
-  const loadSignedPhoto = useCallback(
-    (photoId: string, force = false) => {
-      const cached = signedPhotos[photoId];
-      if (!force && cached && cached.expiresAt > Date.now()) {
+  const loadSignedPhotos = useCallback(
+    (targetPhotoIds: string[], force = false) => {
+      const targets = targetPhotoIds.filter((photoId) => {
+        const cached = signedPhotos[photoId];
+        return force || !cached || cached.expiresAt <= Date.now();
+      });
+      if (targets.length === 0) {
         return;
       }
 
-      setLoadingPhotoId(photoId);
-      setErrorPhotoId((current) => (current === photoId ? null : current));
+      setLoadingPhotoIds((current) => [...current, ...targets]);
+      setErrorPhotoIds((current) => current.filter((photoId) => !targets.includes(photoId)));
       void client.storage
         .from("task-photos")
-        .createSignedUrl(taskPhotoPath(taskId, photoId), SIGNED_URL_EXPIRES_IN_SECONDS)
+        .createSignedUrls(
+          targets.map((photoId) => taskPhotoPath(taskId, photoId)),
+          SIGNED_URL_EXPIRES_IN_SECONDS,
+        )
         .then(({ data, error: signedUrlError }) => {
-          if (signedUrlError || !data.signedUrl) {
-            setErrorPhotoId(photoId);
-            return;
+          const expiresAt = Date.now() + SIGNED_URL_EXPIRES_IN_SECONDS * 1000;
+          const loaded: Record<string, SignedPhoto> = {};
+          const failed: string[] = [];
+          targets.forEach((photoId, index) => {
+            const row = data?.[index];
+            if (signedUrlError || !row || row.error || !row.signedUrl) {
+              failed.push(photoId);
+              return;
+            }
+            loaded[photoId] = { url: row.signedUrl, expiresAt };
+          });
+          setSignedPhotos((current) => ({ ...current, ...loaded }));
+          if (failed.length > 0) {
+            setErrorPhotoIds((current) => [...current, ...failed]);
           }
-          setSignedPhotos((current) => ({
-            ...current,
-            [photoId]: {
-              url: data.signedUrl,
-              expiresAt: Date.now() + SIGNED_URL_EXPIRES_IN_SECONDS * 1000,
-            },
-          }));
         })
         .catch(() => {
-          setErrorPhotoId(photoId);
+          setErrorPhotoIds((current) => [...current, ...targets]);
         })
         .finally(() => {
-          setLoadingPhotoId((current) => (current === photoId ? null : current));
+          setLoadingPhotoIds((current) => current.filter((photoId) => !targets.includes(photoId)));
         });
     },
     [client, signedPhotos, taskId],
@@ -58,29 +68,28 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
 
   const openViewer = () => {
     setCurrentIndex(0);
-    setErrorPhotoId(null);
-    const firstPhotoId = photoIds[0];
-    if (firstPhotoId) {
-      void loadSignedPhoto(firstPhotoId);
-    }
+    setErrorPhotoIds([]);
+    loadSignedPhotos(photoIds);
   };
 
   const selectPhoto = (index: number) => {
     const photoId = photoIds[index];
     if (photoId) {
       setCurrentIndex(index);
-      void loadSignedPhoto(photoId);
+      loadSignedPhotos([photoId]);
     }
   };
 
   const retryCurrentPhoto = () => {
     if (currentPhotoId) {
-      void loadSignedPhoto(currentPhotoId, true);
+      loadSignedPhotos([currentPhotoId], true);
     }
   };
 
   const reportCurrentPhotoError = () => {
-    setErrorPhotoId(currentPhotoId);
+    if (currentPhotoId) {
+      setErrorPhotoIds((current) => [...current, currentPhotoId]);
+    }
   };
 
   return {
@@ -88,9 +97,11 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
     currentIndex,
     currentUrl: currentSignedPhoto?.url ?? null,
     signedPhotos,
-    loadingCurrent: currentPhotoId === loadingPhotoId,
+    loadingCurrent: currentPhotoId !== null && loadingPhotoIds.includes(currentPhotoId),
     error:
-      errorPhotoId === currentPhotoId ? "写真を表示できませんでした。再読み込みしてください。" : "",
+      currentPhotoId !== null && errorPhotoIds.includes(currentPhotoId)
+        ? "写真を表示できませんでした。再読み込みしてください。"
+        : "",
     openViewer,
     selectPhoto,
     retryCurrentPhoto,
