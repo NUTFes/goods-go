@@ -1,70 +1,28 @@
--- =========================================
--- Seed data for local development
--- =========================================
+-- 第45回技大祭の準備日・片付け日に使用する実業務データ。
+-- ローカルseedと本番の一回限りimportで同じファイルを使用する。
 
--- auth users
-insert into auth.users (
-	instance_id,
-	id,
-	aud,
-	role,
-	email,
-	encrypted_password,
-	email_confirmed_at,
-	confirmation_token,
-	recovery_token,
-	email_change_token_new,
-	email_change,
-	raw_app_meta_data,
-	raw_user_meta_data,
-	created_at,
-	updated_at
-)
-values
-	('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-0000000000a0', 'authenticated', 'authenticated', 'admin@goods-go.local', extensions.crypt('gidaifes', extensions.gen_salt('bf')), now(), '', '', '', '', '{"provider":"email","providers":["email"]}'::jsonb, '{"name":"管理者 太郎"}'::jsonb, now(), now()),
-	('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-0000000000b0', 'authenticated', 'authenticated', 'leader@goods-go.local', extensions.crypt('gidaifes', extensions.gen_salt('bf')), now(), '', '', '', '', '{"provider":"email","providers":["email"]}'::jsonb, '{"name":"指揮者 花子"}'::jsonb, now(), now()),
-	('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-0000000000c0', 'authenticated', 'authenticated', 'user@goods-go.local', extensions.crypt('gidaifes', extensions.gen_salt('bf')), now(), '', '', '', '', '{"provider":"email","providers":["email"]}'::jsonb, '{"name":"一般 次郎"}'::jsonb, now(), now())
-on conflict (id) do update
-set
-	instance_id = excluded.instance_id,
-	email = excluded.email,
-	encrypted_password = excluded.encrypted_password,
-	email_confirmed_at = excluded.email_confirmed_at,
-	raw_app_meta_data = excluded.raw_app_meta_data,
-	raw_user_meta_data = excluded.raw_user_meta_data,
-	updated_at = excluded.updated_at;
+do $movement$
+declare
+	active_admin_id uuid;
+begin
+	perform pg_catalog.pg_advisory_xact_lock(
+		pg_catalog.hashtextextended('goods-go.import.2026-45th-movement', 0)
+	);
 
-insert into auth.identities (
-	provider_id,
-	user_id,
-	identity_data,
-	provider,
-	last_sign_in_at,
-	created_at,
-	updated_at
-)
-values
-	('10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000a0', '{"sub":"10000000-0000-0000-0000-0000000000a0","email":"admin@goods-go.local","email_verified":true,"phone_verified":false}'::jsonb, 'email', now(), now(), now()),
-	('10000000-0000-0000-0000-0000000000b0', '10000000-0000-0000-0000-0000000000b0', '{"sub":"10000000-0000-0000-0000-0000000000b0","email":"leader@goods-go.local","email_verified":true,"phone_verified":false}'::jsonb, 'email', now(), now(), now()),
-	('10000000-0000-0000-0000-0000000000c0', '10000000-0000-0000-0000-0000000000c0', '{"sub":"10000000-0000-0000-0000-0000000000c0","email":"user@goods-go.local","email_verified":true,"phone_verified":false}'::jsonb, 'email', now(), now(), now())
-on conflict (provider_id, provider) do update
-set
-	user_id = excluded.user_id,
-	identity_data = excluded.identity_data,
-	updated_at = excluded.updated_at;
+	if (
+		select count(*)
+		from public.users
+		where role = 0
+			and deleted is null
+	) <> 1 then
+		raise exception '2026 movement import requires exactly one active administrator';
+	end if;
 
--- public users (override role)
-insert into public.users (user_id, name, email, role)
-values
-	('10000000-0000-0000-0000-0000000000a0', '管理者 太郎', 'admin@goods-go.local', 0),
-	('10000000-0000-0000-0000-0000000000b0', '指揮者 花子', 'leader@goods-go.local', 1),
-	('10000000-0000-0000-0000-0000000000c0', '一般 次郎', 'user@goods-go.local', 2)
-on conflict (user_id) do update
-set
-	name = excluded.name,
-	email = excluded.email,
-	role = excluded.role,
-	deleted = null;
+	select user_id
+	into active_admin_id
+	from public.users
+	where role = 0
+		and deleted is null;
 
 -- items
 insert into public.items (name)
@@ -129,20 +87,9 @@ values
 on conflict do nothing;
 
 -- tasks
-with
-admin_user as (
-	select user_id from public.users where email = 'admin@goods-go.local' and deleted is null limit 1
-),
-leader_user as (
-	select user_id from public.users where email = 'leader@goods-go.local' and deleted is null limit 1
-),
-item_map as (
-	select item_id, name from public.items where deleted is null
-),
-location_map as (
-	select location_id, name from public.locations where deleted is null
-),
-seed_rows as (
+create temporary table import_2026_45th_movement
+as
+with source_rows as (
 	select *
 	from (
 		values
@@ -234,8 +181,70 @@ seed_rows as (
 		quantity,
 		note
 	)
+),
+numbered_rows as (
+	select
+		s.*,
+		row_number() over (
+			partition by
+				event_day_type,
+				item_name,
+				from_location_name,
+				to_location_name,
+				scheduled_start_time,
+				scheduled_end_time
+			order by quantity, note
+		) as duplicate_index
+	from source_rows s
+),
+hashed_rows as (
+	select
+		n.*,
+		md5(concat_ws(
+			'|',
+			'goods-go:2026-45th-movement',
+			event_day_type::text,
+			item_name,
+			from_location_name,
+			to_location_name,
+			scheduled_start_time::text,
+			scheduled_end_time::text,
+			duplicate_index::text
+		)) as row_hash
+	from numbered_rows n
+)
+select
+	(
+		substr(row_hash, 1, 8) || '-' ||
+		substr(row_hash, 9, 4) || '-' ||
+		substr(row_hash, 13, 4) || '-' ||
+		substr(row_hash, 17, 4) || '-' ||
+		substr(row_hash, 21, 12)
+	)::uuid as task_id,
+	event_day_type,
+	current_status,
+	item_name,
+	from_location_name,
+	to_location_name,
+	scheduled_start_time,
+	scheduled_end_time,
+	actual_start_time,
+	actual_end_time,
+	quantity,
+	note
+from hashed_rows;
+
+alter table import_2026_45th_movement
+add primary key (task_id);
+
+with item_map as (
+	select item_id, name from public.items where deleted is null
+),
+location_map as (
+	select location_id, name from public.locations where deleted is null
 )
 insert into public.tasks (
+	task_id,
 	event_day_type,
 	item_id,
 	quantity,
@@ -251,6 +260,7 @@ insert into public.tasks (
 	note
 )
 select
+	s.task_id,
 	s.event_day_type,
 	i.item_id,
 	s.quantity,
@@ -260,24 +270,44 @@ select
 	s.scheduled_end_time,
 	s.actual_start_time,
 	s.actual_end_time,
-	a.user_id,
-	l.user_id,
+	active_admin_id,
+	active_admin_id,
 	s.current_status,
 	s.note
-from seed_rows s
+from import_2026_45th_movement s
 join item_map i on i.name = s.item_name
 join location_map fl on fl.name = s.from_location_name
 join location_map tl on tl.name = s.to_location_name
-cross join admin_user a
-cross join leader_user l
-where not exists (
-	select 1
-	from public.tasks t
-	where t.event_day_type = s.event_day_type
-		and t.item_id = i.item_id
-		and t.from_location_id = fl.location_id
-		and t.to_location_id = tl.location_id
-		and t.scheduled_start_time = s.scheduled_start_time
-		and t.scheduled_end_time = s.scheduled_end_time
-		and t.deleted is null
-);
+on conflict (task_id) do nothing;
+
+	if (select count(*) from import_2026_45th_movement) <> 75 then
+		raise exception '2026 movement import must contain exactly 75 tasks';
+	end if;
+
+	if exists (
+		select 1
+		from import_2026_45th_movement s
+		left join public.tasks t on t.task_id = s.task_id
+		left join public.items i on i.item_id = t.item_id
+		left join public.locations fl on fl.location_id = t.from_location_id
+		left join public.locations tl on tl.location_id = t.to_location_id
+		where t.task_id is null
+			or t.deleted is not null
+			or t.event_day_type is distinct from s.event_day_type
+			or i.name is distinct from s.item_name
+			or fl.name is distinct from s.from_location_name
+			or tl.name is distinct from s.to_location_name
+			or t.scheduled_start_time is distinct from s.scheduled_start_time
+			or t.scheduled_end_time is distinct from s.scheduled_end_time
+			or t.quantity is distinct from s.quantity
+	) then
+		raise exception '2026 movement import validation failed';
+	end if;
+
+	raise notice '2026 movement import verified: preparation=%, cleanup=%',
+		(select count(*) from import_2026_45th_movement where event_day_type = 1),
+		(select count(*) from import_2026_45th_movement where event_day_type = 2);
+
+drop table import_2026_45th_movement;
+end;
+$movement$;
