@@ -31,7 +31,9 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
   const [createOpen, setCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<AdminTask | null>(null);
   const [deletingTask, setDeletingTask] = useState<AdminTask | null>(null);
-  const [viewingTask, setViewingTask] = useState<AdminTask | null>(null);
+  const [viewingTaskId, setViewingTaskId] = useState<string | null>(null);
+
+  const viewingTask = tasks.find((task) => task.taskId === viewingTaskId) ?? null;
 
   const handleFilterChange = (nextFilters: TaskFilterState) => {
     startTransition(() => {
@@ -89,7 +91,7 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
             sort={sort}
             isNavigating={isPending}
             onSort={handleSortChange}
-            onViewPhotos={(task) => setViewingTask(task)}
+            onViewPhotos={(task) => setViewingTaskId(task.taskId)}
             onEdit={(task) => setEditingTask(task)}
             onDelete={(task) => setDeletingTask(task)}
           />
@@ -126,11 +128,12 @@ export function TaskListPageView({ tasks, filterOptions }: TaskListPageViewProps
       />
 
       <TaskPhotoConfirmDialog
+        key={viewingTaskId ?? "task-photo-confirm-dialog-empty"}
         open={viewingTask !== null}
         task={viewingTask}
         onOpenChange={(open) => {
           if (!open) {
-            setViewingTask(null);
+            setViewingTaskId(null);
           }
         }}
       />
