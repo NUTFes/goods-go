@@ -69,21 +69,32 @@ set
 -- items
 insert into public.items (name)
 values
-	('椅子'),
-	('机'),
-	('テント'),
-	('パネル'),
-	('カラーコーン')
+	('技大祭テント大'),
+	('技大祭テント小'),
+	('技大祭テント新'),
+	('長岡高専テント'),
+	('長岡大学テント'),
+	('長机'),
+	('パイロン'),
+	('パーティション'),
+	('パーティション足'),
+	('掲示板'),
+	('ゴミ箱大'),
+	('ゴミ箱中'),
+	('ゴミ箱小'),
+	('音響機材一式')
 on conflict do nothing;
 
 -- locations
 insert into public.locations (name)
 values
-	('講義棟102'),
-	('講義棟201'),
-	('AL2'),
-	('体育館前'),
-	('正門広場')
+	('体育館'),
+	('グラウンド器具庫'),
+	('長岡高専'),
+	('長岡大学'),
+	('24下倉庫'),
+	('地域防災実践研究センター'),
+	('116倉庫')
 on conflict do nothing;
 
 -- tasks
@@ -104,18 +115,20 @@ seed_rows as (
 	select *
 	from (
 		values
-			(0, 0, '椅子', '講義棟102', '講義棟201', '08:00'::time, '09:00'::time, null::time, null::time, 10, 'seed-task-01'),
-			(0, 1, '机', 'AL2', '講義棟102', '09:00'::time, '10:00'::time, '09:10'::time, null::time, 8, 'seed-task-02'),
-			(0, 3, 'テント', '体育館前', '正門広場', '10:00'::time, '11:30'::time, '10:00'::time, '11:20'::time, 4, 'seed-task-03'),
-			(1, 0, 'パネル', '講義棟201', 'AL2', '08:30'::time, '09:30'::time, null::time, null::time, 6, 'seed-task-04'),
-			(1, 1, '椅子', '正門広場', '体育館前', '09:30'::time, '10:30'::time, '09:40'::time, null::time, 20, 'seed-task-05'),
-			(1, 2, 'カラーコーン', '講義棟102', '正門広場', '11:00'::time, '12:00'::time, '11:05'::time, '11:50'::time, 12, 'seed-task-06'),
-			(2, 0, '机', '体育館前', '講義棟201', '13:00'::time, '14:00'::time, null::time, null::time, 5, 'seed-task-07'),
-			(2, 1, 'テント', '正門広場', 'AL2', '14:00'::time, '15:30'::time, '14:05'::time, null::time, 3, 'seed-task-08'),
-			(2, 3, '椅子', '講義棟201', '講義棟102', '15:30'::time, '16:30'::time, '15:40'::time, '16:20'::time, 15, 'seed-task-09'),
-			(1, 0, 'パネル', 'AL2', '体育館前', '16:30'::time, '17:30'::time, null::time, null::time, 7, 'seed-task-10'),
-			(0, 1, 'カラーコーン', '講義棟102', 'AL2', '17:30'::time, '18:00'::time, '17:40'::time, null::time, 9, 'seed-task-11'),
-			(2, 3, '机', '講義棟201', '正門広場', '18:00'::time, '19:00'::time, '18:05'::time, '18:50'::time, 4, 'seed-task-12')
+			(2, 0, '技大祭テント大', '体育館', 'グラウンド器具庫', '13:00'::time, '17:00'::time, null::time, null::time, 45, '軽トラックで運搬'),
+			(2, 0, '技大祭テント小', '体育館', 'グラウンド器具庫', '13:00'::time, '17:00'::time, null::time, null::time, 5, '軽トラックで運搬'),
+			(2, 0, '技大祭テント新', '体育館', 'グラウンド器具庫', '13:00'::time, '17:00'::time, null::time, null::time, 5, '軽トラックで運搬'),
+			(2, 0, '長岡高専テント', '体育館', '長岡高専', '13:00'::time, '17:00'::time, null::time, null::time, 8, '軽トラックで運搬'),
+			(2, 0, '長岡大学テント', '体育館', '長岡大学', '13:00'::time, '17:00'::time, null::time, null::time, 4, '軽トラックで運搬'),
+			(2, 0, '長机', '体育館', '24下倉庫', '13:00'::time, '17:00'::time, null::time, null::time, 68, '軽トラックで運搬'),
+			(2, 0, 'パイロン', '体育館', '24下倉庫', '13:00'::time, '17:00'::time, null::time, null::time, 103, '軽トラックで運搬'),
+			(2, 0, 'パーティション', '体育館', '24下倉庫', '13:00'::time, '17:00'::time, null::time, null::time, 27, '軽トラックで運搬'),
+			(2, 0, 'パーティション足', '体育館', '24下倉庫', '13:00'::time, '17:00'::time, null::time, null::time, 54, '軽トラックで運搬'),
+			(2, 0, '掲示板', '体育館', '地域防災実践研究センター', '13:00'::time, '17:00'::time, null::time, null::time, 50, '支援課トラックで運搬'),
+			(2, 0, 'ゴミ箱大', '体育館', '24下倉庫', '13:00'::time, '17:00'::time, null::time, null::time, 8, '軽トラックで運搬'),
+			(2, 0, 'ゴミ箱中', '体育館', '24下倉庫', '13:00'::time, '17:00'::time, null::time, null::time, 8, '軽トラックで運搬'),
+			(2, 0, 'ゴミ箱小', '体育館', '24下倉庫', '13:00'::time, '17:00'::time, null::time, null::time, 11, '軽トラックで運搬'),
+			(2, 0, '音響機材一式', '体育館', '116倉庫', '13:00'::time, '17:00'::time, null::time, null::time, 1, '軽トラックで運搬')
 	) as t(
 		event_day_type,
 		current_status,
@@ -168,6 +181,11 @@ cross join leader_user l
 where not exists (
 	select 1
 	from public.tasks t
-	where t.note = s.note
+	where t.event_day_type = s.event_day_type
+		and t.item_id = i.item_id
+		and t.from_location_id = fl.location_id
+		and t.to_location_id = tl.location_id
+		and t.scheduled_start_time = s.scheduled_start_time
+		and t.scheduled_end_time = s.scheduled_end_time
 		and t.deleted is null
 );
