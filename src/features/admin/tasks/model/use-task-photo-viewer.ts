@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { taskPhotoPath } from "@/features/tasks/model/task-photo";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,6 +17,7 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
   const [signedPhotos, setSignedPhotos] = useState<Record<string, SignedPhoto>>({});
   const [loadingPhotoIds, setLoadingPhotoIds] = useState<string[]>([]);
   const [errorPhotoIds, setErrorPhotoIds] = useState<string[]>([]);
+  const loadingPhotoIdsRef = useRef(new Set<string>());
 
   const currentPhotoId = photoIds[currentIndex] ?? null;
   const currentSignedPhoto = currentPhotoId ? signedPhotos[currentPhotoId] : undefined;
@@ -24,6 +25,9 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
   const loadSignedPhotos = useCallback(
     (targetPhotoIds: string[], force = false) => {
       const targets = targetPhotoIds.filter((photoId) => {
+        if (loadingPhotoIdsRef.current.has(photoId)) {
+          return false;
+        }
         const cached = signedPhotos[photoId];
         return force || !cached || cached.expiresAt <= Date.now();
       });
@@ -31,8 +35,10 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
         return;
       }
 
-      setLoadingPhotoIds((current) => [...current, ...targets]);
-      setErrorPhotoIds((current) => current.filter((photoId) => !targets.includes(photoId)));
+      const targetSet = new Set(targets);
+      targets.forEach((photoId) => loadingPhotoIdsRef.current.add(photoId));
+      setLoadingPhotoIds((current) => [...new Set([...current, ...targets])]);
+      setErrorPhotoIds((current) => current.filter((photoId) => !targetSet.has(photoId)));
       void client.storage
         .from("task-photos")
         .createSignedUrls(
@@ -53,14 +59,15 @@ export function useTaskPhotoViewer(taskId: string, photoIds: string[]) {
           });
           setSignedPhotos((current) => ({ ...current, ...loaded }));
           if (failed.length > 0) {
-            setErrorPhotoIds((current) => [...current, ...failed]);
+            setErrorPhotoIds((current) => [...new Set([...current, ...failed])]);
           }
         })
         .catch(() => {
-          setErrorPhotoIds((current) => [...current, ...targets]);
+          setErrorPhotoIds((current) => [...new Set([...current, ...targets])]);
         })
         .finally(() => {
-          setLoadingPhotoIds((current) => current.filter((photoId) => !targets.includes(photoId)));
+          targets.forEach((photoId) => loadingPhotoIdsRef.current.delete(photoId));
+          setLoadingPhotoIds((current) => current.filter((photoId) => !targetSet.has(photoId)));
         });
     },
     [client, signedPhotos, taskId],
