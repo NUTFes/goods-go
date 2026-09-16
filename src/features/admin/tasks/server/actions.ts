@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh, revalidatePath } from "next/cache";
+import { TASK_STATUSES } from "@/features/tasks/model/task-status";
 import { requireAdminUser } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { type TaskFormInput, taskFormSchema } from "../model/schema";
@@ -124,6 +125,34 @@ export async function deleteTaskAction(taskId: string): Promise<ActionResult> {
 
   if (error) {
     return { ok: false, message: "削除に失敗しました" };
+  }
+
+  revalidatePath("/admin/tasks");
+  refresh();
+  return { ok: true };
+}
+
+export async function completeTaskAction(taskId: string): Promise<ActionResult> {
+  await requireAdminUser();
+
+  if (!taskId) {
+    return { ok: false, message: "対象タスクが見つかりません" };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ current_status: TASK_STATUSES.DONE })
+    .eq("task_id", taskId)
+    .is("deleted", null)
+    .select("task_id")
+    .maybeSingle();
+
+  if (error) {
+    return { ok: false, message: "ステータスの更新に失敗しました" };
+  }
+  if (!data) {
+    return { ok: false, message: "対象タスクが見つかりません" };
   }
 
   revalidatePath("/admin/tasks");

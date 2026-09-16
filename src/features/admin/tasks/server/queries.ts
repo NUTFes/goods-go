@@ -2,7 +2,7 @@ import { requireAdminUser } from "@/lib/auth/guards";
 import { APP_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { getLeafLocationsWithRootGroup } from "@/features/tasks/model/location-options";
-import { isTaskStatus } from "@/features/tasks/model/task-status";
+import { isTaskStatus, TASK_STATUSES } from "@/features/tasks/model/task-status";
 import type { Tables } from "@/types/schema.gen";
 import { buildQuarterHourOptions, normalizeTimeValue, sortAdminTasks } from "../model/mappers";
 import type { AdminTaskListPageData, TaskFormOption, TaskListQueryState } from "../model/types";
@@ -50,7 +50,9 @@ export async function getAdminTaskListPageData(
     tasksQuery = tasksQuery.eq("event_day_type", Number(queryState.filters.day));
   }
 
-  if (queryState.filters.status !== "all") {
+  if (queryState.filters.status === "reviewWithPhotos") {
+    tasksQuery = tasksQuery.eq("current_status", TASK_STATUSES.REVIEW);
+  } else if (queryState.filters.status !== "all") {
     tasksQuery = tasksQuery.eq("current_status", Number(queryState.filters.status));
   }
 
@@ -72,16 +74,22 @@ export async function getAdminTaskListPageData(
 
   tasksQuery = tasksQuery.order("created", { ascending: false });
 
-  const [tasksResult, itemsResult, locationsResult, leadersResult] = await Promise.all([
-    tasksQuery,
-    supabase.from("items").select("item_id,name").is("deleted", null),
-    supabase.from("locations").select("location_id,name,parent_location_id").is("deleted", null),
-    supabase
-      .from("users")
-      .select("user_id,name,role")
-      .is("deleted", null)
-      .in("role", [APP_ROLES.ADMIN, APP_ROLES.LEADER]),
-  ]);
+  const [tasksResult, itemsResult, locationsResult, leadersResult, taskPhotosResult] =
+    await Promise.all([
+      tasksQuery,
+      supabase.from("items").select("item_id,name").is("deleted", null),
+      supabase.from("locations").select("location_id,name,parent_location_id").is("deleted", null),
+      supabase
+        .from("users")
+        .select("user_id,name,role")
+        .is("deleted", null)
+        .in("role", [APP_ROLES.ADMIN, APP_ROLES.LEADER]),
+      supabase
+        .from("task_photos")
+        .select("task_id,photo_id,sort_order")
+        .is("deleted_at", null)
+        .order("sort_order"),
+    ]);
 
   if (tasksResult.error) {
     throw new Error(tasksResult.error.message);
@@ -99,10 +107,20 @@ export async function getAdminTaskListPageData(
     throw new Error(leadersResult.error.message);
   }
 
+  if (taskPhotosResult.error) {
+    throw new Error(taskPhotosResult.error.message);
+  }
+
   const tasksRows = (tasksResult.data ?? []) as TaskRow[];
   const itemRows = (itemsResult.data ?? []) as ItemRow[];
   const locationRows = (locationsResult.data ?? []) as LocationRow[];
   const leaderRows = (leadersResult.data ?? []) as LeaderRow[];
+  const photoIdsByTaskId = new Map<string, string[]>();
+  for (const photo of taskPhotosResult.data ?? []) {
+    const photoIds = photoIdsByTaskId.get(photo.task_id) ?? [];
+    photoIds.push(photo.photo_id);
+    photoIdsByTaskId.set(photo.task_id, photoIds);
+  }
 
   const itemNameById = new Map(itemRows.map((item) => [item.item_id, item.name]));
   const locationNameById = new Map(
@@ -110,34 +128,39 @@ export async function getAdminTaskListPageData(
   );
   const leaderNameById = new Map(leaderRows.map((leader) => [leader.user_id, leader.name]));
 
-  const tasks = sortAdminTasks(
-    tasksRows.map((task) => {
-      if (!isTaskStatus(task.current_status)) {
-        throw new Error(`Unknown task status: ${task.current_status}`);
-      }
+  const mappedTasks = tasksRows.map((task) => {
+    if (!isTaskStatus(task.current_status)) {
+      throw new Error(`Unknown task status: ${task.current_status}`);
+    }
 
-      return {
-        taskId: task.task_id,
-        eventDayType: task.event_day_type as 0 | 1 | 2,
-        currentStatus: task.current_status,
-        itemId: task.item_id,
-        itemName: itemNameById.get(task.item_id) ?? "-",
-        quantity: task.quantity,
-        fromLocationId: task.from_location_id,
-        fromLocationName: locationNameById.get(task.from_location_id) ?? "-",
-        toLocationId: task.to_location_id,
-        toLocationName: locationNameById.get(task.to_location_id) ?? "-",
-        scheduledStartTime: normalizeTimeValue(task.scheduled_start_time) ?? "-",
-        scheduledEndTime: normalizeTimeValue(task.scheduled_end_time) ?? "-",
-        actualStartTime: normalizeTimeValue(task.actual_start_time),
-        actualEndTime: normalizeTimeValue(task.actual_end_time),
-        leaderUserId: task.leader_user_id,
-        leaderName: task.leader_user_id ? (leaderNameById.get(task.leader_user_id) ?? null) : null,
-        note: task.note,
-      };
-    }),
-    queryState.sort,
-  );
+    const photoIds = photoIdsByTaskId.get(task.task_id) ?? [];
+    return {
+      taskId: task.task_id,
+      photoCount: photoIds.length,
+      photoIds,
+      eventDayType: task.event_day_type as 0 | 1 | 2,
+      currentStatus: task.current_status,
+      itemId: task.item_id,
+      itemName: itemNameById.get(task.item_id) ?? "-",
+      quantity: task.quantity,
+      fromLocationId: task.from_location_id,
+      fromLocationName: locationNameById.get(task.from_location_id) ?? "-",
+      toLocationId: task.to_location_id,
+      toLocationName: locationNameById.get(task.to_location_id) ?? "-",
+      scheduledStartTime: normalizeTimeValue(task.scheduled_start_time) ?? "-",
+      scheduledEndTime: normalizeTimeValue(task.scheduled_end_time) ?? "-",
+      actualStartTime: normalizeTimeValue(task.actual_start_time),
+      actualEndTime: normalizeTimeValue(task.actual_end_time),
+      leaderUserId: task.leader_user_id,
+      leaderName: task.leader_user_id ? (leaderNameById.get(task.leader_user_id) ?? null) : null,
+      note: task.note,
+    };
+  });
+  const visibleTasks =
+    queryState.filters.status === "reviewWithPhotos"
+      ? mappedTasks.filter((task) => task.photoCount > 0)
+      : mappedTasks;
+  const tasks = sortAdminTasks(visibleTasks, queryState.sort);
 
   return {
     tasks,

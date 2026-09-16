@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Clock3, MapPin, NotebookPen, Package, Triangle } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState, useTransition } from "react";
-import { type UseFormReturn, useForm, useWatch } from "react-hook-form";
+import { type UseFormReturn, useForm, useFormState, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -100,6 +100,7 @@ function TaskBasicSection({
   form: TaskForm;
   filterOptions: TaskFilterOptions;
 }) {
+  const { errors } = useFormState({ control: form.control });
   const eventDayType = useWatch({
     control: form.control,
     name: "eventDayType",
@@ -137,7 +138,7 @@ function TaskBasicSection({
               ))}
             </SelectContent>
           </Select>
-          <FieldError message={form.formState.errors.eventDayType?.message} />
+          <FieldError message={errors.eventDayType?.message} />
         </div>
 
         <div className="space-y-1.5">
@@ -161,7 +162,7 @@ function TaskBasicSection({
               ))}
             </SelectContent>
           </Select>
-          <FieldError message={form.formState.errors.currentStatus?.message} />
+          <FieldError message={errors.currentStatus?.message} />
         </div>
 
         <div className="space-y-1.5">
@@ -185,7 +186,7 @@ function TaskBasicSection({
               ))}
             </SelectContent>
           </Select>
-          <FieldError message={form.formState.errors.leaderUserId?.message} />
+          <FieldError message={errors.leaderUserId?.message} />
         </div>
       </div>
     </section>
@@ -199,6 +200,7 @@ function TaskLocationSection({
   form: TaskForm;
   locationGroups: LocationGroups;
 }) {
+  const { errors } = useFormState({ control: form.control });
   const fromLocationId = useWatch({
     control: form.control,
     name: "fromLocationId",
@@ -251,7 +253,7 @@ function TaskLocationSection({
               )}
             </SelectContent>
           </Select>
-          <FieldError message={form.formState.errors.fromLocationId?.message} />
+          <FieldError message={errors.fromLocationId?.message} />
         </div>
 
         <div className="pt-8 text-zinc-400">
@@ -294,7 +296,7 @@ function TaskLocationSection({
               )}
             </SelectContent>
           </Select>
-          <FieldError message={form.formState.errors.toLocationId?.message} />
+          <FieldError message={errors.toLocationId?.message} />
         </div>
       </div>
     </section>
@@ -308,6 +310,7 @@ function TaskItemSection({
   form: TaskForm;
   filterOptions: TaskFilterOptions;
 }) {
+  const { errors } = useFormState({ control: form.control });
   const itemId = useWatch({
     control: form.control,
     name: "itemId",
@@ -338,7 +341,7 @@ function TaskItemSection({
                 ))}
               </SelectContent>
             </Select>
-            <FieldError message={form.formState.errors.itemId?.message} />
+            <FieldError message={errors.itemId?.message} />
           </div>
 
           <div className="space-y-1.5">
@@ -350,7 +353,7 @@ function TaskItemSection({
                 valueAsNumber: true,
               })}
             />
-            <FieldError message={form.formState.errors.quantity?.message} />
+            <FieldError message={errors.quantity?.message} />
           </div>
         </div>
       </div>
@@ -365,6 +368,7 @@ function TaskScheduleSection({
   form: TaskForm;
   filterOptions: TaskFilterOptions;
 }) {
+  const { errors } = useFormState({ control: form.control });
   const scheduledStartTime = useWatch({
     control: form.control,
     name: "scheduledStartTime",
@@ -402,7 +406,7 @@ function TaskScheduleSection({
               ))}
             </SelectContent>
           </Select>
-          <FieldError message={form.formState.errors.scheduledStartTime?.message} />
+          <FieldError message={errors.scheduledStartTime?.message} />
         </div>
 
         <div className="pt-8 text-zinc-400">
@@ -430,7 +434,7 @@ function TaskScheduleSection({
               ))}
             </SelectContent>
           </Select>
-          <FieldError message={form.formState.errors.scheduledEndTime?.message} />
+          <FieldError message={errors.scheduledEndTime?.message} />
         </div>
       </div>
     </section>
@@ -438,6 +442,8 @@ function TaskScheduleSection({
 }
 
 function TaskNoteSection({ form }: { form: TaskForm }) {
+  const { errors } = useFormState({ control: form.control });
+
   return (
     <section>
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
@@ -449,7 +455,7 @@ function TaskNoteSection({ form }: { form: TaskForm }) {
         placeholder={`補足があれば記入してください\n例：駐車場設営`}
         {...form.register("note")}
       />
-      <FieldError message={form.formState.errors.note?.message} />
+      <FieldError message={errors.note?.message} />
     </section>
   );
 }
@@ -477,6 +483,7 @@ export function TaskFormDialog({
   const handleDialogOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setSubmitError("");
+      form.reset(toDefaultValues(task));
     }
 
     onOpenChange(nextOpen);
