@@ -190,15 +190,16 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
 
   return (
     <section className="space-y-3 bg-white px-5 py-4">
-      <div className="flex items-center gap-3 overflow-x-auto">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
+          <div className="flex shrink-0 items-center gap-1">
             <ListTodo className="size-5 text-zinc-900" aria-hidden="true" />
-            <span className="text-sm text-zinc-900">ステータス</span>
+            <span className="whitespace-nowrap text-sm text-zinc-900">ステータス</span>
           </div>
           <ToggleGroup
             type="single"
             variant="outline"
+            className="shrink-0"
             value={filters.status}
             onValueChange={(value) =>
               onChange({
@@ -235,7 +236,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
           </ToggleGroup>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <SelectFilter
             value={filters.itemId}
             icon={<Package className="size-4 text-zinc-500" />}
