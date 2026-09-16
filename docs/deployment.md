@@ -87,6 +87,18 @@ mise run prod:admin:check
 
 command は Kong の `127.0.0.1` bind から Admin API を呼び、secret key と password を出力しません。同じ Admin email での再実行は成功扱いですが、active Admin が存在する状態で別ユーザーへ置換する操作は拒否します。初期化後は password file を password manager へ移し、server 上から安全に削除してください。
 
+### 第45回技大祭の物品移動データ
+
+初期 Admin を作成した後、第45回技大祭の準備日・片付け日の物品移動データを明示的に投入します。
+
+```bash
+mise run prod:data:import -- --confirm IMPORT-2026-MOVEMENT
+```
+
+この command は投入前に production snapshot を作成し、有効な Admin が1人だけ存在することを確認します。投入SQLは1トランザクションで実行され、想定する準備日61件・片付け日14件を確認できなければ全体を取り消します。
+
+タスクには固定IDを使用するため再実行しても重複せず、既存タスクのステータス、実績時刻、備考、写真は上書きしません。通常の deploy では自動実行しません。
+
 ## Cloudflare Tunnel route
 
 Cloudflare Zero Trust で次の 2 hostname だけを登録します。
@@ -147,7 +159,7 @@ mise run prod:db:migrate
 
 `prod:db:migrate` は dry-run と backup が成功しない限り migration を適用しません。production で `supabase migration down` を自動 rollback として使用しません。任意の DDL を安全に逆変換できないためです。
 
-seed は local development 専用です。本番 migration に `supabase/seed.sql` は自動適用しません。
+Supabase CLI の自動 seed は local development 専用です。本番 migration では seed を自動適用せず、前述の確認付き command から業務データ用SQLだけを明示的に実行します。ローカル確認用ユーザーは `supabase/seeds/local-users.sql` に分離しているため、本番には投入されません。
 
 ## Backup と rollback
 
