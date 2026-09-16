@@ -41,7 +41,10 @@ export default function RootLayout({
     <html lang="ja">
       <body className={`${lineSeedJP.variable} ${geistMono.variable} antialiased font-sans`}>
         <NuqsAdapter>{children}</NuqsAdapter>
-        <Toaster />
+        <Toaster
+          position="top-center"
+          mobileOffset={{ top: 164, right: 32, bottom: 26, left: 32 }}
+        />
       </body>
     </html>
   );

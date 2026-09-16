@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { SUPABASE_AUTH_COOKIE_NAME } from "@/lib/supabase/config";
 
 export async function updateSession(request: NextRequest) {
   if (request.nextUrl.pathname === "/api/health") {
@@ -20,6 +21,7 @@ export async function updateSession(request: NextRequest) {
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookieOptions: { name: SUPABASE_AUTH_COOKIE_NAME },
     cookies: {
       getAll() {
         return request.cookies.getAll();
