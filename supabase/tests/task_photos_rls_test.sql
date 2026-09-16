@@ -25,8 +25,8 @@ insert into public.tasks (
   note
 )
 values
-  ('42000000-0000-4000-8000-000000000201', 0, '42000000-0000-4000-8000-000000000001', 1, '42000000-0000-4000-8000-000000000101', '42000000-0000-4000-8000-000000000102', '09:00', '10:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 0, 'seed-task-01'),
-  ('42000000-0000-4000-8000-000000000203', 0, '42000000-0000-4000-8000-000000000001', 1, '42000000-0000-4000-8000-000000000101', '42000000-0000-4000-8000-000000000102', '11:00', '12:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 3, 'seed-task-03');
+  ('42000000-0000-4000-8000-000000000201', 0, '42000000-0000-4000-8000-000000000001', 1, '42000000-0000-4000-8000-000000000101', '42000000-0000-4000-8000-000000000102', '09:00', '10:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 0, 'test-task-01'),
+  ('42000000-0000-4000-8000-000000000203', 0, '42000000-0000-4000-8000-000000000001', 1, '42000000-0000-4000-8000-000000000101', '42000000-0000-4000-8000-000000000102', '11:00', '12:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 3, 'test-task-03');
 
 insert into public.task_photos (photo_id, task_id, sort_order)
 select
@@ -34,7 +34,7 @@ select
   task_id,
   0
 from public.tasks
-where note = 'seed-task-01';
+where note = 'test-task-01';
 
 insert into public.task_photos (photo_id, task_id, sort_order, deleted_at)
 select
@@ -43,21 +43,21 @@ select
   1,
   now()
 from public.tasks
-where note = 'seed-task-01';
+where note = 'test-task-01';
 
 insert into storage.objects (bucket_id, name)
 select
   'task-photos',
   'tasks/' || task_id::text || '/20000000-0000-4000-8000-000000000001.jpg'
 from public.tasks
-where note = 'seed-task-01';
+where note = 'test-task-01';
 
 insert into storage.objects (bucket_id, name)
 select
   'task-photos',
   'tasks/' || task_id::text || '/20000000-0000-4000-8000-000000000002.jpg'
 from public.tasks
-where note = 'seed-task-01';
+where note = 'test-task-01';
 
 select throws_ok(
   $$
@@ -67,7 +67,7 @@ select throws_ok(
       task_id,
       0
     from public.tasks
-    where note = 'seed-task-01'
+    where note = 'test-task-01'
   $$,
   '23505',
   null,
@@ -92,7 +92,7 @@ select throws_ok(
       task_id,
       2
     from public.tasks
-    where note = 'seed-task-01'
+    where note = 'test-task-01'
   $$,
   '42501',
   null,
@@ -113,7 +113,7 @@ select lives_ok(
       'task-photos',
       'tasks/' || task_id::text || '/20000000-0000-4000-8000-000000000005.jpg'
     from public.tasks
-    where note = 'seed-task-01'
+    where note = 'test-task-01'
   $$,
   'authenticatedは未完了タスクの所定パスへuploadできる'
 );
@@ -125,7 +125,7 @@ select throws_ok(
       'task-photos',
       'tasks/' || task_id::text || '/20000000-0000-4000-8000-000000000006.jpg'
     from public.tasks
-    where note = 'seed-task-03'
+    where note = 'test-task-03'
   $$,
   '42501',
   null,
@@ -144,7 +144,7 @@ select results_eq(
   $$
     select 'tasks/' || task_id::text || '/20000000-0000-4000-8000-000000000001.jpg'
     from public.tasks
-    where note = 'seed-task-01'
+    where note = 'test-task-01'
   $$,
   '有効なtask_photosに対応するObjectだけ参照できる'
 );

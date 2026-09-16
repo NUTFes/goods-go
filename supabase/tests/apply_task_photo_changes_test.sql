@@ -25,9 +25,9 @@ insert into public.tasks (
   note
 )
 values
-  ('41000000-0000-4000-8000-000000000201', 0, '41000000-0000-4000-8000-000000000001', 1, '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000102', '09:00', '10:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 0, 'seed-task-01'),
-  ('41000000-0000-4000-8000-000000000202', 0, '41000000-0000-4000-8000-000000000001', 1, '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000102', '10:00', '11:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 1, 'seed-task-02'),
-  ('41000000-0000-4000-8000-000000000203', 0, '41000000-0000-4000-8000-000000000001', 1, '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000102', '11:00', '12:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 3, 'seed-task-03');
+  ('41000000-0000-4000-8000-000000000201', 0, '41000000-0000-4000-8000-000000000001', 1, '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000102', '09:00', '10:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 0, 'test-task-01'),
+  ('41000000-0000-4000-8000-000000000202', 0, '41000000-0000-4000-8000-000000000001', 1, '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000102', '10:00', '11:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 1, 'test-task-02'),
+  ('41000000-0000-4000-8000-000000000203', 0, '41000000-0000-4000-8000-000000000001', 1, '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000102', '11:00', '12:00', '10000000-0000-0000-0000-0000000000a0', '10000000-0000-0000-0000-0000000000b0', 3, 'test-task-03');
 
 select ok(
   has_function_privilege(
@@ -57,7 +57,7 @@ cross join (
     ('30000000-0000-0000-0000-000000000001'),
     ('30000000-0000-0000-0000-000000000002')
 ) p(photo_id)
-where t.note = 'seed-task-01';
+where t.note = 'test-task-01';
 
 insert into storage.objects (bucket_id, name)
 select
@@ -76,7 +76,7 @@ cross join (
     ('30000000-0000-0000-0000-000000000018'),
     ('30000000-0000-0000-0000-000000000019')
 ) p(photo_id)
-where t.note = 'seed-task-02';
+where t.note = 'test-task-02';
 
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-0000000000c0', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -85,7 +85,7 @@ set local role authenticated;
 select lives_ok(
   $$
     select public.apply_task_photo_changes(
-      (select task_id from public.tasks where note = 'seed-task-01'),
+      (select task_id from public.tasks where note = 'test-task-01'),
       array['30000000-0000-0000-0000-000000000001']::uuid[],
       array[]::uuid[]
     )
@@ -104,7 +104,7 @@ select results_eq(
 );
 
 select public.apply_task_photo_changes(
-  (select task_id from public.tasks where note = 'seed-task-01'),
+  (select task_id from public.tasks where note = 'test-task-01'),
   array['30000000-0000-0000-0000-000000000001']::uuid[],
   array[]::uuid[]
 );
@@ -126,7 +126,7 @@ set local role authenticated;
 select lives_ok(
   $$
     select public.apply_task_photo_changes(
-      (select task_id from public.tasks where note = 'seed-task-01'),
+      (select task_id from public.tasks where note = 'test-task-01'),
       array[]::uuid[],
       array['30000000-0000-0000-0000-000000000001']::uuid[]
     )
@@ -153,7 +153,7 @@ select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-0000000000a0
 set local role authenticated;
 
 select public.apply_task_photo_changes(
-  (select task_id from public.tasks where note = 'seed-task-01'),
+  (select task_id from public.tasks where note = 'test-task-01'),
   array['30000000-0000-0000-0000-000000000002']::uuid[],
   array[]::uuid[]
 );
@@ -167,7 +167,7 @@ select results_eq(
 select throws_ok(
   $$
     select public.apply_task_photo_changes(
-      (select task_id from public.tasks where note = 'seed-task-02'),
+      (select task_id from public.tasks where note = 'test-task-02'),
       array['30000000-0000-0000-0000-000000000002']::uuid[],
       array[]::uuid[]
     )
@@ -180,7 +180,7 @@ select throws_ok(
 select throws_ok(
   $$
     select public.apply_task_photo_changes(
-      (select task_id from public.tasks where note = 'seed-task-03'),
+      (select task_id from public.tasks where note = 'test-task-03'),
       array[]::uuid[],
       array[]::uuid[]
     )
@@ -191,7 +191,7 @@ select throws_ok(
 );
 
 select public.apply_task_photo_changes(
-  (select task_id from public.tasks where note = 'seed-task-02'),
+  (select task_id from public.tasks where note = 'test-task-02'),
   array[
     '30000000-0000-0000-0000-000000000011',
     '30000000-0000-0000-0000-000000000012',
@@ -209,7 +209,7 @@ select results_eq(
   $$
     select array_agg(photo_id order by sort_order)
     from public.task_photos
-    where task_id = (select task_id from public.tasks where note = 'seed-task-02')
+    where task_id = (select task_id from public.tasks where note = 'test-task-02')
       and deleted_at is null
   $$,
   $$
@@ -230,7 +230,7 @@ select results_eq(
 select throws_ok(
   $$
     select public.apply_task_photo_changes(
-      (select task_id from public.tasks where note = 'seed-task-02'),
+      (select task_id from public.tasks where note = 'test-task-02'),
       array['30000000-0000-0000-0000-000000000019']::uuid[],
       array[]::uuid[]
     )
@@ -241,7 +241,7 @@ select throws_ok(
 );
 
 select results_eq(
-  $$select current_status from public.tasks where note = 'seed-task-02'$$,
+  $$select current_status from public.tasks where note = 'test-task-02'$$,
   array[1::smallint],
   '写真操作でタスクのステータスを変更しない'
 );
@@ -252,7 +252,7 @@ set local role anon;
 select throws_ok(
   $$
     select public.apply_task_photo_changes(
-      (select task_id from public.tasks where note = 'seed-task-01'),
+      (select task_id from public.tasks where note = 'test-task-01'),
       array[]::uuid[],
       array[]::uuid[]
     )
