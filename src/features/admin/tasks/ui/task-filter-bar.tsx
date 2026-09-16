@@ -317,7 +317,7 @@ export function TaskFilterBar({ filters, filterOptions, onChange }: TaskFilterBa
             })
           }
         >
-          タグを全てクリア
+          フィルターを全てクリア
         </Button>
       </div>
     </section>
