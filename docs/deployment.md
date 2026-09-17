@@ -92,10 +92,10 @@ command は Kong の `127.0.0.1` bind から Admin API を呼び、secret key �
 初期 Admin を作成した後、第45回技大祭の準備日・片付け日の物品移動データを明示的に投入します。
 
 ```bash
-mise run prod:data:import -- --confirm IMPORT-2026-MOVEMENT
+mise run prod:data:import -- --admin-email admin@example.com --confirm IMPORT-2026-MOVEMENT
 ```
 
-この command は投入前に production snapshot を作成し、有効な Admin が1人だけ存在することを確認します。投入SQLは1トランザクションで実行され、想定する準備日61件・片付け日14件を確認できなければ全体を取り消します。
+この command は投入前に production snapshot を作成し、`--admin-email`で指定した有効な Admin が1人だけ存在することを確認します。投入SQLは1トランザクションで実行され、想定する準備日61件・片付け日14件を確認できなければ全体を取り消します。
 
 タスクには固定IDを使用するため再実行しても重複せず、既存タスクのステータス、実績時刻、備考、写真は上書きしません。通常の deploy では自動実行しません。
 

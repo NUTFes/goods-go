@@ -9,11 +9,33 @@ IMPORT_FILE="${ROOT_DIR}/supabase/data/2026_45th_movement.sql"
 CONFIRMATION="IMPORT-2026-MOVEMENT"
 
 import_2026_movement() {
-  local confirmation="${1:-}"
+  local admin_email="" confirmation=""
+
+  while (($# > 0)); do
+    case "$1" in
+      --admin-email)
+        admin_email="${2:-}"
+        shift 2
+        ;;
+      --confirm)
+        confirmation="${2:-}"
+        shift 2
+        ;;
+      *)
+        echo "unknown option: $1" >&2
+        exit 1
+        ;;
+    esac
+  done
+
+  if [[ ! "${admin_email}" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]]; then
+    echo "a valid --admin-email is required" >&2
+    exit 1
+  fi
 
   if [[ "${confirmation}" != "${CONFIRMATION}" ]]; then
     echo "production data import requires explicit confirmation" >&2
-    echo "rerun with: mise run prod:data:import -- --confirm ${CONFIRMATION}" >&2
+    echo "rerun with: mise run prod:data:import -- --admin-email <email> --confirm ${CONFIRMATION}" >&2
     exit 1
   fi
 
@@ -28,7 +50,9 @@ import_2026_movement() {
   bash "${SCRIPT_DIR}/prod-admin.sh" require
   bash "${SCRIPT_DIR}/prod-db.sh" backup
 
-  stack_compose exec -T db psql \
+  stack_compose exec -T \
+    -e "PGOPTIONS=-c goods_go.import_admin_email=${admin_email}" \
+    db psql \
     -U postgres \
     -d postgres \
     -v ON_ERROR_STOP=1 \
@@ -39,13 +63,11 @@ import_2026_movement() {
 
 case "${1:-}" in
   import-2026-movement)
-    if [[ "${2:-}" != "--confirm" || $# -ne 3 ]]; then
-      import_2026_movement ""
-    fi
-    import_2026_movement "${3:-}"
+    shift
+    import_2026_movement "$@"
     ;;
   *)
-    echo "usage: bash scripts/prod-data.sh import-2026-movement --confirm ${CONFIRMATION}" >&2
+    echo "usage: bash scripts/prod-data.sh import-2026-movement --admin-email <email> --confirm ${CONFIRMATION}" >&2
     exit 1
     ;;
 esac

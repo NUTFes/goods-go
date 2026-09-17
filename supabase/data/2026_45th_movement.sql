@@ -4,6 +4,10 @@
 do $movement$
 declare
 	active_admin_id uuid;
+	import_admin_email text := coalesce(
+		nullif(pg_catalog.current_setting('goods_go.import_admin_email', true), ''),
+		'admin@goods-go.local'
+	);
 begin
 	perform pg_catalog.pg_advisory_xact_lock(
 		pg_catalog.hashtextextended('goods-go.import.2026-45th-movement', 0)
@@ -14,15 +18,17 @@ begin
 		from public.users
 		where role = 0
 			and deleted is null
+			and lower(btrim(email)) = lower(btrim(import_admin_email))
 	) <> 1 then
-		raise exception '2026 movement import requires exactly one active administrator';
+		raise exception '2026 movement import requires one active administrator matching %', import_admin_email;
 	end if;
 
 	select user_id
 	into active_admin_id
 	from public.users
 	where role = 0
-		and deleted is null;
+		and deleted is null
+		and lower(btrim(email)) = lower(btrim(import_admin_email));
 
 -- items
 insert into public.items (name)
