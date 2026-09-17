@@ -30,6 +30,9 @@ begin
 		and deleted is null
 		and lower(btrim(email)) = lower(btrim(import_admin_email));
 
+	-- 更新権限トリガーにも、指定したAdminとして実行していることを伝える。
+	perform pg_catalog.set_config('request.jwt.claim.sub', active_admin_id::text, true);
+
 -- items
 insert into public.items (name)
 values
@@ -99,36 +102,36 @@ with source_rows as (
 	select *
 	from (
 		values
-			(1, 0, '机', 'B講義室前', '休憩所（電気棟前）', '09:00'::time, '10:00'::time, null::time, null::time, 25, 'チームB・フェーズ1／トラック行先：電気棟と物材経営情報棟の間'),
-			(1, 0, '椅子', 'B講義室前', '休憩所（電気棟前）', '09:00'::time, '10:00'::time, null::time, null::time, 24, 'チームB・フェーズ1／トラック行先：電気棟と物材経営情報棟の間'),
-			(1, 0, '机', 'B講義室前', 'フリマ', '09:00'::time, '10:00'::time, null::time, null::time, 11, 'チームB・フェーズ1／トラック行先：電気棟と物材経営情報棟の間'),
-			(1, 0, '椅子', 'B講義室前', 'フリマ', '09:00'::time, '10:00'::time, null::time, null::time, 9, 'チームB・フェーズ1／トラック行先：電気棟と物材経営情報棟の間'),
-			(1, 0, '机', 'B講義室前', 'CAFE ECLA', '09:00'::time, '10:00'::time, null::time, null::time, 1, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '椅子', 'B講義室前', 'CAFE ECLA', '09:00'::time, '10:00'::time, null::time, null::time, 3, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '机', 'B講義室前', '木沢ハウス', '09:00'::time, '10:00'::time, null::time, null::time, 2, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '椅子', 'B講義室前', '木沢ハウス', '09:00'::time, '10:00'::time, null::time, null::time, 2, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '机', 'B講義室前', '調理場（電気棟）', '09:00'::time, '10:00'::time, null::time, null::time, 4, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '椅子', 'B講義室前', '調理場（電気棟）', '09:00'::time, '10:00'::time, null::time, null::time, 5, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '机', 'B講義室前', '案内所（情報処理センター前）', '09:00'::time, '10:00'::time, null::time, null::time, 6, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '椅子', 'B講義室前', '案内所（情報処理センター前）', '09:00'::time, '10:00'::time, null::time, null::time, 3, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '机', 'B講義室前', '調理場（機械棟）', '09:00'::time, '10:00'::time, null::time, null::time, 4, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '椅子', 'B講義室前', '調理場（機械棟）', '09:00'::time, '10:00'::time, null::time, null::time, 5, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
-			(1, 0, '机', 'B講義室前', '体育館', '09:00'::time, '10:00'::time, null::time, null::time, 20, 'チームB・フェーズ3／トラック行先：体育館裏口近く'),
-			(1, 0, '椅子', 'B講義室前', '体育館', '09:00'::time, '10:00'::time, null::time, null::time, 20, 'チームB・フェーズ3／トラック行先：体育館裏口近く'),
-			(1, 0, '机', 'B講義室前', '縁日', '09:00'::time, '10:00'::time, null::time, null::time, 14, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '椅子', 'B講義室前', '縁日', '09:00'::time, '10:00'::time, null::time, null::time, 7, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '机', 'B講義室前', 'キッキングスナイパー', '09:00'::time, '10:00'::time, null::time, null::time, 4, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '椅子', 'B講義室前', 'キッキングスナイパー', '09:00'::time, '10:00'::time, null::time, null::time, 4, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '机', 'B講義室前', '休憩所（機械棟前）', '09:00'::time, '10:00'::time, null::time, null::time, 25, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '椅子', 'B講義室前', '休憩所（機械棟前）', '09:00'::time, '10:00'::time, null::time, null::time, 24, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '机', 'B講義室前', '案内所（屋内プール前）', '09:00'::time, '10:00'::time, null::time, null::time, 6, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '椅子', 'B講義室前', '案内所（屋内プール前）', '09:00'::time, '10:00'::time, null::time, null::time, 3, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '机', 'B講義室前', '受付テント', '09:00'::time, '10:00'::time, null::time, null::time, 8, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '椅子', 'B講義室前', '受付テント', '09:00'::time, '10:00'::time, null::time, null::time, 5, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '机', 'B講義室前', '音響', '09:00'::time, '10:00'::time, null::time, null::time, 6, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '椅子', 'B講義室前', '音響', '09:00'::time, '10:00'::time, null::time, null::time, 8, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '机', 'B講義室前', '屋外ステージ', '09:00'::time, '10:00'::time, null::time, null::time, 20, 'チームB・フェーズ4／トラック行先：中央駐車場'),
-			(1, 0, '椅子', 'B講義室前', '屋外ステージ', '09:00'::time, '10:00'::time, null::time, null::time, 20, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '机', 'B講義室前', '休憩所（電気棟前）', '09:00'::time, '09:15'::time, null::time, null::time, 25, 'チームB・フェーズ1／トラック行先：電気棟と物材経営情報棟の間'),
+			(1, 0, '椅子', 'B講義室前', '休憩所（電気棟前）', '09:00'::time, '09:15'::time, null::time, null::time, 24, 'チームB・フェーズ1／トラック行先：電気棟と物材経営情報棟の間'),
+			(1, 0, '机', 'B講義室前', 'フリマ', '09:00'::time, '09:15'::time, null::time, null::time, 11, 'チームB・フェーズ1／トラック行先：電気棟と物材経営情報棟の間'),
+			(1, 0, '椅子', 'B講義室前', 'フリマ', '09:00'::time, '09:15'::time, null::time, null::time, 9, 'チームB・フェーズ1／トラック行先：電気棟と物材経営情報棟の間'),
+			(1, 0, '机', 'B講義室前', 'CAFE ECLA', '09:15'::time, '09:30'::time, null::time, null::time, 1, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '椅子', 'B講義室前', 'CAFE ECLA', '09:15'::time, '09:30'::time, null::time, null::time, 3, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '机', 'B講義室前', '木沢ハウス', '09:15'::time, '09:30'::time, null::time, null::time, 2, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '椅子', 'B講義室前', '木沢ハウス', '09:15'::time, '09:30'::time, null::time, null::time, 2, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '机', 'B講義室前', '調理場（電気棟）', '09:15'::time, '09:30'::time, null::time, null::time, 4, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '椅子', 'B講義室前', '調理場（電気棟）', '09:15'::time, '09:30'::time, null::time, null::time, 5, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '机', 'B講義室前', '案内所（情報処理センター前）', '09:15'::time, '09:30'::time, null::time, null::time, 6, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '椅子', 'B講義室前', '案内所（情報処理センター前）', '09:15'::time, '09:30'::time, null::time, null::time, 3, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '机', 'B講義室前', '調理場（機械棟）', '09:15'::time, '09:30'::time, null::time, null::time, 4, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '椅子', 'B講義室前', '調理場（機械棟）', '09:15'::time, '09:30'::time, null::time, null::time, 5, 'チームB・フェーズ2／トラック行先：情報システムセンタと電気棟の間'),
+			(1, 0, '机', 'B講義室前', '体育館', '09:30'::time, '09:45'::time, null::time, null::time, 20, 'チームB・フェーズ3／トラック行先：体育館裏口近く'),
+			(1, 0, '椅子', 'B講義室前', '体育館', '09:30'::time, '09:45'::time, null::time, null::time, 20, 'チームB・フェーズ3／トラック行先：体育館裏口近く'),
+			(1, 0, '机', 'B講義室前', '縁日', '09:45'::time, '10:00'::time, null::time, null::time, 14, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '椅子', 'B講義室前', '縁日', '09:45'::time, '10:00'::time, null::time, null::time, 7, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '机', 'B講義室前', 'キッキングスナイパー', '09:45'::time, '10:00'::time, null::time, null::time, 4, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '椅子', 'B講義室前', 'キッキングスナイパー', '09:45'::time, '10:00'::time, null::time, null::time, 4, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '机', 'B講義室前', '休憩所（機械棟前）', '09:45'::time, '10:00'::time, null::time, null::time, 25, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '椅子', 'B講義室前', '休憩所（機械棟前）', '09:45'::time, '10:00'::time, null::time, null::time, 24, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '机', 'B講義室前', '案内所（屋内プール前）', '09:45'::time, '10:00'::time, null::time, null::time, 6, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '椅子', 'B講義室前', '案内所（屋内プール前）', '09:45'::time, '10:00'::time, null::time, null::time, 3, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '机', 'B講義室前', '受付テント', '09:45'::time, '10:00'::time, null::time, null::time, 8, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '椅子', 'B講義室前', '受付テント', '09:45'::time, '10:00'::time, null::time, null::time, 5, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '机', 'B講義室前', '音響', '09:45'::time, '10:00'::time, null::time, null::time, 6, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '椅子', 'B講義室前', '音響', '09:45'::time, '10:00'::time, null::time, null::time, 8, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '机', 'B講義室前', '屋外ステージ', '09:45'::time, '10:00'::time, null::time, null::time, 20, 'チームB・フェーズ4／トラック行先：中央駐車場'),
+			(1, 0, '椅子', 'B講義室前', '屋外ステージ', '09:45'::time, '10:00'::time, null::time, null::time, 20, 'チームB・フェーズ4／トラック行先：中央駐車場'),
 			(1, 0, '掲示板', '体育館', '案内所（講義棟前）', '10:00'::time, '12:00'::time, null::time, null::time, 1, 'チームB・トラック運搬／トラック行先：講義棟前'),
 			(1, 0, 'パーティション', '体育館', '財務物販テント', '10:00'::time, '12:00'::time, null::time, null::time, 1, 'チームB・トラック運搬／トラック行先：講義棟前'),
 			(1, 0, '長机', '体育館', '深才下宿貸間組合', '10:00'::time, '12:00'::time, null::time, null::time, 6, 'チームB・トラック運搬／トラック行先：講義棟前'),
@@ -213,8 +216,14 @@ hashed_rows as (
 			item_name,
 			from_location_name,
 			to_location_name,
-			scheduled_start_time::text,
-			scheduled_end_time::text,
+			case
+				when note like 'チームB・フェーズ%' then '09:00:00'
+				else scheduled_start_time::text
+			end,
+			case
+				when note like 'チームB・フェーズ%' then '10:00:00'
+				else scheduled_end_time::text
+			end,
 			duplicate_index::text
 		)) as row_hash
 	from numbered_rows n
@@ -284,7 +293,10 @@ from import_2026_45th_movement s
 join item_map i on i.name = s.item_name
 join location_map fl on fl.name = s.from_location_name
 join location_map tl on tl.name = s.to_location_name
-on conflict (task_id) do nothing;
+on conflict (task_id) do update
+set
+	scheduled_start_time = excluded.scheduled_start_time,
+	scheduled_end_time = excluded.scheduled_end_time;
 
 	if (select count(*) from import_2026_45th_movement) <> 75 then
 		raise exception '2026 movement import must contain exactly 75 tasks';

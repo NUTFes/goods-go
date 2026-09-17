@@ -97,7 +97,7 @@ mise run prod:data:import -- --admin-email admin@example.com --confirm IMPORT-20
 
 この command は投入前に production snapshot を作成し、`--admin-email`で指定した有効な Admin が1人だけ存在することを確認します。投入SQLは1トランザクションで実行され、想定する準備日61件・片付け日14件を確認できなければ全体を取り消します。
 
-タスクには固定IDを使用するため再実行しても重複せず、既存タスクのステータス、実績時刻、備考、写真は上書きしません。通常の deploy では自動実行しません。
+タスクには固定IDを使用するため再実行しても重複しません。予定時刻は投入SQLの内容に合わせて更新しますが、既存タスクのステータス、実績時刻、備考、写真は上書きしません。通常の deploy では自動実行しません。
 
 ## Cloudflare Tunnel route
 
