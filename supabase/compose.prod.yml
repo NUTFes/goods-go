@@ -8,6 +8,10 @@ services:
     environment:
       GOTRUE_JWT_KEYS: ${JWT_KEYS:-[]}
 
+  storage:
+    environment:
+      JWT_JWKS: ${JWT_JWKS:-{"keys":[]}}
+
   supavisor:
     ports: !override
       - "127.0.0.1:${POSTGRES_PORT}:5432"
