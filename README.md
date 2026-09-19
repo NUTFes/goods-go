@@ -76,6 +76,7 @@ mise run prod:setup -- --domain goods-go.example.com
 mise run prod:supabase:up
 mise run prod:db:migrate
 mise run prod:admin:bootstrap -- --email admin@example.com --password-file ./secrets/admin-password
+mise run prod:data:import -- --admin-email admin@example.com --confirm IMPORT-2026-MOVEMENT
 mise run prod:deploy
 ```
 

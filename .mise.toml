@@ -234,6 +234,15 @@ description = "production の初期 Admin を Auth Admin API で作成"
 run = "bash scripts/prod-admin.sh bootstrap"
 
 # ------------------------------------------------------------------------------
+# 10. Production Data
+# ------------------------------------------------------------------------------
+
+[tasks."10_prod_data:10_import"]
+alias = "prod:data:import"
+description = "第45回技大祭の物品移動データを production へ投入"
+run = "bash scripts/prod-data.sh import-2026-movement"
+
+# ------------------------------------------------------------------------------
 # 99. Danger Zone
 # ------------------------------------------------------------------------------
 
